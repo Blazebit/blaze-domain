@@ -712,7 +712,7 @@ b.conum * { color: inherit !important; }
 
 .vendor strong { display: none; }
 
-.logo { background: url("../images/blaze_persistence.png") no-repeat scroll left top rgba(0, 0, 0, 0); display: block; float: left; height: 40px; width: 66px; float: right; background-size: contain; }
+.logo { background: url("../images/blaze_domain.png") no-repeat scroll left top rgba(0, 0, 0, 0); display: block; float: left; height: 40px; width: 66px; float: right; background-size: contain; }
 
 .logo strong { display: none; }
 

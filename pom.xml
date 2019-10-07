@@ -22,7 +22,7 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <name>Blazebit Blaze-Domain</name>
-    <url>https://persistence.blazebit.com</url>
+    <url>https://domain.blazebit.com</url>
     <description>Blazebit Blaze-Domain</description>
 
     <properties>

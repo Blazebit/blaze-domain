@@ -180,8 +180,8 @@
             </properties>
             <distributionManagement>
                 <site>
-                    <id>staging-persistence.blazebit.com</id>
-                    <name>persistence.blazebit.com Staging</name>
+                    <id>staging-domain.blazebit.com</id>
+                    <name>domain.blazebit.com Staging</name>
                     <url>scp://staging-domain.blazebit.com/var/www/virtual/staging-domain.blazebit.com/htdocs</url>
                 </site>
             </distributionManagement>
@@ -193,8 +193,8 @@
             </properties>
             <distributionManagement>
                 <site>
-                    <id>persistence.blazebit.com</id>
-                    <name>persistence.blazebit.com</name>
+                    <id>domain.blazebit.com</id>
+                    <name>domain.blazebit.com</name>
                     <url>scp://domain.blazebit.com/var/www/virtual/domain.blazebit.com/htdocs</url>
                 </site>
             </distributionManagement>

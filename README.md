@@ -37,8 +37,6 @@ Blaze-Domain has support for
 How to use it?
 ==============
 
-WARNING: Blaze-Domain is still under heavy initial development and is not yet intended to be used!
-
 Blaze-Domain is split up into different modules. We recommend that you define a version property in your parent pom that you can use for all artifacts. Modules are all released in one batch so you can safely increment just that property. 
 
 ```xml
@@ -62,3 +60,132 @@ Alternatively you can also use our BOM in the `dependencyManagement` section.
     </dependencies>
 </dependencyManagement>
 ```
+
+## Manual setup
+
+For compiling you will only need API artifacts and for the runtime you need impl and integration artifacts.
+
+Blaze-Domain Core module dependencies
+
+```xml
+<dependency>
+    <groupId>com.blazebit</groupId>
+    <artifactId>blaze-domain-core-api</artifactId>
+    <version>${blaze-domain.version}</version>
+    <scope>compile</scope>
+</dependency>
+<dependency>
+    <groupId>com.blazebit</groupId>
+    <artifactId>blaze-domain-core-impl</artifactId>
+    <version>${blaze-domain.version}</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
+Blaze-Domain Declarative module dependencies
+
+```xml
+<dependency>
+    <groupId>com.blazebit</groupId>
+    <artifactId>blaze-domain-declarative-api</artifactId>
+    <version>${blaze-domain.version}</version>
+    <scope>compile</scope>
+</dependency>
+<dependency>
+    <groupId>com.blazebit</groupId>
+    <artifactId>blaze-domain-declarative-impl</artifactId>
+    <version>${blaze-domain.version}</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
+Blaze-Domain Declarative CDI integration dependencies
+
+```xml
+<dependency>
+    <groupId>com.blazebit</groupId>
+    <artifactId>blaze-domain-declarative-integration-cdi</artifactId>
+    <version>${blaze-domain.version}</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
+Blaze-Domain Persistence module dependencies
+
+```xml
+<dependency>
+    <groupId>com.blazebit</groupId>
+    <artifactId>blaze-domain-persistence</artifactId>
+    <version>${blaze-domain.version}</version>
+    <scope>compile</scope>
+</dependency>
+<dependency>
+    <groupId>com.blazebit</groupId>
+    <artifactId>blaze-domain-declarative-persistence</artifactId>
+    <version>${blaze-domain.version}</version>
+    <scope>compile</scope>
+</dependency>
+```
+
+Documentation
+=========
+
+Currently there is no documentation other than the Javadoc.
+ 
+Core quick-start
+=================
+
+Building a domain model works through the `DomainBuilder` API. 
+
+```java
+DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
+domainBuilder.createEntityType("Cat")
+    .addAttribute("name", String.class)
+    .addAttribute("age", Integer.class)
+  .build();
+DomainModel domain = domainBuilder.build();
+```
+
+This will build an entity type with the domain type name `Cat` containing two attributes `name` and `age`.
+The domain model can then be queried.
+
+```java
+// Returns a basic domain type for the java type String
+((EntityDomainType) domain.getType("Cat")).getAttribute("name").getType();
+```
+
+This alone is not very spectacular, but the declarative module allows to interpret class structures as domain types which saves a lot of typing and is safer.
+
+Declarative usage
+=================
+
+The declarative module allows to define domain models through java class definitions:
+
+```java
+@DomainType
+interface Cat {
+  String getName();
+  Integer getAge();
+}
+```
+
+which can then be registered like this:
+
+```java
+DeclarativeDomainConfiguration config = DeclarativeDomain.getDefaultProvider().createDefaultConfiguration();
+config.addDomainType(Cat.class);
+DomainModel domain = config.createDomainModel();
+```
+
+The discovery and registering can be automated by making use of the CDI integration `blaze-domain-declarative-integration-cdi`.
+
+Licensing
+=========
+
+This distribution, as a whole, is licensed under the terms of the Apache
+License, Version 2.0 (see LICENSE.txt).
+
+References
+==========
+
+Project Site:              https://domain.blazebit.com (coming at some point)

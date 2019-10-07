@@ -27,5 +27,5 @@
     <suppress checks="JavadocStyle" files="[\\/](impl|integration|testsuite|examples)[\\/].*\.java$"/>
     <suppress checks="JavadocType" files="[\\/](impl|integration|testsuite|examples)[\\/].*\.java$"/>
     <suppress checks="NonEmptyAtclauseDescription" files="[\\/](impl|testsuite|examples)[\\/].*\.java$"/>
-    <suppress checks="com.blazebit.persistence.checkstyle.JavadocSinceCheck" files="[\\/](testsuite|examples)[\\/].*\.java$"/>
+    <suppress checks="com.blazebit.domain.checkstyle.JavadocSinceCheck" files="[\\/](testsuite|examples)[\\/].*\.java$"/>
 </suppressions>
