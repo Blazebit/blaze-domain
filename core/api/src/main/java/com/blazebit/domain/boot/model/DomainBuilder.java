@@ -258,6 +258,14 @@ public interface DomainBuilder {
     public EnumDomainTypeBuilder createEnumType(String name, Class<? extends Enum<?>> javaType);
 
     /**
+     * Sets whether function names are case sensitive.
+     *
+     * @param caseSensitive Whether function names are case sensitive
+     * @return this for chaining
+     */
+    public DomainBuilder setFunctionCaseSensitive(boolean caseSensitive);
+
+    /**
      * Builds and validates the domain model as defined via this builder.
      *
      * @return The domain model

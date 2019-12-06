@@ -16,6 +16,7 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
+import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.boot.model.EnumDomainTypeDefinitionImpl;
 import com.blazebit.domain.impl.boot.model.EnumDomainTypeValueDefinitionImpl;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
@@ -25,6 +26,7 @@ import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author Christian Beikov
@@ -38,9 +40,17 @@ public class EnumDomainTypeImpl extends AbstractDomainTypeImpl implements EnumDo
     @SuppressWarnings("unchecked")
     public EnumDomainTypeImpl(EnumDomainTypeDefinitionImpl typeDefinition, MetamodelBuildingContext context) {
         super(typeDefinition, context);
-        Map<String, EnumDomainTypeValue> enumValues = new HashMap<>(typeDefinition.getEnumValues().size());
+        Map<String, EnumDomainTypeValue> enumValues;
+        if (typeDefinition.isCaseSensitive()) {
+            enumValues = new HashMap<>(typeDefinition.getEnumValues().size());
+        } else {
+            enumValues = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        }
         for (EnumDomainTypeValueDefinitionImpl enumValue : (Collection<EnumDomainTypeValueDefinitionImpl>) (Collection<?>) typeDefinition.getEnumValues().values()) {
-            enumValues.put(enumValue.getValue(), enumValue.createValue(this, context));
+            EnumDomainTypeValue old;
+            if ((old = enumValues.put(enumValue.getValue(), enumValue.createValue(this, context))) != null) {
+                context.addError("Duplicate enum value definition due to case insensitivity: [" + old.getValue() + ", " + enumValue.getValue() + "]");
+            }
         }
 
         this.enumValues = enumValues;
@@ -66,5 +76,10 @@ public class EnumDomainTypeImpl extends AbstractDomainTypeImpl implements EnumDo
     @Override
     public <T> T getMetadata(Class<T> metadataType) {
         return (T) metadata.get(metadataType);
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return getMetadataDefinitions(metadata);
     }
 }

@@ -17,6 +17,7 @@
 package com.blazebit.domain.spi;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
+import com.blazebit.domain.runtime.model.DomainModel;
 
 /**
  * Interface implemented by the domain implementation provider.
@@ -28,14 +29,20 @@ import com.blazebit.domain.boot.model.DomainBuilder;
  */
 public interface DomainBuilderProvider {
 
-    // TODO: Allow reusing an existing DomainModel as basis
-
     /**
      * Creates an empty domain builder.
      *
      * @return the domain builder
      */
     public DomainBuilder createEmptyBuilder();
+
+    /**
+     * Creates a domain builder based on an existing domain model.
+     *
+     * @param domainModel The existing domain model
+     * @return the domain builder
+     */
+    public DomainBuilder createBuilder(DomainModel domainModel);
 
     /**
      * Creates an empty domain builder and returns it after running {@link DomainContributor} on it.

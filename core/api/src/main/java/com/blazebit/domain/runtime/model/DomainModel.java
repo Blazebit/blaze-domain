@@ -53,9 +53,23 @@ public interface DomainModel {
     /**
      * Returns the types of the domain model as map indexed by their type name.
      *
-     * @return the type of the domain model
+     * @return the types of the domain model
      */
     public Map<String, DomainType> getTypes();
+
+    /**
+     * Returns the types of the domain model as map indexed by their java type.
+     *
+     * @return the types of the domain model
+     */
+    public Map<Class<?>, DomainType> getTypesByJavaType();
+
+    /**
+     * Returns the collection types of the domain model as map indexed by their element domain type.
+     *
+     * @return the collection types of the domain model
+     */
+    public Map<DomainType, CollectionDomainType> getCollectionTypes();
 
     /**
      * Returns the domain function with the given name or <code>null</code>.
@@ -79,6 +93,13 @@ public interface DomainModel {
      * @return the function type resolver
      */
     public DomainFunctionTypeResolver getFunctionTypeResolver(String functionName);
+
+    /**
+     * Returns the function type resolvers of the domain model as map indexed by their function name.
+     *
+     * @return the function type resolvers of the domain model
+     */
+    public Map<String, DomainFunctionTypeResolver> getFunctionTypeResolvers();
 
     /**
      * Returns the operation type resolver for resolving the type of the domain operator applied to the given type name.
@@ -115,6 +136,34 @@ public interface DomainModel {
      * @return the predicate type resolver
      */
     public DomainPredicateTypeResolver getPredicateTypeResolver(Class<?> javaType, DomainPredicateType predicateType);
+
+    /**
+     * Returns the operation type resolvers of the domain model as map indexed by their type name.
+     *
+     * @return the operation type resolvers of the domain model
+     */
+    public Map<String, Map<DomainOperator, DomainOperationTypeResolver>> getOperationTypeResolvers();
+
+    /**
+     * Returns the operation type resolvers of the domain model as map indexed by their java type.
+     *
+     * @return the operation type resolvers of the domain model
+     */
+    public Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> getOperationTypeResolversByJavaType();
+
+    /**
+     * Returns the predicate type resolvers of the domain model as map indexed by their type name.
+     *
+     * @return the predicate type resolvers of the domain model
+     */
+    public Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> getPredicateTypeResolvers();
+
+    /**
+     * Returns the predicate type resolvers of the domain model as map indexed by their java type.
+     *
+     * @return the predicate type resolvers of the domain model
+     */
+    public Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> getPredicateTypeResolversByJavaType();
 
     /**
      * Returns the numeric literal resolver.

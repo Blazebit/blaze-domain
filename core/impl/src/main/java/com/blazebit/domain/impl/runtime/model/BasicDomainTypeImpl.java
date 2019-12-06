@@ -16,8 +16,9 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
-import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
+import com.blazebit.domain.boot.model.MetadataDefinition;
+import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.BasicDomainType;
 
 import java.util.Map;
@@ -43,5 +44,10 @@ public class BasicDomainTypeImpl extends AbstractDomainTypeImpl implements Basic
     @Override
     public <T> T getMetadata(Class<T> metadataType) {
         return (T) metadata.get(metadataType);
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return getMetadataDefinitions(metadata);
     }
 }

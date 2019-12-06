@@ -34,6 +34,7 @@ public class EntityDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl
     private final String name;
     private final Class<?> javaType;
     private final Map<String, EntityDomainTypeAttributeDefinitionImpl> attributes;
+    private boolean caseSensitive = true;
     private EntityDomainType domainType;
 
     public EntityDomainTypeDefinitionImpl(String name, Class<?> javaType) {
@@ -50,6 +51,14 @@ public class EntityDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl
     @Override
     public Class<?> getJavaType() {
         return javaType;
+    }
+
+    public boolean isCaseSensitive() {
+        return caseSensitive;
+    }
+
+    public void setCaseSensitive(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
     }
 
     public void addAttribute(EntityDomainTypeAttributeDefinitionImpl attribute) {

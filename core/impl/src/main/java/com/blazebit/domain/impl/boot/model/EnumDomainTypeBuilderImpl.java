@@ -34,6 +34,12 @@ public class EnumDomainTypeBuilderImpl implements EnumDomainTypeBuilder {
     }
 
     @Override
+    public EnumDomainTypeBuilder setCaseSensitive(boolean caseSensitive) {
+        domainTypeDefinition.setCaseSensitive(caseSensitive);
+        return this;
+    }
+
+    @Override
     public EnumDomainTypeBuilder withValue(String value) {
         domainTypeDefinition.addEnumValue(new EnumDomainTypeValueDefinitionImpl(domainTypeDefinition, value));
         return this;

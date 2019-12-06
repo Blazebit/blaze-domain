@@ -95,6 +95,14 @@ public interface DeclarativeDomainConfiguration {
     DeclarativeDomainConfiguration withMetadataProcessor(DeclarativeFunctionParameterMetadataProcessor<? extends Annotation> metadataProcessor);
 
     /**
+     * Sets whether function names are case sensitive.
+     *
+     * @param caseSensitive Whether function names are case sensitive
+     * @return this for chaining
+     */
+    DeclarativeDomainConfiguration setFunctionCaseSensitive(boolean caseSensitive);
+
+    /**
      * Builds and validates the domain model as defined via this builder.
      *
      * @return The domain model

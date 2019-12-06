@@ -25,6 +25,14 @@ package com.blazebit.domain.boot.model;
 public interface EnumDomainTypeBuilder {
 
     /**
+     * Sets whether enum values are case sensitive.
+     *
+     * @param caseSensitive Whether values are case sensitive
+     * @return this for chaining
+     */
+    public EnumDomainTypeBuilder setCaseSensitive(boolean caseSensitive);
+
+    /**
      * Adds the given value to the enum values.
      *
      * @param value The enum value to add

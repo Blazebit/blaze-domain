@@ -16,19 +16,23 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
-import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
+import com.blazebit.domain.boot.model.MetadataDefinition;
+import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
+import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicateType;
 import com.blazebit.domain.runtime.model.DomainType;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public abstract class AbstractDomainTypeImpl implements DomainType {
+public abstract class AbstractDomainTypeImpl implements DomainType, DomainTypeDefinition {
 
     private final String name;
     private final Class<?> javaType;
@@ -61,6 +65,22 @@ public abstract class AbstractDomainTypeImpl implements DomainType {
     @Override
     public Set<DomainPredicateType> getEnabledPredicates() {
         return enabledPredicates;
+    }
+
+    @Override
+    public MetadataDefinitionHolder withMetadataDefinition(MetadataDefinition metadataDefinition) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions(Map<Class<?>, Object> metadata) {
+        if (metadata == null || metadata.isEmpty()) {
+            return (Map<Class<?>, MetadataDefinition<?>>) (Map<?, ?>) metadata;
+        }
+        Map<Class<?>, MetadataDefinition<?>> map = new HashMap<>(metadata.size());
+        for (Map.Entry<Class<?>, Object> entry : metadata.entrySet()) {
+            map.put(entry.getKey(), new RuntimeMetadataDefinition(entry.getValue()));
+        }
+        return map;
     }
 
     @Override

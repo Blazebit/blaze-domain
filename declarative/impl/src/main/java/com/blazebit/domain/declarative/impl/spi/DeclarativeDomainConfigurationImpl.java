@@ -108,6 +108,12 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
     }
 
     @Override
+    public DeclarativeDomainConfiguration setFunctionCaseSensitive(boolean caseSensitive) {
+        domainBuilder.setFunctionCaseSensitive(caseSensitive);
+        return this;
+    }
+
+    @Override
     public DomainModel createDomainModel() {
         return domainBuilder.build();
     }
@@ -168,9 +174,9 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
             }
         } else {
             if (resolvedType.typeName.isEmpty()) {
-                function.withCollectionResultType(resolvedType.type);
+                function.withResultType(resolvedType.type);
             } else {
-                function.withCollectionResultType(resolvedType.typeName);
+                function.withResultType(resolvedType.typeName);
             }
         }
 
@@ -287,6 +293,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         }
 
         boolean implicitDiscovery = domainType.discoverMode() != DiscoverMode.EXPLICIT;
+        boolean caseSensitive = domainType.caseSensitive();
         Set<Class<?>> superTypes = ReflectionUtils.getSuperTypes(domainTypeClass);
 
         // automatic metadata discovery via meta annotations
@@ -318,6 +325,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         if (domainTypeClass.isEnum()) {
             Class<? extends Enum<?>> enumDomainTypeClass = (Class<? extends Enum<?>>) domainTypeClass;
             EnumDomainTypeBuilder enumType = domainBuilder.createEnumType(name, enumDomainTypeClass);
+            enumType.setCaseSensitive(caseSensitive);
             for (int i = 0; i < metadataDefinitions.size(); i++) {
                 enumType.withMetadata(metadataDefinitions.get(i));
             }
@@ -327,6 +335,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
             }
         } else {
             EntityDomainTypeBuilder entityType = domainBuilder.createEntityType(name, domainTypeClass);
+            entityType.setCaseSensitive(caseSensitive);
             for (int i = 0; i < metadataDefinitions.size(); i++) {
                 entityType.withMetadata(metadataDefinitions.get(i));
             }

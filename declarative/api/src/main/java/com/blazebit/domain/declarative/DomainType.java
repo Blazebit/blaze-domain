@@ -45,4 +45,11 @@ public @interface DomainType {
      */
     DiscoverMode discoverMode() default DiscoverMode.AUTO;
 
+    /**
+     * Whether attribute names should be case sensitive.
+     *
+     * @return whether attribute names should be case sensitive
+     */
+    boolean caseSensitive() default true;
+
 }

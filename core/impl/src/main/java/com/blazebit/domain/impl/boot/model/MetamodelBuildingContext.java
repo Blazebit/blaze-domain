@@ -19,6 +19,7 @@ package com.blazebit.domain.impl.boot.model;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
+import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicateType;
 import com.blazebit.domain.runtime.model.DomainType;
@@ -37,6 +38,12 @@ public class MetamodelBuildingContext {
 
     public MetamodelBuildingContext(DomainBuilderImpl domainBuilder) {
         this.domainBuilder = domainBuilder;
+        DomainModel baseModel = domainBuilder.getBaseModel();
+        if (baseModel != null) {
+            for (DomainType domainType : baseModel.getTypes().values()) {
+                buildingTypes.put((DomainTypeDefinition<?>) domainType, domainType);
+            }
+        }
     }
 
     public void addError(String error) {

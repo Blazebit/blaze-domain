@@ -101,6 +101,16 @@ public class DomainModelImpl implements DomainModel {
     }
 
     @Override
+    public Map<Class<?>, DomainType> getTypesByJavaType() {
+        return domainTypesByJavaType;
+    }
+
+    @Override
+    public Map<DomainType, CollectionDomainType> getCollectionTypes() {
+        return collectionDomainTypes;
+    }
+
+    @Override
     public DomainFunction getFunction(String name) {
         return domainFunctions.get(name.toUpperCase());
     }
@@ -116,6 +126,11 @@ public class DomainModelImpl implements DomainModel {
             return StaticDomainFunctionTypeResolver.INSTANCE;
         }
         return typeResolver;
+    }
+
+    @Override
+    public Map<String, DomainFunctionTypeResolver> getFunctionTypeResolvers() {
+        return domainFunctionTypeResolvers;
     }
 
     @Override
@@ -140,6 +155,26 @@ public class DomainModelImpl implements DomainModel {
     public DomainPredicateTypeResolver getPredicateTypeResolver(Class<?> javaType, DomainPredicateType predicateType) {
         Map<DomainPredicateType, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolversByJavaType.get(javaType);
         return predicateTypeResolverMap == null ? null : predicateTypeResolverMap.get(predicateType);
+    }
+
+    @Override
+    public Map<String, Map<DomainOperator, DomainOperationTypeResolver>> getOperationTypeResolvers() {
+        return domainOperationTypeResolvers;
+    }
+
+    @Override
+    public Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> getOperationTypeResolversByJavaType() {
+        return domainOperationTypeResolversByJavaType;
+    }
+
+    @Override
+    public Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> getPredicateTypeResolvers() {
+        return domainPredicateTypeResolvers;
+    }
+
+    @Override
+    public Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> getPredicateTypeResolversByJavaType() {
+        return domainPredicateTypeResolversByJavaType;
     }
 
     @Override

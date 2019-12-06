@@ -16,6 +16,7 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
+import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.boot.model.EntityDomainTypeAttributeDefinitionImpl;
 import com.blazebit.domain.impl.boot.model.EntityDomainTypeDefinitionImpl;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
@@ -25,6 +26,7 @@ import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author Christian Beikov
@@ -38,9 +40,17 @@ public class EntityDomainTypeImpl extends AbstractDomainTypeImpl implements Enti
     @SuppressWarnings("unchecked")
     public EntityDomainTypeImpl(EntityDomainTypeDefinitionImpl typeDefinition, MetamodelBuildingContext context) {
         super(typeDefinition, context);
-        Map<String, EntityDomainTypeAttribute> attributes = new HashMap<>(typeDefinition.getAttributes().size());
+        Map<String, EntityDomainTypeAttribute> attributes;
+        if (typeDefinition.isCaseSensitive()) {
+            attributes = new HashMap<>(typeDefinition.getAttributes().size());
+        } else {
+            attributes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        }
         for (EntityDomainTypeAttributeDefinitionImpl attributeDefinition : (Collection<EntityDomainTypeAttributeDefinitionImpl>) (Collection<?>) typeDefinition.getAttributes().values()) {
-            attributes.put(attributeDefinition.getName(), attributeDefinition.createAttribute(this, context));
+            EntityDomainTypeAttribute old;
+            if ((old = attributes.put(attributeDefinition.getName(), attributeDefinition.createAttribute(this, context))) != null) {
+                context.addError("Duplicate attribute definition due to case insensitivity: [" + old.getName() + ", " + attributeDefinition.getName() + "]");
+            }
         }
         this.attributes = attributes;
         this.metadata = context.createMetadata(typeDefinition);
@@ -64,5 +74,10 @@ public class EntityDomainTypeImpl extends AbstractDomainTypeImpl implements Enti
     @Override
     public <T> T getMetadata(Class<T> metadataType) {
         return (T) metadata.get(metadataType);
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return getMetadataDefinitions(metadata);
     }
 }

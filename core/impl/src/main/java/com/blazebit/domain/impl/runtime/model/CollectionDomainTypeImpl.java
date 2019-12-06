@@ -17,6 +17,7 @@
 package com.blazebit.domain.impl.runtime.model;
 
 import com.blazebit.domain.boot.model.CollectionDomainTypeDefinition;
+import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.domain.runtime.model.DomainOperator;
@@ -67,5 +68,10 @@ public class CollectionDomainTypeImpl extends AbstractDomainTypeImpl implements 
     @Override
     public <T> T getMetadata(Class<T> metadataType) {
         return (T) metadata.get(metadataType);
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return getMetadataDefinitions(metadata);
     }
 }

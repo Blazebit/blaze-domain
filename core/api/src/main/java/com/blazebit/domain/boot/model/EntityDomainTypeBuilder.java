@@ -25,6 +25,14 @@ package com.blazebit.domain.boot.model;
 public interface EntityDomainTypeBuilder {
 
     /**
+     * Sets whether attribute names are case sensitive.
+     *
+     * @param caseSensitive Whether attribute names are case sensitive
+     * @return this for chaining
+     */
+    public EntityDomainTypeBuilder setCaseSensitive(boolean caseSensitive);
+
+    /**
      * Adds an attribute with the given name and type name.
      *
      * @param attributeName The attribute name

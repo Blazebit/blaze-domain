@@ -34,6 +34,12 @@ public class EntityDomainTypeBuilderImpl implements EntityDomainTypeBuilder {
     }
 
     @Override
+    public EntityDomainTypeBuilderImpl setCaseSensitive(boolean caseSensitive) {
+        domainTypeDefinition.setCaseSensitive(caseSensitive);
+        return this;
+    }
+
+    @Override
     public EntityDomainTypeBuilderImpl addAttribute(String attributeName, String typeName) {
         domainTypeDefinition.addAttribute(new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, typeName, null, false));
         return this;

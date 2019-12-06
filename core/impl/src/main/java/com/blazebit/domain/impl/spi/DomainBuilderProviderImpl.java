@@ -18,6 +18,7 @@ package com.blazebit.domain.impl.spi;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.impl.boot.model.DomainBuilderImpl;
+import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.spi.DomainBuilderProvider;
 import com.blazebit.domain.spi.DomainContributor;
 
@@ -32,6 +33,11 @@ public class DomainBuilderProviderImpl implements DomainBuilderProvider {
     @Override
     public DomainBuilder createEmptyBuilder() {
         return new DomainBuilderImpl();
+    }
+
+    @Override
+    public DomainBuilder createBuilder(DomainModel domainModel) {
+        return new DomainBuilderImpl(domainModel);
     }
 
     @Override

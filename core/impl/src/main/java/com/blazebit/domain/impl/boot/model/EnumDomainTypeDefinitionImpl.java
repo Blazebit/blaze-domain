@@ -34,6 +34,7 @@ public class EnumDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<E
     private final String name;
     private final Class<? extends Enum<?>> javaType;
     private final Map<String, EnumDomainTypeValueDefinitionImpl> enumValues = new HashMap<>();
+    private boolean caseSensitive = true;
     private EnumDomainType domainType;
 
     public EnumDomainTypeDefinitionImpl(String name, Class<? extends Enum<?>> javaType) {
@@ -49,6 +50,14 @@ public class EnumDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<E
     @Override
     public Class<? extends Enum<?>> getJavaType() {
         return javaType;
+    }
+
+    public boolean isCaseSensitive() {
+        return caseSensitive;
+    }
+
+    public void setCaseSensitive(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
     }
 
     public void addEnumValue(EnumDomainTypeValueDefinitionImpl enumValue) {
