@@ -79,6 +79,11 @@ public class EnumDomainTypeImpl extends AbstractDomainTypeImpl implements EnumDo
     }
 
     @Override
+    public Map<Class<?>, Object> getMetadata() {
+        return metadata;
+    }
+
+    @Override
     public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
         return getMetadataDefinitions(metadata);
     }

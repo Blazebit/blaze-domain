@@ -77,6 +77,11 @@ public class EntityDomainTypeImpl extends AbstractDomainTypeImpl implements Enti
     }
 
     @Override
+    public Map<Class<?>, Object> getMetadata() {
+        return metadata;
+    }
+
+    @Override
     public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
         return getMetadataDefinitions(metadata);
     }

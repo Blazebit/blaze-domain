@@ -16,9 +16,14 @@
 
 package com.blazebit.domain.impl.boot.model;
 
+import com.blazebit.domain.boot.model.CollectionDomainTypeDefinition;
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.boot.model.DomainFunctionBuilder;
+import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
+import com.blazebit.domain.boot.model.EntityDomainTypeAttributeDefinition;
+import com.blazebit.domain.boot.model.EntityDomainTypeBuilder;
+import com.blazebit.domain.boot.model.EntityDomainTypeDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.runtime.model.DomainModelImpl;
 import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
@@ -350,6 +355,34 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
+    public EntityDomainTypeBuilder extendEntityType(String name, EntityDomainTypeDefinition baseEntityType) {
+        EntityDomainTypeBuilderImpl builder = createEntityType(name);
+        for (MetadataDefinition<?> metadataDefinition : baseEntityType.getMetadataDefinitions().values()) {
+            builder.withMetadata(metadataDefinition);
+        }
+
+        for (EntityDomainTypeAttributeDefinition attribute : baseEntityType.getAttributes().values()) {
+            builder.addAttribute(attribute.getName(), attribute.getTypeName(), attribute.getMetadataDefinitions().values().toArray(new MetadataDefinition[0]));
+        }
+
+        return builder;
+    }
+
+    @Override
+    public EntityDomainTypeBuilder extendEntityType(String name, Class<?> javaType, EntityDomainTypeDefinition baseEntityType) {
+        EntityDomainTypeBuilderImpl builder = createEntityType(name, javaType);
+        for (MetadataDefinition<?> metadataDefinition : baseEntityType.getMetadataDefinitions().values()) {
+            builder.withMetadata(metadataDefinition);
+        }
+
+        for (EntityDomainTypeAttributeDefinition attribute : baseEntityType.getAttributes().values()) {
+            builder.addAttribute(attribute.getName(), attribute.getTypeName(), attribute.getMetadataDefinitions().values().toArray(new MetadataDefinition[0]));
+        }
+
+        return builder;
+    }
+
+    @Override
     public EnumDomainTypeBuilderImpl createEnumType(String name) {
         return new EnumDomainTypeBuilderImpl(this, name, null);
     }
@@ -357,6 +390,66 @@ public class DomainBuilderImpl implements DomainBuilder {
     @Override
     public EnumDomainTypeBuilderImpl createEnumType(String name, Class<? extends Enum<?>> javaType) {
         return new EnumDomainTypeBuilderImpl(this, name, javaType);
+    }
+
+    @Override
+    public DomainTypeDefinition<?> getType(String name) {
+        return domainTypeDefinitions.get(name);
+    }
+
+    @Override
+    public DomainTypeDefinition<?> getType(Class<?> javaType) {
+        return domainTypeDefinitionsByJavaType.get(javaType);
+    }
+
+    @Override
+    public EntityDomainTypeDefinition getEntityType(String name) {
+        return (EntityDomainTypeDefinition) (DomainTypeDefinition<?>) domainTypeDefinitions.get(name);
+    }
+
+    @Override
+    public EntityDomainTypeDefinition getEntityType(Class<?> javaType) {
+        return (EntityDomainTypeDefinition) (DomainTypeDefinition<?>) domainTypeDefinitionsByJavaType.get(javaType);
+    }
+
+    @Override
+    public CollectionDomainTypeDefinition getCollectionType(String elementDomainTypeName) {
+        return collectionDomainTypeDefinitions.get(elementDomainTypeName);
+    }
+
+    @Override
+    public CollectionDomainTypeDefinition getCollectionType(Class<?> elementDomainJavaType) {
+        return collectionDomainTypeDefinitionsByJavaType.get(elementDomainJavaType);
+    }
+
+    @Override
+    public Map<String, DomainTypeDefinition<?>> getTypes() {
+        return (Map<String, DomainTypeDefinition<?>>) (Map<?, ?>) domainTypeDefinitions;
+    }
+
+    @Override
+    public Map<Class<?>, DomainTypeDefinition<?>> getTypesByJavaType() {
+        return (Map<Class<?>, DomainTypeDefinition<?>>) (Map<?, ?>) domainTypeDefinitionsByJavaType;
+    }
+
+    @Override
+    public Map<String, CollectionDomainTypeDefinition> getCollectionTypes() {
+        return (Map<String, CollectionDomainTypeDefinition>) (Map<?, ?>) collectionDomainTypeDefinitions;
+    }
+
+    @Override
+    public Map<Class<?>, CollectionDomainTypeDefinition> getCollectionTypesByJavaType() {
+        return (Map<Class<?>, CollectionDomainTypeDefinition>) (Map<?, ?>) collectionDomainTypeDefinitionsByJavaType;
+    }
+
+    @Override
+    public DomainFunctionDefinition getFunction(String name) {
+        return domainFunctionDefinitions.get(name);
+    }
+
+    @Override
+    public Map<String, DomainFunctionDefinition> getFunctions() {
+        return (Map<String, DomainFunctionDefinition>) (Map<?, ?>) domainFunctionDefinitions;
     }
 
     @Override

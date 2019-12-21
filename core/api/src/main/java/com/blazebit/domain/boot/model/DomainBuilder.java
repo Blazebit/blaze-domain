@@ -30,6 +30,8 @@ import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
 import com.blazebit.domain.runtime.model.CollectionLiteralResolver;
 
+import java.util.Map;
+
 /**
  * A builder for a domain model.
  *
@@ -241,6 +243,25 @@ public interface DomainBuilder {
     public EntityDomainTypeBuilder createEntityType(String name, Class<?> javaType);
 
     /**
+     * Creates an entity domain type with the given type name that extends the entity type with the given type name.
+     *
+     * @param name The type name
+     * @param baseEntityType The base entity domain type definition
+     * @return the entity domain builder
+     */
+    public EntityDomainTypeBuilder extendEntityType(String name, EntityDomainTypeDefinition baseEntityType);
+
+    /**
+     * Creates an entity domain type with the given type name and Java type.
+     *
+     * @param name The type name
+     * @param javaType The Java type
+     * @param baseEntityType The base entity domain type definition
+     * @return the entity domain builder
+     */
+    public EntityDomainTypeBuilder extendEntityType(String name, Class<?> javaType, EntityDomainTypeDefinition baseEntityType);
+
+    /**
      * Creates an enum domain type with the given type name.
      *
      * @param name The type name
@@ -264,6 +285,97 @@ public interface DomainBuilder {
      * @return this for chaining
      */
     public DomainBuilder setFunctionCaseSensitive(boolean caseSensitive);
+
+    /**
+     * Returns the domain type definition with the given type name or <code>null</code>.
+     *
+     * @param name The type name of the desired domain type definition
+     * @return the domain type definition or <code>null</code>
+     */
+    public DomainTypeDefinition<?> getType(String name);
+
+    /**
+     * Returns the domain type definition with the given java type or <code>null</code>.
+     *
+     * @param javaType The java type of the desired domain type definition
+     * @return the domain type definition or <code>null</code>
+     */
+    public DomainTypeDefinition<?> getType(Class<?> javaType);
+
+    /**
+     * Returns the entity domain type definition with the given type name or <code>null</code>.
+     *
+     * @param name The type name of the desired entity domain type definition
+     * @return the entity domain type definition or <code>null</code>
+     */
+    public EntityDomainTypeDefinition getEntityType(String name);
+
+    /**
+     * Returns the entity domain type definition with the given java type or <code>null</code>.
+     *
+     * @param javaType The java type of the desired entity domain type definition
+     * @return the entity domain type definition or <code>null</code>
+     */
+    public EntityDomainTypeDefinition getEntityType(Class<?> javaType);
+
+    /**
+     * Returns the collection domain type definition with the given element domain type name or <code>null</code>.
+     *
+     * @param elementDomainTypeName The element domain type name of the desired collection domain type definition
+     * @return the collection domain type definition or <code>null</code>
+     */
+    public CollectionDomainTypeDefinition getCollectionType(String elementDomainTypeName);
+
+    /**
+     * Returns the collection domain type definition with the given element java type or <code>null</code>.
+     *
+     * @param elementDomainJavaType The element java type of the desired collection domain type definition
+     * @return the collection domain type definition or <code>null</code>
+     */
+    public CollectionDomainTypeDefinition getCollectionType(Class<?> elementDomainJavaType);
+
+    /**
+     * Returns the type definitions of the domain builder as map indexed by their type name.
+     *
+     * @return the type definitions of the domain builder
+     */
+    public Map<String, DomainTypeDefinition<?>> getTypes();
+
+    /**
+     * Returns the type definitions of the domain builder as map indexed by their java type.
+     *
+     * @return the type definitions of the domain builder
+     */
+    public Map<Class<?>, DomainTypeDefinition<?>> getTypesByJavaType();
+
+    /**
+     * Returns the collection type definitions of the domain builder as map indexed by their element domain type name.
+     *
+     * @return the collection type definitions of the domain builder
+     */
+    public Map<String, CollectionDomainTypeDefinition> getCollectionTypes();
+
+    /**
+     * Returns the collection type definitions of the domain builder as map indexed by their element java type.
+     *
+     * @return the collection type definitions of the domain builder
+     */
+    public Map<Class<?>, CollectionDomainTypeDefinition> getCollectionTypesByJavaType();
+
+    /**
+     * Returns the domain function definition with the given name or <code>null</code>.
+     *
+     * @param name The name of the desired domain function definition
+     * @return the domain function definition or <code>null</code>
+     */
+    public DomainFunctionDefinition getFunction(String name);
+
+    /**
+     * Returns the function definitions of the domain builder as map indexed by their function name.
+     *
+     * @return the function definitions of the domain builder
+     */
+    public Map<String, DomainFunctionDefinition> getFunctions();
 
     /**
      * Builds and validates the domain model as defined via this builder.

@@ -15,7 +15,6 @@
         <module>api</module>
         <module>impl</module>
         <module>integration</module>
-        <module>persistence</module>
     </modules>
 
 </project>

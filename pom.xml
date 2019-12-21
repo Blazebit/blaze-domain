@@ -14,7 +14,6 @@
         <module>dist</module>
         <module>core</module>
         <module>declarative</module>
-        <module>persistence</module>
         <module>documentation</module>
     </modules>
 

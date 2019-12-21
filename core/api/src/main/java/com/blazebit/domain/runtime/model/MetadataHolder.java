@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.runtime.model;
 
+import java.util.Map;
+
 /**
  * A domain element that can hold metadata definitions.
  *
@@ -32,5 +34,12 @@ public interface MetadataHolder {
      * @return The metadata object or <code>null</code>
      */
     public <T> T getMetadata(Class<T> metadataType);
+
+    /**
+     * Returns the metadata map.
+     *
+     * @return the metadata map
+     */
+    public Map<Class<?>, Object> getMetadata();
 
 }

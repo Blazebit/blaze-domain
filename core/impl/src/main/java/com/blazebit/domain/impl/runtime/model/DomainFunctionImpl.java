@@ -107,4 +107,44 @@ public class DomainFunctionImpl implements DomainFunction {
     public <T> T getMetadata(Class<T> metadataType) {
         return (T) metadata.get(metadataType);
     }
+
+    @Override
+    public Map<Class<?>, Object> getMetadata() {
+        return metadata;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder signature = new StringBuilder(name);
+        signature.append(" (");
+        if (argumentList.isEmpty()) {
+            if (minArgumentCount != 0) {
+                for (int i = 0; i < minArgumentCount; i++) {
+                    signature.append("argument").append(i + 1).append(", ");
+                }
+                if (argumentCount < minArgumentCount) {
+                    signature.append("...");
+                } else {
+                    signature.setLength(signature.length() - 2);
+                }
+            } else if (argumentCount > 0) {
+                for (int i = 0; i < minArgumentCount; i++) {
+                    signature.append("argument").append(i + 1).append(", ");
+                }
+                signature.setLength(signature.length() - 2);
+            }
+        } else {
+            for (int i = 0; i < argumentList.size(); i++) {
+                DomainFunctionArgument argument = argumentList.get(i);
+                if (argument.getName() == null) {
+                    signature.append("argument").append(i + 1).append(", ");
+                } else {
+                    signature.append(argument.getName()).append(", ");
+                }
+            }
+            signature.setLength(signature.length() - 2);
+        }
+        signature.append(')');
+        return signature.toString();
+    }
 }

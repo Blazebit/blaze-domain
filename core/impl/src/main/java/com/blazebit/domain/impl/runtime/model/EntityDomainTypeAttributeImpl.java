@@ -61,4 +61,17 @@ public class EntityDomainTypeAttributeImpl implements EntityDomainTypeAttribute 
     public <T> T getMetadata(Class<T> metadataType) {
         return (T) metadata.get(metadataType);
     }
+
+    @Override
+    public Map<Class<?>, Object> getMetadata() {
+        return metadata;
+    }
+
+    @Override
+    public String toString() {
+        return "EntityDomainTypeAttribute{" +
+            "name='" + name + '\'' +
+            ", type=" + type +
+            '}';
+    }
 }

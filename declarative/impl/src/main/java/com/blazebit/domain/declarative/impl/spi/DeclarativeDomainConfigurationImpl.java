@@ -17,12 +17,6 @@
 package com.blazebit.domain.declarative.impl.spi;
 
 import com.blazebit.annotation.AnnotationUtils;
-import com.blazebit.domain.declarative.Transient;
-import com.blazebit.domain.declarative.spi.DeclarativeAttributeMetadataProcessor;
-import com.blazebit.domain.declarative.spi.DeclarativeFunctionMetadataProcessor;
-import com.blazebit.domain.declarative.spi.DeclarativeFunctionParameterMetadataProcessor;
-import com.blazebit.domain.declarative.spi.DeclarativeMetadataProcessor;
-import com.blazebit.domain.declarative.spi.TypeResolver;
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.boot.model.DomainFunctionBuilder;
 import com.blazebit.domain.boot.model.EntityDomainTypeBuilder;
@@ -35,6 +29,12 @@ import com.blazebit.domain.declarative.DomainFunction;
 import com.blazebit.domain.declarative.DomainFunctionParam;
 import com.blazebit.domain.declarative.DomainFunctions;
 import com.blazebit.domain.declarative.DomainType;
+import com.blazebit.domain.declarative.Transient;
+import com.blazebit.domain.declarative.spi.DeclarativeAttributeMetadataProcessor;
+import com.blazebit.domain.declarative.spi.DeclarativeFunctionMetadataProcessor;
+import com.blazebit.domain.declarative.spi.DeclarativeFunctionParameterMetadataProcessor;
+import com.blazebit.domain.declarative.spi.DeclarativeMetadataProcessor;
+import com.blazebit.domain.declarative.spi.TypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.reflection.ReflectionUtils;
 
@@ -46,12 +46,12 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  * @author Christian Beikov
@@ -59,13 +59,15 @@ import java.util.logging.Logger;
  */
 public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConfiguration {
 
-    private static final Logger LOG = Logger.getLogger(DeclarativeDomainConfigurationImpl.class.getName());
     private static final MetadataDefinition[] EMPTY = new MetadataDefinition[0];
+    private final Set<Class<?>> domainTypes = new HashSet<>();
+    private final Set<Class<?>> domainFunctions = new HashSet<>();
     private final DomainBuilder domainBuilder;
     private final Map<Class<? extends Annotation>, List<DeclarativeMetadataProcessor<Annotation>>> entityMetadataProcessors = new HashMap<>();
     private final Map<Class<? extends Annotation>, List<DeclarativeAttributeMetadataProcessor<Annotation>>> attributeMetadataProcessors = new HashMap<>();
     private final Map<Class<? extends Annotation>, List<DeclarativeFunctionMetadataProcessor<Annotation>>> functionMetadataProcessors = new HashMap<>();
     private final Map<Class<? extends Annotation>, List<DeclarativeFunctionParameterMetadataProcessor<Annotation>>> functionParameterMetadataProcessors = new HashMap<>();
+    private final Map<Class<?>, Object> services = new HashMap<>();
     private TypeResolver typeResolver;
 
     public DeclarativeDomainConfigurationImpl(DomainBuilder domainBuilder) {
@@ -74,25 +76,25 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
 
     @Override
     public DeclarativeDomainConfiguration withMetadataProcessor(DeclarativeMetadataProcessor<? extends Annotation> metadataProcessor) {
-        entityMetadataProcessors.compute(metadataProcessor.getProcessingAnnotation(), (k, v) -> new ArrayList<>()).add((DeclarativeMetadataProcessor<Annotation>) metadataProcessor);
+        entityMetadataProcessors.computeIfAbsent(metadataProcessor.getProcessingAnnotation(), k -> new ArrayList<>()).add((DeclarativeMetadataProcessor<Annotation>) metadataProcessor);
         return this;
     }
 
     @Override
     public DeclarativeDomainConfiguration withMetadataProcessor(DeclarativeAttributeMetadataProcessor<? extends Annotation> metadataProcessor) {
-        attributeMetadataProcessors.compute(metadataProcessor.getProcessingAnnotation(), (k, v) -> new ArrayList<>()).add((DeclarativeAttributeMetadataProcessor<Annotation>) metadataProcessor);
+        attributeMetadataProcessors.computeIfAbsent(metadataProcessor.getProcessingAnnotation(), k -> new ArrayList<>()).add((DeclarativeAttributeMetadataProcessor<Annotation>) metadataProcessor);
         return this;
     }
 
     @Override
     public DeclarativeDomainConfiguration withMetadataProcessor(DeclarativeFunctionMetadataProcessor<? extends Annotation> metadataProcessor) {
-        functionMetadataProcessors.compute(metadataProcessor.getProcessingAnnotation(), (k, v) -> new ArrayList<>()).add((DeclarativeFunctionMetadataProcessor<Annotation>) metadataProcessor);
+        functionMetadataProcessors.computeIfAbsent(metadataProcessor.getProcessingAnnotation(), k -> new ArrayList<>()).add((DeclarativeFunctionMetadataProcessor<Annotation>) metadataProcessor);
         return this;
     }
 
     @Override
     public DeclarativeDomainConfiguration withMetadataProcessor(DeclarativeFunctionParameterMetadataProcessor<? extends Annotation> metadataProcessor) {
-        functionParameterMetadataProcessors.compute(metadataProcessor.getProcessingAnnotation(), (k, v) -> new ArrayList<>()).add((DeclarativeFunctionParameterMetadataProcessor<Annotation>) metadataProcessor);
+        functionParameterMetadataProcessors.computeIfAbsent(metadataProcessor.getProcessingAnnotation(), k -> new ArrayList<>()).add((DeclarativeFunctionParameterMetadataProcessor<Annotation>) metadataProcessor);
         return this;
     }
 
@@ -108,6 +110,22 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
     }
 
     @Override
+    public <T> T getService(Class<T> serviceClass) {
+        return (T) services.get(serviceClass);
+    }
+
+    @Override
+    public Map<Class<?>, Object> getServices() {
+        return Collections.unmodifiableMap(services);
+    }
+
+    @Override
+    public <T> DeclarativeDomainConfiguration withService(Class<T> serviceClass, T service) {
+        services.put(serviceClass, service);
+        return this;
+    }
+
+    @Override
     public DeclarativeDomainConfiguration setFunctionCaseSensitive(boolean caseSensitive) {
         domainBuilder.setFunctionCaseSensitive(caseSensitive);
         return this;
@@ -115,32 +133,45 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
 
     @Override
     public DomainModel createDomainModel() {
+        analyzeDomainTypes();
+        analyzeDomainFunctions();
         return domainBuilder.build();
     }
 
     @Override
     public DeclarativeDomainConfiguration addDomainFunctions(Class<?> domainFunctionsClass) {
-        DomainFunctions domainFunctions = AnnotationUtils.findAnnotation(domainFunctionsClass, DomainFunctions.class);
-        if (domainFunctions == null) {
-            throw new IllegalArgumentException("No domain functions annotation found on type: " + domainFunctionsClass);
-        }
+        domainFunctions.add(domainFunctionsClass);
+        return this;
+    }
 
-        boolean implicitDiscovery = domainFunctions.discoverMode() != DiscoverMode.EXPLICIT;
-        Set<Class<?>> superTypes = ReflectionUtils.getSuperTypes(domainFunctionsClass);
-        Set<String> handledMethods = new HashSet<>();
+    @Override
+    public DeclarativeDomainConfiguration addDomainType(Class<?> domainTypeClass) {
+        domainTypes.add(domainTypeClass);
+        return this;
+    }
 
-        for (Class<?> c : superTypes) {
-            for (Method method : c.getDeclaredMethods()) {
-                if (Modifier.isStatic(method.getModifiers()) && !Modifier.isPrivate(method.getModifiers()) && !method.isBridge()) {
-                    final String methodName = method.getName();
-                    if (handledMethods.add(methodName)) {
-                        handleDomainFunctionMethod(domainFunctionsClass, method, implicitDiscovery);
+    public void analyzeDomainFunctions() {
+        for (Class<?> domainFunctionsClass : domainFunctions) {
+            DomainFunctions domainFunctions = AnnotationUtils.findAnnotation(domainFunctionsClass, DomainFunctions.class);
+            if (domainFunctions == null) {
+                throw new IllegalArgumentException("No domain functions annotation found on type: " + domainFunctionsClass);
+            }
+
+            boolean implicitDiscovery = domainFunctions.discoverMode() != DiscoverMode.EXPLICIT;
+            Set<Class<?>> superTypes = ReflectionUtils.getSuperTypes(domainFunctionsClass);
+            Set<String> handledMethods = new HashSet<>();
+
+            for (Class<?> c : superTypes) {
+                for (Method method : c.getDeclaredMethods()) {
+                    if (!method.isBridge() && method.getDeclaringClass() != Object.class) {
+                        final String methodName = method.getName();
+                        if (handledMethods.add(methodName)) {
+                            handleDomainFunctionMethod(domainFunctionsClass, method, implicitDiscovery);
+                        }
                     }
                 }
             }
         }
-
-        return this;
     }
 
     private void handleDomainFunctionMethod(Class<?> domainFunctionsClass, Method method, boolean implicitDiscovery) {
@@ -184,7 +215,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         for (Map.Entry<Class<? extends Annotation>, List<DeclarativeFunctionMetadataProcessor<Annotation>>> entry : functionMetadataProcessors.entrySet()) {
             if (entry.getKey() == null) {
                 for (DeclarativeFunctionMetadataProcessor<Annotation> processor : entry.getValue()) {
-                    MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, null);
+                    MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, null, this);
                     if (metadataDefinition != null) {
                         function.withMetadata(metadataDefinition);
                     }
@@ -193,7 +224,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 Annotation annotation = AnnotationUtils.findAnnotation(method, entry.getKey());
                 if (annotation != null) {
                     for (DeclarativeFunctionMetadataProcessor<Annotation> processor : entry.getValue()) {
-                        MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, annotation);
+                        MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, annotation, this);
                         if (metadataDefinition != null) {
                             function.withMetadata(metadataDefinition);
                         }
@@ -239,7 +270,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         for (Map.Entry<Class<? extends Annotation>, List<DeclarativeFunctionParameterMetadataProcessor<Annotation>>> entry : functionParameterMetadataProcessors.entrySet()) {
             if (entry.getKey() == null) {
                 for (DeclarativeFunctionParameterMetadataProcessor<Annotation> processor : entry.getValue()) {
-                    MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, parameter, null);
+                    MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, parameter, null, this);
                     if (metadataDefinition != null) {
                         metadataDefinitions.add(metadataDefinition);
                     }
@@ -248,7 +279,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 Annotation annotation = AnnotationUtils.findAnnotation(method, entry.getKey());
                 if (annotation != null) {
                     for (DeclarativeFunctionParameterMetadataProcessor<Annotation> processor : entry.getValue()) {
-                        MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, parameter, annotation);
+                        MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, parameter, annotation, this);
                         if (metadataDefinition != null) {
                             metadataDefinitions.add(metadataDefinition);
                         }
@@ -280,83 +311,82 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         }
     }
 
-    @Override
-    public DeclarativeDomainConfiguration addDomainType(Class<?> domainTypeClass) {
-        DomainType domainType = AnnotationUtils.findAnnotation(domainTypeClass, DomainType.class);
-        if (domainType == null) {
-            throw new IllegalArgumentException("No domain type annotation found on type: " + domainTypeClass);
-        }
+    private void analyzeDomainTypes() {
+        for (Class<?> domainTypeClass : domainTypes) {
+            DomainType domainType = AnnotationUtils.findAnnotation(domainTypeClass, DomainType.class);
+            if (domainType == null) {
+                throw new IllegalArgumentException("No domain type annotation found on type: " + domainTypeClass);
+            }
 
-        String name = domainType.value();
-        if (name.isEmpty()) {
-            name = domainTypeClass.getSimpleName();
-        }
+            String name = domainType.value();
+            if (name.isEmpty()) {
+                name = domainTypeClass.getSimpleName();
+            }
 
-        boolean implicitDiscovery = domainType.discoverMode() != DiscoverMode.EXPLICIT;
-        boolean caseSensitive = domainType.caseSensitive();
-        Set<Class<?>> superTypes = ReflectionUtils.getSuperTypes(domainTypeClass);
+            boolean implicitDiscovery = domainType.discoverMode() != DiscoverMode.EXPLICIT;
+            boolean caseSensitive = domainType.caseSensitive();
+            Set<Class<?>> superTypes = ReflectionUtils.getSuperTypes(domainTypeClass);
 
-        // automatic metadata discovery via meta annotations
-        List<MetadataDefinition<?>> metadataDefinitions = new ArrayList<>();
+            // automatic metadata discovery via meta annotations
+            List<MetadataDefinition<?>> metadataDefinitions = new ArrayList<>();
 
-        for (Class<?> type : superTypes) {
-            for (Map.Entry<Class<? extends Annotation>, List<DeclarativeMetadataProcessor<Annotation>>> entry : entityMetadataProcessors.entrySet()) {
-                if (entry.getKey() == null) {
-                    for (DeclarativeMetadataProcessor<Annotation> processor : entry.getValue()) {
-                        MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, null);
-                        if (metadataDefinition != null) {
-                            metadataDefinitions.add(metadataDefinition);
-                        }
-                    }
-                } else {
-                    Annotation annotation = AnnotationUtils.findAnnotation(type, entry.getKey());
-                    if (annotation != null) {
+            for (Class<?> type : superTypes) {
+                for (Map.Entry<Class<? extends Annotation>, List<DeclarativeMetadataProcessor<Annotation>>> entry : entityMetadataProcessors.entrySet()) {
+                    if (entry.getKey() == null) {
                         for (DeclarativeMetadataProcessor<Annotation> processor : entry.getValue()) {
-                            MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, annotation);
+                            MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, null, this);
                             if (metadataDefinition != null) {
                                 metadataDefinitions.add(metadataDefinition);
+                            }
+                        }
+                    } else {
+                        Annotation annotation = AnnotationUtils.findAnnotation(type, entry.getKey());
+                        if (annotation != null) {
+                            for (DeclarativeMetadataProcessor<Annotation> processor : entry.getValue()) {
+                                MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, annotation, this);
+                                if (metadataDefinition != null) {
+                                    metadataDefinitions.add(metadataDefinition);
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        if (domainTypeClass.isEnum()) {
-            Class<? extends Enum<?>> enumDomainTypeClass = (Class<? extends Enum<?>>) domainTypeClass;
-            EnumDomainTypeBuilder enumType = domainBuilder.createEnumType(name, enumDomainTypeClass);
-            enumType.setCaseSensitive(caseSensitive);
-            for (int i = 0; i < metadataDefinitions.size(); i++) {
-                enumType.withMetadata(metadataDefinitions.get(i));
-            }
-            Enum[] enumConstants = (Enum[]) domainTypeClass.getEnumConstants();
-            for (int i = 0; i < (enumConstants).length; i++) {
-                handleEnumConstant(enumType, enumDomainTypeClass, enumConstants[i]);
-            }
-        } else {
-            EntityDomainTypeBuilder entityType = domainBuilder.createEntityType(name, domainTypeClass);
-            entityType.setCaseSensitive(caseSensitive);
-            for (int i = 0; i < metadataDefinitions.size(); i++) {
-                entityType.withMetadata(metadataDefinitions.get(i));
-            }
+            if (domainTypeClass.isEnum()) {
+                Class<? extends Enum<?>> enumDomainTypeClass = (Class<? extends Enum<?>>) domainTypeClass;
+                EnumDomainTypeBuilder enumType = domainBuilder.createEnumType(name, enumDomainTypeClass);
+                enumType.setCaseSensitive(caseSensitive);
+                for (int i = 0; i < metadataDefinitions.size(); i++) {
+                    enumType.withMetadata(metadataDefinitions.get(i));
+                }
+                Enum[] enumConstants = (Enum[]) domainTypeClass.getEnumConstants();
+                for (int i = 0; i < (enumConstants).length; i++) {
+                    handleEnumConstant(enumType, enumDomainTypeClass, enumConstants[i]);
+                }
+            } else {
+                EntityDomainTypeBuilder entityType = domainBuilder.createEntityType(name, domainTypeClass);
+                entityType.setCaseSensitive(caseSensitive);
+                for (int i = 0; i < metadataDefinitions.size(); i++) {
+                    entityType.withMetadata(metadataDefinitions.get(i));
+                }
 
-            Set<String> handledMethods = new HashSet<>();
+                Set<String> handledMethods = new HashSet<>();
 
-            for (Class<?> c : superTypes) {
-                for (Method method : c.getDeclaredMethods()) {
-                    if (!Modifier.isPrivate(method.getModifiers()) && !method.isBridge()) {
-                        final String methodName = method.getName();
-                        if (handledMethods.add(methodName)) {
-                            handleDomainAttributeMethod(entityType, domainTypeClass, method, implicitDiscovery);
+                for (Class<?> c : superTypes) {
+                    for (Method method : c.getDeclaredMethods()) {
+                        if (!Modifier.isPrivate(method.getModifiers()) && !method.isBridge()) {
+                            final String methodName = method.getName();
+                            if (handledMethods.add(methodName)) {
+                                handleDomainAttributeMethod(entityType, domainTypeClass, method, implicitDiscovery);
+                            }
                         }
                     }
                 }
+
+                entityType.build();
             }
-
-            entityType.build();
         }
-
-        return this;
     }
 
     private void handleEnumConstant(EnumDomainTypeBuilder enumType, Class<? extends Enum<?>> domainTypeClass, Enum<?> enumConstant) {
@@ -366,7 +396,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         for (Map.Entry<Class<? extends Annotation>, List<DeclarativeMetadataProcessor<Annotation>>> entry : entityMetadataProcessors.entrySet()) {
             if (entry.getKey() == null) {
                 for (DeclarativeMetadataProcessor<Annotation> processor : entry.getValue()) {
-                    MetadataDefinition<?> metadataDefinition = processor.process(constantClass, null);
+                    MetadataDefinition<?> metadataDefinition = processor.process(constantClass, null, this);
                     if (metadataDefinition != null) {
                         metadataDefinitions.add(metadataDefinition);
                     }
@@ -375,7 +405,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 Annotation annotation = AnnotationUtils.findAnnotation(constantClass, entry.getKey());
                 if (annotation != null) {
                     for (DeclarativeMetadataProcessor<Annotation> processor : entry.getValue()) {
-                        MetadataDefinition<?> metadataDefinition = processor.process(constantClass, annotation);
+                        MetadataDefinition<?> metadataDefinition = processor.process(constantClass, annotation, this);
                         if (metadataDefinition != null) {
                             metadataDefinitions.add(metadataDefinition);
                         }
@@ -417,14 +447,14 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         for (Map.Entry<Class<? extends Annotation>, List<DeclarativeAttributeMetadataProcessor<Annotation>>> entry : attributeMetadataProcessors.entrySet()) {
             if (entry.getKey() == DomainAttribute.class) {
                 for (DeclarativeAttributeMetadataProcessor<Annotation> processor : entry.getValue()) {
-                    MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, domainAttribute);
+                    MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, domainAttribute, this);
                     if (metadataDefinition != null) {
                         metadataDefinitions.add(metadataDefinition);
                     }
                 }
             } else if (entry.getKey() == null) {
                 for (DeclarativeAttributeMetadataProcessor<Annotation> processor : entry.getValue()) {
-                    MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, null);
+                    MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, null, this);
                     if (metadataDefinition != null) {
                         metadataDefinitions.add(metadataDefinition);
                     }
@@ -433,7 +463,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 Annotation annotation = AnnotationUtils.findAnnotation(method, entry.getKey());
                 if (annotation != null) {
                     for (DeclarativeAttributeMetadataProcessor<Annotation> processor : entry.getValue()) {
-                        MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, annotation);
+                        MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, annotation, this);
                         if (metadataDefinition != null) {
                             metadataDefinitions.add(metadataDefinition);
                         }

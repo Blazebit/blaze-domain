@@ -45,8 +45,9 @@ public interface DeclarativeFunctionParameterMetadataProcessor<T extends Annotat
      * @param method The method
      * @param parameter The parameter
      * @param annotation The annotation
+     * @param serviceProvider The service provider
      * @return A metadata definition or <code>null</code>
      */
-    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Parameter parameter, T annotation);
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Parameter parameter, T annotation, ServiceProvider<?> serviceProvider);
 
 }

@@ -54,10 +54,12 @@ public class EntityDomainTypeAttributeDefinitionImpl extends MetadataDefinitionH
         return owner;
     }
 
+    @Override
     public String getTypeName() {
         return typeName;
     }
 
+    @Override
     public Class<?> getJavaType() {
         return javaType;
     }
@@ -67,7 +69,6 @@ public class EntityDomainTypeAttributeDefinitionImpl extends MetadataDefinitionH
         return collection;
     }
 
-    @Override
     public DomainTypeDefinition<?> getTypeDefinition() {
         return typeDefinition;
     }

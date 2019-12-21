@@ -53,4 +53,14 @@ public class EnumDomainTypeValueImpl implements EnumDomainTypeValue {
     public <T> T getMetadata(Class<T> metadataType) {
         return (T) metadata.get(metadataType);
     }
+
+    @Override
+    public Map<Class<?>, Object> getMetadata() {
+        return metadata;
+    }
+
+    @Override
+    public String toString() {
+        return value;
+    }
 }

@@ -68,4 +68,25 @@ public class DomainFunctionArgumentImpl implements DomainFunctionArgument {
     public <T> T getMetadata(Class<T> metadataType) {
         return (T) metadata.get(metadataType);
     }
+
+    @Override
+    public Map<Class<?>, Object> getMetadata() {
+        return metadata;
+    }
+
+    @Override
+    public String toString() {
+        if (name == null) {
+            return "DomainFunctionArgument{" +
+                "index=" + index +
+                ", type=" + type +
+                '}';
+        } else {
+            return "DomainFunctionArgument{" +
+                "name='" + name + '\'' +
+                ", index=" + index +
+                ", type=" + type +
+                '}';
+        }
+    }
 }

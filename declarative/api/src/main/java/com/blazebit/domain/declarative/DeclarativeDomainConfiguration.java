@@ -20,6 +20,7 @@ import com.blazebit.domain.declarative.spi.DeclarativeAttributeMetadataProcessor
 import com.blazebit.domain.declarative.spi.DeclarativeFunctionMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeFunctionParameterMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeMetadataProcessor;
+import com.blazebit.domain.declarative.spi.ServiceProvider;
 import com.blazebit.domain.declarative.spi.TypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 
@@ -29,10 +30,10 @@ import java.lang.annotation.Annotation;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface DeclarativeDomainConfiguration {
+public interface DeclarativeDomainConfiguration extends ServiceProvider<DeclarativeDomainConfiguration> {
 
     /**
-     * Analyzes the given domain type java class and adds it as domain type to the domain builder.
+     * Adds the given domain type java class for later analysis to add it as domain type to the domain builder.
      *
      * @param domainTypeClass The domain type java class to analyze
      * @return this for chaining
@@ -40,7 +41,7 @@ public interface DeclarativeDomainConfiguration {
     DeclarativeDomainConfiguration addDomainType(Class<?> domainTypeClass);
 
     /**
-     * Analyzes the given domain functions java class and adds its functions as domain function to the domain builder.
+     * Adds the given domain functions java class for later analysis to add its functions as domain function to the domain builder.
      *
      * @param domainFunctionsClass The domain functions java class to analyze
      * @return this for chaining

@@ -46,9 +46,16 @@ public interface EntityDomainTypeAttributeDefinition extends MetadataDefinitionH
     public boolean isCollection();
 
     /**
-     * The type definition of this attribute.
+     * Returns the type name of this attribute.
      *
-     * @return the type definition of this attribute
+     * @return the type name of this attribute
      */
-    public DomainTypeDefinition<?> getTypeDefinition();
+    public String getTypeName();
+
+    /**
+     * Returns the java type of this attribute.
+     *
+     * @return the java type of this attribute
+     */
+    public Class<?> getJavaType();
 }

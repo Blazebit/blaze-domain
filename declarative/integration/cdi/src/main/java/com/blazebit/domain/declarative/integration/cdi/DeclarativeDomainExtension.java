@@ -23,7 +23,11 @@ import com.blazebit.domain.declarative.DomainType;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.*;
+import javax.enterprise.inject.spi.AfterBeanDiscovery;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;

@@ -71,7 +71,17 @@ public class CollectionDomainTypeImpl extends AbstractDomainTypeImpl implements 
     }
 
     @Override
+    public Map<Class<?>, Object> getMetadata() {
+        return metadata;
+    }
+
+    @Override
     public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
         return getMetadataDefinitions(metadata);
+    }
+
+    @Override
+    public String toString() {
+        return "Collection[" + super.toString() + "]";
     }
 }
