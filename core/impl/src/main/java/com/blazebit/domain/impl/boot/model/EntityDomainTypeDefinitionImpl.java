@@ -65,6 +65,7 @@ public class EntityDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl
         attributes.put(attribute.getName(), attribute);
     }
 
+    @Override
     public EntityDomainTypeAttributeDefinition getAttribute(String name) {
         return attributes.get(name);
     }

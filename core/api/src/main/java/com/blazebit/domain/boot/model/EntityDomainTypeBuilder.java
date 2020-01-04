@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.boot.model;
 
+import java.util.Map;
+
 /**
  * An domain entity type builder.
  *
@@ -25,12 +27,41 @@ package com.blazebit.domain.boot.model;
 public interface EntityDomainTypeBuilder {
 
     /**
+     * The name of the domain type.
+     *
+     * @return the name
+     */
+    public String getName();
+
+    /**
+     * The Java type of the domain type, or <code>null</code> if none available.
+     *
+     * @return the Java type or <code>null</code>
+     */
+    public Class<?> getJavaType();
+
+    /**
      * Sets whether attribute names are case sensitive.
      *
      * @param caseSensitive Whether attribute names are case sensitive
      * @return this for chaining
      */
     public EntityDomainTypeBuilder setCaseSensitive(boolean caseSensitive);
+
+    /**
+     * The attribute of the entity domain type with the given name or <code>null</code>.
+     *
+     * @param attributeName The name of the attribute
+     * @return the attribute of the entity domain type
+     */
+    public EntityDomainTypeAttributeDefinition getAttribute(String attributeName);
+
+    /**
+     * The attributes of the entity domain type.
+     *
+     * @return the attributes of the entity domain type
+     */
+    public Map<String, EntityDomainTypeAttributeDefinition> getAttributes();
 
     /**
      * Adds an attribute with the given name and type name.
@@ -115,6 +146,13 @@ public interface EntityDomainTypeBuilder {
      * @return this for chaining
      */
     public EntityDomainTypeBuilder withMetadata(MetadataDefinition<?> metadataDefinition);
+
+    /**
+     * Returns the metadata definitions of this domain element.
+     *
+     * @return the metadata definitions
+     */
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions();
 
     /**
      * Builds and adds the domain entity type to the domain builder.

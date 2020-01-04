@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.boot.model;
 
+import java.util.Map;
+
 /**
  * A domain enum type builder.
  *
@@ -23,6 +25,35 @@ package com.blazebit.domain.boot.model;
  * @since 1.0.0
  */
 public interface EnumDomainTypeBuilder {
+
+    /**
+     * The name of the domain type.
+     *
+     * @return the name
+     */
+    public String getName();
+
+    /**
+     * The enum Java type of the enum domain type, or <code>null</code> if none available.
+     *
+     * @return the enum Java type or <code>null</code>
+     */
+    public Class<? extends Enum<?>> getJavaType();
+
+    /**
+     * The enum value of the enum domain type with the given name or <code>null</code>.
+     *
+     * @param name The name of the enum value
+     * @return the enum value of the enum domain type
+     */
+    public EnumDomainTypeValueDefinition getEnumValue(String name);
+
+    /**
+     * The enum values of the enum domain type.
+     *
+     * @return the enum values of the enum domain type
+     */
+    public Map<String, EnumDomainTypeValueDefinition> getEnumValues();
 
     /**
      * Sets whether enum values are case sensitive.
@@ -56,6 +87,13 @@ public interface EnumDomainTypeBuilder {
      * @return this for chaining
      */
     public EnumDomainTypeBuilder withMetadata(MetadataDefinition<?> metadataDefinition);
+
+    /**
+     * Returns the metadata definitions of this domain element.
+     *
+     * @return the metadata definitions
+     */
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions();
 
     /**
      * Builds and adds the domain enum type to the domain builder.

@@ -65,6 +65,11 @@ public class EnumDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<E
     }
 
     @Override
+    public EnumDomainTypeValueDefinition getEnumValue(String name) {
+        return enumValues.get(name);
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public Map<String, EnumDomainTypeValueDefinition> getEnumValues() {
         return (Map<String, EnumDomainTypeValueDefinition>) (Map<?, ?>) enumValues;

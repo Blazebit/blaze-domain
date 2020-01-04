@@ -17,8 +17,12 @@
 package com.blazebit.domain.impl.boot.model;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
+import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionBuilder;
 import com.blazebit.domain.boot.model.MetadataDefinition;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Christian Beikov
@@ -32,6 +36,26 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
     public DomainFunctionBuilderImpl(DomainBuilderImpl domainBuilder, String name) {
         this.domainBuilder = domainBuilder;
         this.domainFunctionDefinition = new DomainFunctionDefinitionImpl(name);
+    }
+
+    @Override
+    public String getName() {
+        return domainFunctionDefinition.getName();
+    }
+
+    @Override
+    public int getMinArgumentCount() {
+        return domainFunctionDefinition.getMinArgumentCount();
+    }
+
+    @Override
+    public int getArgumentCount() {
+        return domainFunctionDefinition.getArgumentCount();
+    }
+
+    @Override
+    public List<DomainFunctionArgumentDefinition> getArgumentDefinitions() {
+        return domainFunctionDefinition.getArgumentDefinitions();
     }
 
     @Override
@@ -184,6 +208,11 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
     public DomainFunctionBuilder withMetadata(MetadataDefinition<?> metadataDefinition) {
         domainFunctionDefinition.withMetadataDefinition(metadataDefinition);
         return this;
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return domainFunctionDefinition.getMetadataDefinitions();
     }
 
     @Override

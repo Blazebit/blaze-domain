@@ -16,6 +16,9 @@
 
 package com.blazebit.domain.boot.model;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * A builder for a domain function.
  *
@@ -23,6 +26,34 @@ package com.blazebit.domain.boot.model;
  * @since 1.0.0
  */
 public interface DomainFunctionBuilder {
+
+    /**
+     * The name of the domain function.
+     *
+     * @return the name
+     */
+    public String getName();
+
+    /**
+     * The minimum argument count for the function.
+     *
+     * @return the minimum function argument count
+     */
+    public int getMinArgumentCount();
+
+    /**
+     * The maximum argument count for the function.
+     *
+     * @return the maximum function argument count
+     */
+    public int getArgumentCount();
+
+    /**
+     * The argument definitions for this domain function.
+     *
+     * @return the argument definitions
+     */
+    public List<DomainFunctionArgumentDefinition> getArgumentDefinitions();
 
     /**
      * Specifies the minimum argument count for the domain function.
@@ -212,6 +243,13 @@ public interface DomainFunctionBuilder {
      * @return this for chaining
      */
     public DomainFunctionBuilder withMetadata(MetadataDefinition<?> metadataDefinition);
+
+    /**
+     * Returns the metadata definitions of this domain element.
+     *
+     * @return the metadata definitions
+     */
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions();
 
     /**
      * Builds and adds the domain function to the domain builder.

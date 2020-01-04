@@ -32,6 +32,14 @@ public interface EnumDomainTypeDefinition extends DomainTypeDefinition<EnumDomai
     public Class<? extends Enum<?>> getJavaType();
 
     /**
+     * The enum value of the enum domain type with the given name or <code>null</code>.
+     *
+     * @param name The name of the enum value
+     * @return the enum value of the enum domain type
+     */
+    public EnumDomainTypeValueDefinition getEnumValue(String name);
+
+    /**
      * The enum values of the enum domain type.
      *
      * @return the enum values of the enum domain type

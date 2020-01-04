@@ -16,8 +16,11 @@
 
 package com.blazebit.domain.impl.boot.model;
 
+import com.blazebit.domain.boot.model.EntityDomainTypeAttributeDefinition;
 import com.blazebit.domain.boot.model.EntityDomainTypeBuilder;
 import com.blazebit.domain.boot.model.MetadataDefinition;
+
+import java.util.Map;
 
 /**
  * @author Christian Beikov
@@ -34,9 +37,29 @@ public class EntityDomainTypeBuilderImpl implements EntityDomainTypeBuilder {
     }
 
     @Override
+    public String getName() {
+        return domainTypeDefinition.getName();
+    }
+
+    @Override
+    public Class<?> getJavaType() {
+        return domainTypeDefinition.getJavaType();
+    }
+
+    @Override
     public EntityDomainTypeBuilderImpl setCaseSensitive(boolean caseSensitive) {
         domainTypeDefinition.setCaseSensitive(caseSensitive);
         return this;
+    }
+
+    @Override
+    public EntityDomainTypeAttributeDefinition getAttribute(String attributeName) {
+        return domainTypeDefinition.getAttribute(attributeName);
+    }
+
+    @Override
+    public Map<String, EntityDomainTypeAttributeDefinition> getAttributes() {
+        return domainTypeDefinition.getAttributes();
     }
 
     @Override
@@ -111,6 +134,11 @@ public class EntityDomainTypeBuilderImpl implements EntityDomainTypeBuilder {
     public EntityDomainTypeBuilder withMetadata(MetadataDefinition<?> metadataDefinition) {
         domainTypeDefinition.withMetadataDefinition(metadataDefinition);
         return this;
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return domainTypeDefinition.getMetadataDefinitions();
     }
 
     @Override

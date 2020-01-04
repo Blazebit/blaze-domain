@@ -17,7 +17,10 @@
 package com.blazebit.domain.impl.boot.model;
 
 import com.blazebit.domain.boot.model.EnumDomainTypeBuilder;
+import com.blazebit.domain.boot.model.EnumDomainTypeValueDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
+
+import java.util.Map;
 
 /**
  * @author Christian Beikov
@@ -31,6 +34,26 @@ public class EnumDomainTypeBuilderImpl implements EnumDomainTypeBuilder {
     public EnumDomainTypeBuilderImpl(DomainBuilderImpl domainBuilder, String name, Class<? extends Enum<?>> javaType) {
         this.domainBuilder = domainBuilder;
         this.domainTypeDefinition = new EnumDomainTypeDefinitionImpl(name, javaType);
+    }
+
+    @Override
+    public String getName() {
+        return domainTypeDefinition.getName();
+    }
+
+    @Override
+    public Class<? extends Enum<?>> getJavaType() {
+        return domainTypeDefinition.getJavaType();
+    }
+
+    @Override
+    public EnumDomainTypeValueDefinition getEnumValue(String name) {
+        return domainTypeDefinition.getEnumValue(name);
+    }
+
+    @Override
+    public Map<String, EnumDomainTypeValueDefinition> getEnumValues() {
+        return domainTypeDefinition.getEnumValues();
     }
 
     @Override
@@ -60,6 +83,11 @@ public class EnumDomainTypeBuilderImpl implements EnumDomainTypeBuilder {
     public EnumDomainTypeBuilder withMetadata(MetadataDefinition<?> metadataDefinition) {
         domainTypeDefinition.withMetadataDefinition(metadataDefinition);
         return this;
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return domainTypeDefinition.getMetadataDefinitions();
     }
 
     @Override

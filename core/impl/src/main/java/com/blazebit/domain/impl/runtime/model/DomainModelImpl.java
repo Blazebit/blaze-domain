@@ -27,6 +27,7 @@ import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicateType;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityLiteralResolver;
 import com.blazebit.domain.runtime.model.EnumLiteralResolver;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
@@ -88,6 +89,16 @@ public class DomainModelImpl implements DomainModel {
     @Override
     public DomainType getType(Class<?> javaType) {
         return domainTypesByJavaType.get(javaType);
+    }
+
+    @Override
+    public EntityDomainType getEntityType(String name) {
+        return (EntityDomainType) domainTypes.get(name);
+    }
+
+    @Override
+    public EntityDomainType getEntityType(Class<?> javaType) {
+        return (EntityDomainType) domainTypesByJavaType.get(javaType);
     }
 
     @Override

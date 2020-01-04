@@ -43,6 +43,22 @@ public interface DomainModel {
     public DomainType getType(Class<?> javaType);
 
     /**
+     * Returns the entity domain type with the given type name or <code>null</code>.
+     *
+     * @param name The type name of the desired domain type
+     * @return the entity domain type or <code>null</code>
+     */
+    public EntityDomainType getEntityType(String name);
+
+    /**
+     * Returns the entity domain type with the given java type or <code>null</code>.
+     *
+     * @param javaType The java type of the desired domain type
+     * @return the entity domain type or <code>null</code>
+     */
+    public EntityDomainType getEntityType(Class<?> javaType);
+
+    /**
      * Returns the collection domain type with the given element domain type or <code>null</code>.
      *
      * @param elementDomainType The element domain type of the desired collection domain type
