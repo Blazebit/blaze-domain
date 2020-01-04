@@ -41,7 +41,7 @@ Blaze-Domain is split up into different modules. We recommend that you define a 
 
 ```xml
 <properties>
-    <blaze-domain.version>1.0.0-SNAPSHOT</blaze-domain.version>
+    <blaze-domain.version>1.0.0-Alpha3</blaze-domain.version>
 </properties>
 ```
 
@@ -53,7 +53,7 @@ Alternatively you can also use our BOM in the `dependencyManagement` section.
         <dependency>
             <groupId>com.blazebit</groupId>
             <artifactId>blaze-domain-bom</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${blaze-domain.version}</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>    
