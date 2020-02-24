@@ -16,7 +16,12 @@
 
 package com.blazebit.domain.runtime.model;
 
-import java.util.*;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A domain operation type resolver utility that caches static resolvers.
@@ -42,7 +47,7 @@ public final class StaticDomainOperationTypeResolvers {
     public static DomainOperationTypeResolver returning(final String typeName) {
         DomainOperationTypeResolver domainOperationTypeResolver = RETURNING_TYPE_NAME_CACHE.get(typeName);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new DomainOperationTypeResolver() {
+            domainOperationTypeResolver = new SerializableDomainOperationTypeResolver() {
                 @Override
                 public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
                     return domainModel.getType(typeName);
@@ -62,7 +67,7 @@ public final class StaticDomainOperationTypeResolvers {
     public static DomainOperationTypeResolver returning(final Class<?> javaType) {
         DomainOperationTypeResolver domainOperationTypeResolver = RETURNING_JAVA_TYPE_CACHE.get(javaType);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new DomainOperationTypeResolver() {
+            domainOperationTypeResolver = new SerializableDomainOperationTypeResolver() {
                 @Override
                 public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
                     return domainModel.getType(javaType);
@@ -85,7 +90,7 @@ public final class StaticDomainOperationTypeResolvers {
         ClassArray key = new ClassArray(javaTypes);
         DomainOperationTypeResolver domainOperationTypeResolver = WIDEST_CACHE.get(key);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new DomainOperationTypeResolver() {
+            domainOperationTypeResolver = new SerializableDomainOperationTypeResolver() {
                 @Override
                 public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
                     List<DomainType> preferredTypes = new ArrayList<>(javaTypes.length);
@@ -131,5 +136,14 @@ public final class StaticDomainOperationTypeResolvers {
         public int hashCode() {
             return Arrays.hashCode(classes);
         }
+    }
+
+    /**
+     * A serializable version.
+     *
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static interface SerializableDomainOperationTypeResolver extends DomainOperationTypeResolver, Serializable {
     }
 }

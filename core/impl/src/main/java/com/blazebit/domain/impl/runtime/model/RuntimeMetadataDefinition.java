@@ -27,7 +27,7 @@ public class RuntimeMetadataDefinition implements MetadataDefinition<Object> {
 
     private final Object object;
 
-    protected RuntimeMetadataDefinition(Object object) {
+    public RuntimeMetadataDefinition(Object object) {
         this.object = object;
     }
 

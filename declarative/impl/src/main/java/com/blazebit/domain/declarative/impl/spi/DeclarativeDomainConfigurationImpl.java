@@ -35,7 +35,9 @@ import com.blazebit.domain.declarative.spi.DeclarativeFunctionMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeFunctionParameterMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeMetadataProcessor;
 import com.blazebit.domain.declarative.spi.TypeResolver;
+import com.blazebit.domain.declarative.spi.TypeResolverDecorator;
 import com.blazebit.domain.runtime.model.DomainModel;
+import com.blazebit.domain.runtime.model.DomainPredicateType;
 import com.blazebit.reflection.ReflectionUtils;
 
 import java.lang.annotation.Annotation;
@@ -68,7 +70,9 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
     private final Map<Class<? extends Annotation>, List<DeclarativeFunctionMetadataProcessor<Annotation>>> functionMetadataProcessors = new HashMap<>();
     private final Map<Class<? extends Annotation>, List<DeclarativeFunctionParameterMetadataProcessor<Annotation>>> functionParameterMetadataProcessors = new HashMap<>();
     private final Map<Class<?>, Object> services = new HashMap<>();
+    private final List<TypeResolverDecorator> typeResolverDecorators = new ArrayList<>();
     private TypeResolver typeResolver;
+    private TypeResolver configuredTypeResolver;
 
     public DeclarativeDomainConfigurationImpl(DomainBuilder domainBuilder) {
         this.domainBuilder = domainBuilder;
@@ -110,6 +114,17 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
     }
 
     @Override
+    public List<TypeResolverDecorator> getTypeResolverDecorators() {
+        return typeResolverDecorators;
+    }
+
+    @Override
+    public DeclarativeDomainConfiguration withTypeResolverDecorator(TypeResolverDecorator typeResolverDecorator) {
+        typeResolverDecorators.add(typeResolverDecorator);
+        return this;
+    }
+
+    @Override
     public <T> T getService(Class<T> serviceClass) {
         return (T) services.get(serviceClass);
     }
@@ -133,6 +148,11 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
 
     @Override
     public DomainModel createDomainModel() {
+        TypeResolver r = typeResolver == null ? TypeResolver.NOOP : typeResolver;
+        for (int i = 0; i < typeResolverDecorators.size(); i++) {
+            r = typeResolverDecorators.get(i).decorate(r);
+        }
+        configuredTypeResolver = r;
         analyzeDomainTypes();
         analyzeDomainFunctions();
         return domainBuilder.build();
@@ -160,6 +180,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
             boolean implicitDiscovery = domainFunctions.discoverMode() != DiscoverMode.EXPLICIT;
             Set<Class<?>> superTypes = ReflectionUtils.getSuperTypes(domainFunctionsClass);
             Set<String> handledMethods = new HashSet<>();
+            superTypes.remove(Object.class);
 
             for (Class<?> c : superTypes) {
                 for (Method method : c.getDeclaredMethods()) {
@@ -298,9 +319,9 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         ResolvedType resolvedType = resolveType(typeName, elementTypeName, type, elementType, domainFunctionsClass, method, parameter);
         if (resolvedType.collection) {
             if (resolvedType.typeName.isEmpty()) {
-                function.withArgument(parameterName, resolvedType.type, metadataDefinitionArray);
+                function.withCollectionArgument(parameterName, resolvedType.type, metadataDefinitionArray);
             } else {
-                function.withArgument(parameterName, resolvedType.typeName, metadataDefinitionArray);
+                function.withCollectionArgument(parameterName, resolvedType.typeName, metadataDefinitionArray);
             }
         } else {
             if (resolvedType.typeName.isEmpty()) {
@@ -326,6 +347,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
             boolean implicitDiscovery = domainType.discoverMode() != DiscoverMode.EXPLICIT;
             boolean caseSensitive = domainType.caseSensitive();
             Set<Class<?>> superTypes = ReflectionUtils.getSuperTypes(domainTypeClass);
+            superTypes.remove(Object.class);
 
             // automatic metadata discovery via meta annotations
             List<MetadataDefinition<?>> metadataDefinitions = new ArrayList<>();
@@ -364,6 +386,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 for (int i = 0; i < (enumConstants).length; i++) {
                     handleEnumConstant(enumType, enumDomainTypeClass, enumConstants[i]);
                 }
+                enumType.build();
             } else {
                 EntityDomainTypeBuilder entityType = domainBuilder.createEntityType(name, domainTypeClass);
                 entityType.setCaseSensitive(caseSensitive);
@@ -386,6 +409,8 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
 
                 entityType.build();
             }
+
+            domainBuilder.withPredicate(name, DomainPredicateType.NULLNESS, DomainPredicateType.EQUALITY);
         }
     }
 
@@ -508,31 +533,36 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
             }
         } else {
             Class<?> returnType;
-            if (type == void.class) {
-                if (typeResolver != null) {
-                    Object resolvedType = typeResolver.resolve(method.getGenericReturnType());
-                    if (resolvedType instanceof String) {
-                        return ResolvedType.basic((String) resolvedType);
-                    } else if (resolvedType instanceof Class<?>) {
-                        return ResolvedType.basic((Class<?>) resolvedType);
-                    } else if (resolvedType instanceof ParameterizedType) {
-                        ParameterizedType parameterizedType = (ParameterizedType) resolvedType;
-                        Type rawType = parameterizedType.getRawType();
-                        if ("Collection".equals(rawType.getTypeName()) || rawType instanceof Class<?> && Collection.class.isAssignableFrom((Class<?>) rawType)) {
-                            Type[] typeArguments = parameterizedType.getActualTypeArguments();
-                            if (typeArguments.length > 0) {
-                                if (typeArguments[0] instanceof Class<?>) {
-                                    return ResolvedType.collection((Class<?>) typeArguments[0]);
-                                } else {
-                                    return ResolvedType.collection(typeArguments[0].getTypeName());
-                                }
+            if (configuredTypeResolver != null) {
+                Type t = type == void.class ? method.getGenericReturnType() : type;
+                Object resolvedType = configuredTypeResolver.resolve(baseClass, t);
+                if (resolvedType == null && !(t instanceof Class<?>)) {
+                    // If the type could not be resolved, we try to resolve to a class type first and then invoke the resolver again
+                    resolvedType = configuredTypeResolver.resolve(baseClass, ReflectionUtils.getResolvedMethodReturnType(baseClass, method));
+                }
+                if (resolvedType instanceof String) {
+                    return ResolvedType.basic((String) resolvedType);
+                } else if (resolvedType instanceof Class<?>) {
+                    return ResolvedType.basic((Class<?>) resolvedType);
+                } else if (resolvedType instanceof ParameterizedType) {
+                    ParameterizedType parameterizedType = (ParameterizedType) resolvedType;
+                    Type rawType = parameterizedType.getRawType();
+                    if ("Collection".equals(rawType.getTypeName()) || rawType instanceof Class<?> && Collection.class.isAssignableFrom((Class<?>) rawType)) {
+                        Type[] typeArguments = parameterizedType.getActualTypeArguments();
+                        if (typeArguments.length > 0) {
+                            if (typeArguments[0] instanceof Class<?>) {
+                                return ResolvedType.collection((Class<?>) typeArguments[0]);
+                            } else {
+                                return ResolvedType.collection(typeArguments[0].getTypeName());
                             }
-                        } else if (rawType instanceof Class<?>) {
-                            return ResolvedType.basic((Class<?>) rawType);
                         }
+                    } else if (rawType instanceof Class<?>) {
+                        return ResolvedType.basic((Class<?>) rawType);
                     }
                 }
+            }
 
+            if (type == void.class) {
                 if (method == null) {
                     returnType = parameter.getType();
                     if (Collection.class.isAssignableFrom(returnType)) {
@@ -552,11 +582,26 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 }
             } else {
                 returnType = type;
-                elementType = null;
             }
             if (Collection.class.isAssignableFrom(returnType)) {
+                if (configuredTypeResolver != null) {
+                    Object resolvedType = configuredTypeResolver.resolve(baseClass, elementType);
+                    if (resolvedType instanceof String) {
+                        return ResolvedType.collection((String) resolvedType);
+                    } else if (resolvedType instanceof Class<?>) {
+                        return ResolvedType.collection((Class<?>) resolvedType);
+                    }
+                }
                 return ResolvedType.collection(elementType);
             } else {
+                if (configuredTypeResolver != null) {
+                    Object resolvedType = configuredTypeResolver.resolve(baseClass, returnType);
+                    if (resolvedType instanceof String) {
+                        return ResolvedType.basic((String) resolvedType);
+                    } else if (resolvedType instanceof Class<?>) {
+                        return ResolvedType.basic((Class<?>) resolvedType);
+                    }
+                }
                 return ResolvedType.basic(returnType);
             }
         }

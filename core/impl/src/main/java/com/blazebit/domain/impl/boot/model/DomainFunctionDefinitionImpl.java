@@ -20,7 +20,10 @@ import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.impl.runtime.model.DomainFunctionImpl;
+import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.domain.runtime.model.DomainFunction;
+import com.blazebit.domain.runtime.model.DomainFunctionArgument;
+import com.blazebit.domain.runtime.model.DomainType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +47,27 @@ public class DomainFunctionDefinitionImpl extends MetadataDefinitionHolderImpl<D
 
     public DomainFunctionDefinitionImpl(String name) {
         this.name = name;
+    }
+
+    public DomainFunctionDefinitionImpl(DomainFunction domainFunction) {
+        this.name = domainFunction.getName();
+        this.minArgumentCount = domainFunction.getMinArgumentCount();
+        this.argumentCount = domainFunction.getArgumentCount();
+        if (domainFunction.getResultType() != null) {
+            if (domainFunction.getResultType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
+                CollectionDomainType resultType = (CollectionDomainType) domainFunction.getResultType();
+                this.resultTypeName = resultType.getElementType().getName();
+                this.resultJavaType = resultType.getElementType().getJavaType();
+                this.collection = true;
+            } else {
+                this.resultTypeName = domainFunction.getResultType().getName();
+                this.resultJavaType = domainFunction.getResultType().getJavaType();
+                this.collection = false;
+            }
+        }
+        for (DomainFunctionArgument argument : domainFunction.getArguments()) {
+            argumentDefinitions.add(new DomainFunctionArgumentDefinitionImpl(this, argument));
+        }
     }
 
     @Override
@@ -132,7 +156,7 @@ public class DomainFunctionDefinitionImpl extends MetadataDefinitionHolderImpl<D
         if (resultTypeName == null && resultJavaType == null) {
             resultTypeDefinition = null;
         } else {
-            resultTypeDefinition = domainBuilder.getDomainTypeDefinition(resultTypeName);
+            resultTypeDefinition = resultTypeName == null ? null : domainBuilder.getDomainTypeDefinition(resultTypeName);
             if (resultTypeDefinition == null) {
                 resultTypeDefinition = domainBuilder.getDomainTypeDefinition(resultJavaType);
                 if (resultTypeDefinition == null) {

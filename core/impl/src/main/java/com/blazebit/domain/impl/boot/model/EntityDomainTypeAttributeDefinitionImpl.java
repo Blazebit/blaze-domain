@@ -20,6 +20,8 @@ import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.boot.model.EntityDomainTypeAttributeDefinition;
 import com.blazebit.domain.impl.runtime.model.EntityDomainTypeAttributeImpl;
 import com.blazebit.domain.impl.runtime.model.EntityDomainTypeImpl;
+import com.blazebit.domain.runtime.model.CollectionDomainType;
+import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 
 /**
@@ -42,6 +44,21 @@ public class EntityDomainTypeAttributeDefinitionImpl extends MetadataDefinitionH
         this.typeName = typeName;
         this.javaType = javaType;
         this.collection = collection;
+    }
+
+    public EntityDomainTypeAttributeDefinitionImpl(EntityDomainTypeDefinitionImpl owner, EntityDomainTypeAttribute attribute) {
+        this.owner = owner;
+        this.name = attribute.getName();
+        if (attribute.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
+            CollectionDomainType collectionDomainType = (CollectionDomainType) attribute.getType();
+            this.typeName = collectionDomainType.getElementType().getName();
+            this.javaType = collectionDomainType.getElementType().getJavaType();
+            this.collection = true;
+        } else {
+            this.typeName = attribute.getType().getName();
+            this.javaType = attribute.getType().getJavaType();
+            this.collection = false;
+        }
     }
 
     @Override
@@ -75,7 +92,7 @@ public class EntityDomainTypeAttributeDefinitionImpl extends MetadataDefinitionH
 
     public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context) {
         this.attribute = null;
-        typeDefinition = domainBuilder.getDomainTypeDefinition(typeName);
+        typeDefinition = typeName == null ? null : domainBuilder.getDomainTypeDefinition(typeName);
         if (typeDefinition == null) {
             typeDefinition = domainBuilder.getDomainTypeDefinition(javaType);
             if (typeDefinition == null) {

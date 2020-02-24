@@ -21,6 +21,7 @@ import com.blazebit.domain.boot.model.EnumDomainTypeDefinition;
 import com.blazebit.domain.boot.model.EnumDomainTypeValueDefinition;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EnumDomainType;
+import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +41,15 @@ public class EnumDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<E
     public EnumDomainTypeDefinitionImpl(String name, Class<? extends Enum<?>> javaType) {
         this.name = name;
         this.javaType = javaType;
+    }
+
+    public EnumDomainTypeDefinitionImpl(EnumDomainType enumDomainType) {
+        super(enumDomainType);
+        this.name = enumDomainType.getName();
+        this.javaType = enumDomainType.getJavaType();
+        for (Map.Entry<String, EnumDomainTypeValue> entry : enumDomainType.getEnumValues().entrySet()) {
+            enumValues.put(entry.getKey(), new EnumDomainTypeValueDefinitionImpl(this, entry.getValue().getValue()));
+        }
     }
 
     @Override

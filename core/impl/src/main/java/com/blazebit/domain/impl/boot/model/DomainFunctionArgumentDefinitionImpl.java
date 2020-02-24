@@ -20,8 +20,10 @@ import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.impl.runtime.model.DomainFunctionArgumentImpl;
+import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
+import com.blazebit.domain.runtime.model.DomainType;
 
 /**
  * @author Christian Beikov
@@ -47,11 +49,28 @@ public class DomainFunctionArgumentDefinitionImpl extends MetadataDefinitionHold
         this.collection = collection;
     }
 
+    public DomainFunctionArgumentDefinitionImpl(DomainFunctionDefinitionImpl owner, DomainFunctionArgument argument) {
+        this.owner = owner;
+        this.name = argument.getName();
+        this.index = argument.getPosition();
+
+        if (argument.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
+            CollectionDomainType resultType = (CollectionDomainType) argument.getType();
+            this.typeName = resultType.getElementType().getName();
+            this.javaType = resultType.getElementType().getJavaType();
+            this.collection = true;
+        } else {
+            this.typeName = argument.getType().getName();
+            this.javaType = argument.getType().getJavaType();
+            this.collection = false;
+        }
+    }
+
     public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context) {
         if (typeName == null && javaType == null) {
             typeDefinition = null;
         } else {
-            typeDefinition = domainBuilder.getDomainTypeDefinition(typeName);
+            typeDefinition = typeName == null ? null : domainBuilder.getDomainTypeDefinition(typeName);
             if (typeDefinition == null) {
                 typeDefinition = domainBuilder.getDomainTypeDefinition(javaType);
                 if (typeDefinition == null) {

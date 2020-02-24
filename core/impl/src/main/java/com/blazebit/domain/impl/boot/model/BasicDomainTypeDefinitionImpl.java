@@ -36,6 +36,12 @@ public class BasicDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<
         this.javaType = javaType;
     }
 
+    public BasicDomainTypeDefinitionImpl(BasicDomainType basicDomainType) {
+        super(basicDomainType);
+        this.name = basicDomainType.getName();
+        this.javaType = basicDomainType.getJavaType();
+    }
+
     @Override
     public String getName() {
         return name;

@@ -16,9 +16,9 @@
 
 package com.blazebit.domain.impl.boot.model;
 
+import com.blazebit.domain.boot.model.EnumDomainTypeValueDefinition;
 import com.blazebit.domain.impl.runtime.model.EnumDomainTypeImpl;
 import com.blazebit.domain.impl.runtime.model.EnumDomainTypeValueImpl;
-import com.blazebit.domain.boot.model.EnumDomainTypeValueDefinition;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
 
 /**

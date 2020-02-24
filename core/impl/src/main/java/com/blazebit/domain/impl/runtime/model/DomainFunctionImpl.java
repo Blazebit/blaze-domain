@@ -24,13 +24,14 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class DomainFunctionImpl implements DomainFunction {
+public class DomainFunctionImpl implements DomainFunction, Serializable {
 
     private final String name;
     private final int minArgumentCount;

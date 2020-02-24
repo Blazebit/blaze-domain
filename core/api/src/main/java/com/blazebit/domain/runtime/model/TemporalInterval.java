@@ -16,6 +16,7 @@
 package com.blazebit.domain.runtime.model;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.Objects;
 
@@ -251,5 +252,35 @@ public class TemporalInterval {
                 .minusMinutes(minutes)
                 .minusSeconds(seconds)
                 .toInstant();
+    }
+
+    /**
+     * Adds this interval to the given local time producing a new local time.
+     *
+     * @param localTime The local time to which to add this interval.
+     * @return A new local time representing the sum of the given local time plus this interval
+     */
+    public LocalTime add(LocalTime localTime) {
+        if (years != 0 || months != 0 || days != 0) {
+            throw new IllegalArgumentException("Can't add interval with non-time portion to TIME: " + toString());
+        }
+        return localTime.plusHours(hours)
+            .plusMinutes(minutes)
+            .plusSeconds(seconds);
+    }
+
+    /**
+     * Subtract this interval from the given local time producing a new local time.
+     *
+     * @param localTime The local time from which to subtract this interval.
+     * @return A new local time representing the sum of the given local time subtracted by this interval
+     */
+    public LocalTime subtract(LocalTime localTime) {
+        if (years != 0 || months != 0 || days != 0) {
+            throw new IllegalArgumentException("Can't subtract interval with non-time portion from TIME: " + toString());
+        }
+        return localTime.minusHours(hours)
+            .minusMinutes(minutes)
+            .minusSeconds(seconds);
     }
 }

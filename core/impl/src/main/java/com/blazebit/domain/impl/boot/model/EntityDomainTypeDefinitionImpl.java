@@ -21,6 +21,7 @@ import com.blazebit.domain.boot.model.EntityDomainTypeDefinition;
 import com.blazebit.domain.impl.runtime.model.EntityDomainTypeImpl;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
+import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +42,16 @@ public class EntityDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl
         this.name = name;
         this.javaType = javaType;
         this.attributes = new HashMap<>();
+    }
+
+    public EntityDomainTypeDefinitionImpl(EntityDomainType entityDomainType) {
+        super(entityDomainType);
+        this.name = entityDomainType.getName();
+        this.javaType = entityDomainType.getJavaType();
+        this.attributes = new HashMap<>(entityDomainType.getAttributes().size());
+        for (Map.Entry<String, EntityDomainTypeAttribute> entry : entityDomainType.getAttributes().entrySet()) {
+            attributes.put(entry.getKey(), new EntityDomainTypeAttributeDefinitionImpl(this, entry.getValue()));
+        }
     }
 
     @Override

@@ -24,6 +24,7 @@ import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicateType;
 import com.blazebit.domain.runtime.model.DomainType;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +33,7 @@ import java.util.Set;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public abstract class AbstractDomainTypeImpl implements DomainType, DomainTypeDefinition {
+public abstract class AbstractDomainTypeImpl implements DomainType, DomainTypeDefinition, Serializable {
 
     private final String name;
     private final Class<?> javaType;
@@ -85,6 +86,6 @@ public abstract class AbstractDomainTypeImpl implements DomainType, DomainTypeDe
 
     @Override
     public String toString() {
-        return (name == null ? "n/a" : name) + " [" + javaType + "]";
+        return (name == null ? "n/a" : name) + (javaType == null ? "" : "[" + javaType.getName() + "]");
     }
 }

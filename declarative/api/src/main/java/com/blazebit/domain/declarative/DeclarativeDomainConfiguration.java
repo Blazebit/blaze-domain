@@ -22,9 +22,11 @@ import com.blazebit.domain.declarative.spi.DeclarativeFunctionParameterMetadataP
 import com.blazebit.domain.declarative.spi.DeclarativeMetadataProcessor;
 import com.blazebit.domain.declarative.spi.ServiceProvider;
 import com.blazebit.domain.declarative.spi.TypeResolver;
+import com.blazebit.domain.declarative.spi.TypeResolverDecorator;
 import com.blazebit.domain.runtime.model.DomainModel;
 
 import java.lang.annotation.Annotation;
+import java.util.List;
 
 /**
  * @author Christian Beikov
@@ -62,6 +64,21 @@ public interface DeclarativeDomainConfiguration extends ServiceProvider<Declarat
      * @return this for chaining
      */
     DeclarativeDomainConfiguration setTypeResolver(TypeResolver typeResolver);
+
+    /**
+     * Returns the type resolver decorators.
+     *
+     * @return the type resolver decorators
+     */
+    List<TypeResolverDecorator> getTypeResolverDecorators();
+
+    /**
+     * Registers the given type resolver decorator.
+     *
+     * @param typeResolverDecorator The type resolver decorator
+     * @return this for chaining
+     */
+    DeclarativeDomainConfiguration withTypeResolverDecorator(TypeResolverDecorator typeResolverDecorator);
 
     /**
      * Registers the given declarative metadata processor to for analyzing metadata of domain types.

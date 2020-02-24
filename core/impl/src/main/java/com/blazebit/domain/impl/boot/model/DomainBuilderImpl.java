@@ -26,6 +26,7 @@ import com.blazebit.domain.boot.model.EntityDomainTypeBuilder;
 import com.blazebit.domain.boot.model.EntityDomainTypeDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.runtime.model.DomainModelImpl;
+import com.blazebit.domain.runtime.model.BasicDomainType;
 import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
 import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.domain.runtime.model.CollectionLiteralResolver;
@@ -37,7 +38,9 @@ import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicateType;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityLiteralResolver;
+import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.runtime.model.EnumLiteralResolver;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
 import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
@@ -114,7 +117,13 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     public DomainTypeDefinition<?> getDomainTypeDefinition(String typeName) {
+        if (typeName == null) {
+            throw new IllegalArgumentException("Null type name!");
+        }
         DomainTypeDefinition<?> typeDefinition = domainTypeDefinitions.get(typeName);
+        if (typeDefinition == null && typeName.startsWith("Collection[")) {
+            typeDefinition = collectionDomainTypeDefinitions.get(typeName.substring("Collection[".length(), typeName.length() - 1));
+        }
         if (typeDefinition == null && baseModel != null) {
             typeDefinition = (DomainTypeDefinition<?>) baseModel.getType(typeName);
         }
@@ -122,6 +131,9 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     public DomainTypeDefinition<?> getDomainTypeDefinition(Class<?> javaType) {
+        if (javaType == null) {
+            throw new IllegalArgumentException("Null java type!");
+        }
         DomainTypeDefinition<?> typeDefinition = domainTypeDefinitionsByJavaType.get(javaType);
         if (typeDefinition == null && baseModel != null) {
             typeDefinition = (DomainTypeDefinition<?>) baseModel.getType(javaType);
@@ -145,11 +157,12 @@ public class DomainBuilderImpl implements DomainBuilder {
                 }
             }
             if (collectionDomainTypeDefinition == null) {
-                collectionDomainTypeDefinition = new CollectionDomainTypeDefinitionImpl("Collection", Collection.class, typeDefinition);
+                collectionDomainTypeDefinition = new CollectionDomainTypeDefinitionImpl("Collection[" + typeDefinition.getName() + "]", Collection.class, typeDefinition);
                 collectionDomainTypeDefinitions.put(typeDefinition.getName(), collectionDomainTypeDefinition);
                 if (typeDefinition.getJavaType() != null) {
                     collectionDomainTypeDefinitionsByJavaType.put(typeDefinition.getJavaType(), collectionDomainTypeDefinition);
                 }
+                withPredicate(collectionDomainTypeDefinition.getName(), DomainPredicateType.COLLECTION);
             }
         }
         return collectionDomainTypeDefinition;
@@ -394,68 +407,178 @@ public class DomainBuilderImpl implements DomainBuilder {
 
     @Override
     public DomainTypeDefinition<?> getType(String name) {
-        return domainTypeDefinitions.get(name);
+        DomainTypeDefinitionImplementor<?> typeDefinition = domainTypeDefinitions.get(name);
+        if (typeDefinition == null && baseModel != null) {
+            typeDefinition = getType(baseModel.getType(name));
+        }
+        return typeDefinition;
     }
 
     @Override
     public DomainTypeDefinition<?> getType(Class<?> javaType) {
-        return domainTypeDefinitionsByJavaType.get(javaType);
+        DomainTypeDefinitionImplementor<?> typeDefinition = domainTypeDefinitionsByJavaType.get(javaType);
+        if (typeDefinition == null && baseModel != null) {
+            typeDefinition = getType(baseModel.getType(javaType));
+        }
+        return typeDefinition;
     }
 
     @Override
     public EntityDomainTypeDefinition getEntityType(String name) {
-        return (EntityDomainTypeDefinition) (DomainTypeDefinition<?>) domainTypeDefinitions.get(name);
+        EntityDomainTypeDefinition typeDefinition = (EntityDomainTypeDefinition) (DomainTypeDefinition<?>) domainTypeDefinitions.get(name);
+        if (typeDefinition == null && baseModel != null) {
+            typeDefinition = getEntityType(baseModel.getEntityType(name));
+        }
+        return typeDefinition;
     }
 
     @Override
     public EntityDomainTypeDefinition getEntityType(Class<?> javaType) {
-        return (EntityDomainTypeDefinition) (DomainTypeDefinition<?>) domainTypeDefinitionsByJavaType.get(javaType);
+        EntityDomainTypeDefinition typeDefinition = (EntityDomainTypeDefinition) (DomainTypeDefinition<?>) domainTypeDefinitionsByJavaType.get(javaType);
+        if (typeDefinition == null && baseModel != null) {
+            typeDefinition = getEntityType(baseModel.getEntityType(javaType));
+        }
+        return typeDefinition;
     }
 
     @Override
     public CollectionDomainTypeDefinition getCollectionType(String elementDomainTypeName) {
-        return collectionDomainTypeDefinitions.get(elementDomainTypeName);
+        CollectionDomainTypeDefinition typeDefinition = collectionDomainTypeDefinitions.get(elementDomainTypeName);
+        if (typeDefinition == null && baseModel != null) {
+            typeDefinition = getCollectionType(baseModel.getCollectionType(baseModel.getType(elementDomainTypeName)));
+        }
+        return typeDefinition;
     }
 
     @Override
     public CollectionDomainTypeDefinition getCollectionType(Class<?> elementDomainJavaType) {
-        return collectionDomainTypeDefinitionsByJavaType.get(elementDomainJavaType);
+        CollectionDomainTypeDefinition typeDefinition = collectionDomainTypeDefinitionsByJavaType.get(elementDomainJavaType);
+        if (typeDefinition == null && baseModel != null) {
+            typeDefinition = getCollectionType(baseModel.getCollectionType(baseModel.getType(elementDomainJavaType)));
+        }
+        return typeDefinition;
     }
 
     @Override
     public Map<String, DomainTypeDefinition<?>> getTypes() {
-        return (Map<String, DomainTypeDefinition<?>>) (Map<?, ?>) domainTypeDefinitions;
+        if (baseModel == null) {
+            return (Map<String, DomainTypeDefinition<?>>) (Map<?, ?>) domainTypeDefinitions;
+        } else {
+            Map<String, DomainType> types = baseModel.getTypes();
+            Map<String, DomainTypeDefinition<?>> map = new HashMap<>(types.size() + domainTypeDefinitions.size());
+            for (Map.Entry<String, DomainType> entry : types.entrySet()) {
+                map.put(entry.getKey(), getType(entry.getValue()));
+            }
+            map.putAll(domainTypeDefinitions);
+            return map;
+        }
     }
 
     @Override
     public Map<Class<?>, DomainTypeDefinition<?>> getTypesByJavaType() {
-        return (Map<Class<?>, DomainTypeDefinition<?>>) (Map<?, ?>) domainTypeDefinitionsByJavaType;
+        if (baseModel == null) {
+            return (Map<Class<?>, DomainTypeDefinition<?>>) (Map<?, ?>) domainTypeDefinitionsByJavaType;
+        } else {
+            Map<Class<?>, DomainType> types = baseModel.getTypesByJavaType();
+            Map<Class<?>, DomainTypeDefinition<?>> map = new HashMap<>(types.size() + domainTypeDefinitionsByJavaType.size());
+            for (Map.Entry<Class<?>, DomainType> entry : types.entrySet()) {
+                map.put(entry.getKey(), getType(entry.getValue()));
+            }
+            map.putAll(domainTypeDefinitionsByJavaType);
+            return map;
+        }
     }
 
     @Override
     public Map<String, CollectionDomainTypeDefinition> getCollectionTypes() {
-        return (Map<String, CollectionDomainTypeDefinition>) (Map<?, ?>) collectionDomainTypeDefinitions;
+        if (baseModel == null) {
+            return (Map<String, CollectionDomainTypeDefinition>) (Map<?, ?>) collectionDomainTypeDefinitions;
+        } else {
+            Map<DomainType, CollectionDomainType> collectionTypes = baseModel.getCollectionTypes();
+            Map<String, CollectionDomainTypeDefinition> map = new HashMap<>(collectionTypes.size() + collectionDomainTypeDefinitions.size());
+            for (Map.Entry<DomainType, CollectionDomainType> entry : collectionTypes.entrySet()) {
+                map.put(entry.getKey().getName(), getCollectionType(entry.getValue()));
+            }
+            map.putAll(collectionDomainTypeDefinitions);
+            return map;
+        }
     }
 
     @Override
     public Map<Class<?>, CollectionDomainTypeDefinition> getCollectionTypesByJavaType() {
-        return (Map<Class<?>, CollectionDomainTypeDefinition>) (Map<?, ?>) collectionDomainTypeDefinitionsByJavaType;
+        if (baseModel == null) {
+            return (Map<Class<?>, CollectionDomainTypeDefinition>) (Map<?, ?>) collectionDomainTypeDefinitionsByJavaType;
+        } else {
+            Map<DomainType, CollectionDomainType> collectionTypes = baseModel.getCollectionTypes();
+            Map<Class<?>, CollectionDomainTypeDefinition> map = new HashMap<>(collectionTypes.size() + collectionDomainTypeDefinitionsByJavaType.size());
+            for (Map.Entry<DomainType, CollectionDomainType> entry : collectionTypes.entrySet()) {
+                if (entry.getKey().getJavaType() != null) {
+                    map.put(entry.getKey().getJavaType(), getCollectionType(entry.getValue()));
+                }
+            }
+            map.putAll(collectionDomainTypeDefinitionsByJavaType);
+            return map;
+        }
     }
 
     @Override
     public DomainFunctionDefinition getFunction(String name) {
-        return domainFunctionDefinitions.get(name);
+        DomainFunctionDefinition domainFunctionDefinition = domainFunctionDefinitions.get(name);
+        if (domainFunctionDefinition == null && baseModel != null) {
+            domainFunctionDefinition = getDomainFunction(baseModel.getFunction(name));
+        }
+        return domainFunctionDefinition;
     }
 
     @Override
     public Map<String, DomainFunctionDefinition> getFunctions() {
-        return (Map<String, DomainFunctionDefinition>) (Map<?, ?>) domainFunctionDefinitions;
+        if (baseModel == null) {
+            return (Map<String, DomainFunctionDefinition>) (Map<?, ?>) domainFunctionDefinitions;
+        } else {
+            Map<String, DomainFunction> functions = baseModel.getFunctions();
+            Map<String, DomainFunctionDefinition> map = new HashMap<>(functions.size() + domainTypeDefinitions.size());
+            for (Map.Entry<String, DomainFunction> entry : functions.entrySet()) {
+                map.put(entry.getKey(), getDomainFunction(entry.getValue()));
+            }
+            map.putAll(domainFunctionDefinitions);
+            return map;
+        }
     }
 
     @Override
     public DomainBuilder setFunctionCaseSensitive(boolean caseSensitive) {
         this.functionsCaseSensitive = caseSensitive;
         return this;
+    }
+
+    private DomainTypeDefinitionImplementor<?> getType(DomainType type) {
+        if (type instanceof EnumDomainType) {
+            return getEnumType((EnumDomainType) type);
+        } else if (type instanceof EntityDomainType) {
+            return getEntityType((EntityDomainType) type);
+        } else {
+            return getBasicType((BasicDomainType) type);
+        }
+    }
+
+    private EnumDomainTypeDefinitionImpl getEnumType(EnumDomainType enumDomainType) {
+        return new EnumDomainTypeDefinitionImpl(enumDomainType);
+    }
+
+    private BasicDomainTypeDefinitionImpl getBasicType(BasicDomainType basicDomainType) {
+        return new BasicDomainTypeDefinitionImpl(basicDomainType);
+    }
+
+    private EntityDomainTypeDefinitionImpl getEntityType(EntityDomainType entityDomainType) {
+        return new EntityDomainTypeDefinitionImpl(entityDomainType);
+    }
+
+    private CollectionDomainTypeDefinitionImpl getCollectionType(CollectionDomainType collectionDomainType) {
+        return new CollectionDomainTypeDefinitionImpl(collectionDomainType);
+    }
+
+    private DomainFunctionDefinitionImpl getDomainFunction(DomainFunction domainFunction) {
+        return new DomainFunctionDefinitionImpl(domainFunction);
     }
 
     @Override
@@ -486,7 +609,9 @@ public class DomainBuilderImpl implements DomainBuilder {
                 }
                 CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition = getCollectionDomainTypeDefinition(typeDefinition);
                 collectionDomainTypeDefinition.bindTypes(this, context);
-                collectionDomainTypes.put(domainType, collectionDomainTypeDefinition.getType(context));
+                CollectionDomainType collectionDomainType = collectionDomainTypeDefinition.getType(context);
+                collectionDomainTypes.put(domainType, collectionDomainType);
+                domainTypes.put(collectionDomainType.getName(), collectionDomainType);
             }
         }
         Map<String, DomainFunction> domainFunctions;

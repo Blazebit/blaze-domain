@@ -49,6 +49,13 @@ public class CollectionDomainTypeDefinitionImpl extends MetadataDefinitionHolder
         this.elementTypeDefinition = elementTypeDefinition;
     }
 
+    public CollectionDomainTypeDefinitionImpl(CollectionDomainType collectionDomainType) {
+        this.name = collectionDomainType.getName();
+        this.javaType = collectionDomainType.getJavaType();
+        this.elementTypeName = collectionDomainType.getElementType().getName();
+        this.elementTypeClass = collectionDomainType.getElementType().getJavaType();
+    }
+
     @Override
     public String getName() {
         return name;
@@ -67,7 +74,7 @@ public class CollectionDomainTypeDefinitionImpl extends MetadataDefinitionHolder
     @Override
     public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context) {
         this.domainType = null;
-        elementTypeDefinition = domainBuilder.getDomainTypeDefinition(elementTypeName);
+        elementTypeDefinition = elementTypeName == null ? null : domainBuilder.getDomainTypeDefinition(elementTypeName);
         if (elementTypeDefinition == null) {
             elementTypeDefinition = domainBuilder.getDomainTypeDefinition(elementTypeClass);
             if (elementTypeDefinition == null) {

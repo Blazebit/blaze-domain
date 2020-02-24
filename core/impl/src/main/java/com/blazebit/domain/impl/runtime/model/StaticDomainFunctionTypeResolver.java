@@ -22,13 +22,14 @@ import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class StaticDomainFunctionTypeResolver implements DomainFunctionTypeResolver {
+public class StaticDomainFunctionTypeResolver implements DomainFunctionTypeResolver, Serializable {
 
     public static final DomainFunctionTypeResolver INSTANCE = new StaticDomainFunctionTypeResolver();
 

@@ -16,15 +16,16 @@
 
 package com.blazebit.domain.declarative.impl.spi;
 
+import com.blazebit.domain.Domain;
+import com.blazebit.domain.boot.model.DomainBuilder;
+import com.blazebit.domain.declarative.DeclarativeDomainConfiguration;
 import com.blazebit.domain.declarative.spi.DeclarativeAttributeMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeDomainBuilderProvider;
 import com.blazebit.domain.declarative.spi.DeclarativeFunctionMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeFunctionParameterMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeMetadataProcessor;
 import com.blazebit.domain.declarative.spi.TypeResolver;
-import com.blazebit.domain.Domain;
-import com.blazebit.domain.boot.model.DomainBuilder;
-import com.blazebit.domain.declarative.DeclarativeDomainConfiguration;
+import com.blazebit.domain.declarative.spi.TypeResolverDecorator;
 
 import java.lang.annotation.Annotation;
 import java.util.Iterator;
@@ -68,6 +69,9 @@ public class DeclarativeDomainBuilderProviderImpl implements DeclarativeDomainBu
         }
         for (DeclarativeFunctionParameterMetadataProcessor<Annotation> processor : ServiceLoader.load(DeclarativeFunctionParameterMetadataProcessor.class)) {
             domainConfiguration.withMetadataProcessor(processor);
+        }
+        for (TypeResolverDecorator typeResolverDecorator : ServiceLoader.load(TypeResolverDecorator.class)) {
+            domainConfiguration.withTypeResolverDecorator(typeResolverDecorator);
         }
 
         return domainConfiguration;

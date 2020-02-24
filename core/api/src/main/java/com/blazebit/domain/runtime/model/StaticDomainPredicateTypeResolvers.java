@@ -16,6 +16,7 @@
 
 package com.blazebit.domain.runtime.model;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ public final class StaticDomainPredicateTypeResolvers {
     public static DomainPredicateTypeResolver returning(final String typeName) {
         DomainPredicateTypeResolver domainOperationTypeResolver = RETURNING_TYPE_NAME_CACHE.get(typeName);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new DomainPredicateTypeResolver() {
+            domainOperationTypeResolver = new SerializableDomainPredicateTypeResolver() {
                 @Override
                 public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
                     return domainModel.getType(typeName);
@@ -63,7 +64,7 @@ public final class StaticDomainPredicateTypeResolvers {
     public static DomainPredicateTypeResolver returning(final Class<?> javaType) {
         DomainPredicateTypeResolver domainOperationTypeResolver = RETURNING_JAVA_TYPE_CACHE.get(javaType);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new DomainPredicateTypeResolver() {
+            domainOperationTypeResolver = new SerializableDomainPredicateTypeResolver() {
                 @Override
                 public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
                     return domainModel.getType(javaType);
@@ -72,5 +73,14 @@ public final class StaticDomainPredicateTypeResolvers {
             RETURNING_JAVA_TYPE_CACHE.put(javaType, domainOperationTypeResolver);
         }
         return domainOperationTypeResolver;
+    }
+
+    /**
+     * A serializable version.
+     *
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static interface SerializableDomainPredicateTypeResolver extends DomainPredicateTypeResolver, Serializable {
     }
 }

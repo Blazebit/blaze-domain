@@ -18,6 +18,8 @@ package com.blazebit.domain.impl.boot.model;
 
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
+import com.blazebit.domain.impl.runtime.model.RuntimeMetadataDefinition;
+import com.blazebit.domain.runtime.model.MetadataHolder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +31,15 @@ import java.util.Map;
 public class MetadataDefinitionHolderImpl<X extends MetadataDefinitionHolder<X>> implements MetadataDefinitionHolder<X> {
 
     private final Map<Class<?>, MetadataDefinition<?>> metadataDefinitions = new HashMap<>();
+
+    public MetadataDefinitionHolderImpl() {
+    }
+
+    public MetadataDefinitionHolderImpl(MetadataHolder metadataHolder) {
+        for (Map.Entry<Class<?>, Object> entry : metadataHolder.getMetadata().entrySet()) {
+            metadataDefinitions.put(entry.getKey(), new RuntimeMetadataDefinition(entry.getValue()));
+        }
+    }
 
     @Override
     public X withMetadataDefinition(MetadataDefinition<?> metadataDefinition) {

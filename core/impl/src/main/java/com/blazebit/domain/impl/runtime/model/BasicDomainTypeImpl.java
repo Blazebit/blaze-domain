@@ -55,4 +55,9 @@ public class BasicDomainTypeImpl extends AbstractDomainTypeImpl implements Basic
     public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
         return getMetadataDefinitions(metadata);
     }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

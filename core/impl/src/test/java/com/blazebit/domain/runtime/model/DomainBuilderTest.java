@@ -68,7 +68,7 @@ public class DomainBuilderTest {
         EntityDomainType entityDomainType = (EntityDomainType) domainModel.getType("Test");
         Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType.getMetadata(MetadataSample.class));
         Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType.getAttribute("names").getMetadata(MetadataSample.class));
-        Assert.assertEquals("Collection", entityDomainType.getAttribute("names").getType().getName());
+        Assert.assertEquals("Collection[String]", entityDomainType.getAttribute("names").getType().getName());
         Assert.assertEquals("String", ((CollectionDomainType) entityDomainType.getAttribute("names").getType()).getElementType().getName());
     }
 

@@ -16,34 +16,20 @@
 
 package com.blazebit.domain.declarative.spi;
 
-import java.lang.reflect.Type;
-
 /**
- * A type resolver for generic types of Java type members.
+ * A decorator for type resolvers.
  *
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface TypeResolver {
+public interface TypeResolverDecorator {
 
     /**
-     * A type resolver that always returns null i.e. doesn't resolve a type.
-     */
-    public static final TypeResolver NOOP = new TypeResolver() {
-        @Override
-        public Object resolve(Class<?> contextClass, Type type) {
-            return null;
-        }
-    };
-
-    /**
-     * Resolves the given type to a type name string, java type class or parameterized type.
+     * Returns a decorated type resolver.
      *
-     *
-     * @param contextClass The context class against which to resolve the type
-     * @param type The type to resolve
-     * @return the resolved type
+     * @param typeResolver The type resolver
+     * @return the decorated type resolver
      */
-    public Object resolve(Class<?> contextClass, Type type);
+    public TypeResolver decorate(TypeResolver typeResolver);
 
 }
