@@ -21,13 +21,14 @@ import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class EnumDomainTypeValueImpl implements EnumDomainTypeValue {
+public class EnumDomainTypeValueImpl implements EnumDomainTypeValue, Serializable {
 
     private final EnumDomainType owner;
     private final String value;

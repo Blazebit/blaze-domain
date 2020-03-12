@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.declarative;
 
+import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -58,5 +60,19 @@ public @interface DomainFunction {
      * @return whether the return type is a collection domain type
      */
     boolean collection() default false;
+
+    /**
+     * The type resolver for the domain function type.
+     *
+     * @return the type resolver for the domain function type
+     */
+    Class<? extends DomainFunctionTypeResolver> typeResolver() default DomainFunctionTypeResolver.class;
+
+    /**
+     * The minimum number of arguments that are necessary for this function.
+     *
+     * @return The minimum number of arguments that are necessary for this function
+     */
+    int minArguments() default -1;
 
 }

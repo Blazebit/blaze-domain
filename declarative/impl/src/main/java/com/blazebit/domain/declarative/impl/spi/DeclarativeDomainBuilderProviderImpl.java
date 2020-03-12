@@ -42,12 +42,21 @@ public class DeclarativeDomainBuilderProviderImpl implements DeclarativeDomainBu
 
     @Override
     public DeclarativeDomainConfiguration createEmptyBuilder() {
-        return new DeclarativeDomainConfigurationImpl(Domain.getDefaultProvider().createEmptyBuilder());
+        return createEmptyBuilder(Domain.getDefaultProvider().createEmptyBuilder());
+    }
+
+    @Override
+    public DeclarativeDomainConfiguration createEmptyBuilder(DomainBuilder builder) {
+        return new DeclarativeDomainConfigurationImpl(builder);
     }
 
     @Override
     public DeclarativeDomainConfiguration createDefaultConfiguration() {
-        DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
+        return createDefaultConfiguration(Domain.getDefaultProvider().createDefaultBuilder());
+    }
+
+    @Override
+    public DeclarativeDomainConfiguration createDefaultConfiguration(DomainBuilder domainBuilder) {
         DeclarativeDomainConfigurationImpl domainConfiguration = new DeclarativeDomainConfigurationImpl(domainBuilder);
         Iterator<TypeResolver> typeResolvers = ServiceLoader.load(TypeResolver.class).iterator();
         if (typeResolvers.hasNext()) {

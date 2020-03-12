@@ -17,6 +17,7 @@
 package com.blazebit.domain.declarative.impl.spi;
 
 import com.blazebit.domain.declarative.DomainFunction;
+import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 
 import java.lang.annotation.Annotation;
 
@@ -44,6 +45,16 @@ public class DomainFunctionLiteral implements DomainFunction {
     @Override
     public boolean collection() {
         return false;
+    }
+
+    @Override
+    public Class<? extends DomainFunctionTypeResolver> typeResolver() {
+        return DomainFunctionTypeResolver.class;
+    }
+
+    @Override
+    public int minArguments() {
+        return -1;
     }
 
     @Override

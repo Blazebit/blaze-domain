@@ -16,6 +16,7 @@
 
 package com.blazebit.domain.impl.boot.model;
 
+import com.blazebit.domain.boot.model.CollectionDomainTypeDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
@@ -77,7 +78,7 @@ public class DomainFunctionDefinitionImpl extends MetadataDefinitionHolderImpl<D
 
     @Override
     public int getMinArgumentCount() {
-        return minArgumentCount == -1 ? argumentDefinitions.size() : minArgumentCount;
+        return minArgumentCount == -1 ? getArgumentCount() : minArgumentCount;
     }
 
     public void setMinArgumentCount(int minArgumentCount) {
@@ -86,7 +87,12 @@ public class DomainFunctionDefinitionImpl extends MetadataDefinitionHolderImpl<D
 
     @Override
     public int getArgumentCount() {
-        return argumentCount == -1 ? argumentDefinitions.size() : argumentCount;
+        if (minArgumentCount != -1 && minArgumentCount == argumentDefinitions.size() - 1 && argumentDefinitions.get(argumentDefinitions.size() - 1).getTypeDefinition() instanceof CollectionDomainTypeDefinition) {
+            // Varargs
+            return -1;
+        } else {
+            return argumentCount == -1 ? argumentDefinitions.size() : argumentCount;
+        }
     }
 
     public void setArgumentCount(int argumentCount) {

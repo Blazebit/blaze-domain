@@ -16,6 +16,7 @@
 
 package com.blazebit.domain.declarative.spi;
 
+import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.declarative.DeclarativeDomainConfiguration;
 import com.blazebit.domain.spi.DomainBuilderProvider;
 
@@ -37,11 +38,28 @@ public interface DeclarativeDomainBuilderProvider {
     public DeclarativeDomainConfiguration createEmptyBuilder();
 
     /**
+     * Creates an empty declarative domain configuration.
+     *
+     * @param builder The domain builder
+     * @return the declarative domain configuration
+     */
+    public DeclarativeDomainConfiguration createEmptyBuilder(DomainBuilder builder);
+
+    /**
      * Creates a declarative domain configuration based on {@link DomainBuilderProvider#createDefaultBuilder()} and
      * applies various SPI processors loaded via {@link java.util.ServiceLoader}.
      *
      * @return the declarative domain configuration
      */
     public DeclarativeDomainConfiguration createDefaultConfiguration();
+
+    /**
+     * Creates a declarative domain configuration based on {@link DomainBuilderProvider#createDefaultBuilder()} and
+     * applies various SPI processors loaded via {@link java.util.ServiceLoader}.
+     *
+     * @param builder The domain builder
+     * @return the declarative domain configuration
+     */
+    public DeclarativeDomainConfiguration createDefaultConfiguration(DomainBuilder builder);
 
 }

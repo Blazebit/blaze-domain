@@ -22,13 +22,14 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class EntityDomainTypeAttributeImpl implements EntityDomainTypeAttribute {
+public class EntityDomainTypeAttributeImpl implements EntityDomainTypeAttribute, Serializable {
 
     private final EntityDomainType owner;
     private final String name;

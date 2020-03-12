@@ -43,12 +43,30 @@ public interface DeclarativeDomainConfiguration extends ServiceProvider<Declarat
     DeclarativeDomainConfiguration addDomainType(Class<?> domainTypeClass);
 
     /**
+     * Adds the given domain type java class for later analysis to add it as domain type to the domain builder.
+     *
+     * @param domainTypeClass The domain type java class to analyze
+     * @param domainTypeAnnotation The domain type annotation to use
+     * @return this for chaining
+     */
+    DeclarativeDomainConfiguration addDomainType(Class<?> domainTypeClass, DomainType domainTypeAnnotation);
+
+    /**
      * Adds the given domain functions java class for later analysis to add its functions as domain function to the domain builder.
      *
      * @param domainFunctionsClass The domain functions java class to analyze
      * @return this for chaining
      */
     DeclarativeDomainConfiguration addDomainFunctions(Class<?> domainFunctionsClass);
+
+    /**
+     * Adds the given domain functions java class for later analysis to add its functions as domain function to the domain builder.
+     *
+     * @param domainFunctionsClass The domain functions java class to analyze
+     * @param domainFunctionsAnnotation The domain functions annotation to use
+     * @return this for chaining
+     */
+    DeclarativeDomainConfiguration addDomainFunctions(Class<?> domainFunctionsClass, DomainFunctions domainFunctionsAnnotation);
 
     /**
      * Returns the type resolver.
