@@ -21,6 +21,7 @@ import com.blazebit.domain.impl.boot.model.DomainBuilderImpl;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.spi.DomainBuilderProvider;
 import com.blazebit.domain.spi.DomainContributor;
+import com.blazebit.domain.spi.DomainSerializer;
 
 import java.util.ServiceLoader;
 
@@ -45,6 +46,9 @@ public class DomainBuilderProviderImpl implements DomainBuilderProvider {
         DomainBuilderImpl domainBuilder = new DomainBuilderImpl();
         for (DomainContributor domainContributor : ServiceLoader.load(DomainContributor.class)) {
             domainContributor.contribute(domainBuilder);
+        }
+        for (DomainSerializer domainSerializer : ServiceLoader.load(DomainSerializer.class)) {
+            domainBuilder.withSerializer(domainSerializer);
         }
         return domainBuilder;
     }

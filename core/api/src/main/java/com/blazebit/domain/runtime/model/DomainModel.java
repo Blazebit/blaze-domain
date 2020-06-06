@@ -16,6 +16,9 @@
 
 package com.blazebit.domain.runtime.model;
 
+import com.blazebit.domain.spi.DomainSerializer;
+
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -229,4 +232,21 @@ public interface DomainModel {
      * @return the collection literal resolver
      */
     public CollectionLiteralResolver getCollectionLiteralResolver();
+
+    /**
+     * Returns the domain serializers.
+     *
+     * @return the domain serializers
+     */
+    public List<DomainSerializer<DomainModel>> getDomainSerializers();
+
+    /**
+     * Serializes the domain model to the given target type with the given format.
+     *
+     * @param targetType The target type
+     * @param format The serialization format
+     * @param <T> The target type
+     * @return The serialized form
+     */
+    public <T> T serialize(Class<T> targetType, String format);
 }

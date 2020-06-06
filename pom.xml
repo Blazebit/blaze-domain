@@ -14,6 +14,7 @@
         <module>dist</module>
         <module>core</module>
         <module>declarative</module>
+        <module>typescript</module>
         <module>documentation</module>
     </modules>
 
@@ -116,13 +117,20 @@
                     <mapping>
                         <java>JAVADOC_STYLE</java>
                         <xml>XML_STYLE</xml>
+                        <ts>JAVADOC_STYLE</ts>
+                        <js>JAVADOC_STYLE</js>
                     </mapping>
                     <aggregate>true</aggregate>
                     <includes>
                         <include>**/src/main/**/*.java</include>
                         <include>**/src/main/**/*.xml</include>
+                        <include>**/src/main/typescript/**/*.ts</include>
+                        <include>**/src/main/typescript/**/*.js</include>
                     </includes>
                     <excludes>
+                        <exclude>**/node/**</exclude>
+                        <exclude>**/node_modules/**</exclude>
+                        <exclude>**/src/main/typescript/dist/**</exclude>
                     </excludes>
                     <properties>
                         <inceptionYear>${project.inceptionYear}</inceptionYear>

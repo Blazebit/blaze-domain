@@ -33,8 +33,10 @@ import com.blazebit.domain.runtime.model.EnumLiteralResolver;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
 import com.blazebit.domain.runtime.model.StringLiteralResolver;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
+import com.blazebit.domain.spi.DomainSerializer;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,6 +54,7 @@ public class DomainModelImpl implements DomainModel, Serializable {
     private final Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType;
     private final Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolvers;
     private final Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType;
+    private final List<DomainSerializer<DomainModel>> domainSerializers;
     private final NumericLiteralResolver numericLiteralResolver;
     private final BooleanLiteralResolver booleanLiteralResolver;
     private final StringLiteralResolver stringLiteralResolver;
@@ -62,7 +65,7 @@ public class DomainModelImpl implements DomainModel, Serializable {
 
     public DomainModelImpl(Map<String, DomainType> domainTypes, Map<Class<?>, DomainType> domainTypesByJavaType, Map<DomainType, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
                            Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers, Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers, Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType,
-                           Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType,
+                           Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType, List<DomainSerializer<DomainModel>> domainSerializers,
                            NumericLiteralResolver numericLiteralResolver, BooleanLiteralResolver booleanLiteralResolver, StringLiteralResolver stringLiteralResolver, TemporalLiteralResolver temporalLiteralResolver, EnumLiteralResolver enumLiteralResolver, EntityLiteralResolver entityLiteralResolver, CollectionLiteralResolver collectionLiteralResolver) {
         this.domainTypes = domainTypes;
         this.domainTypesByJavaType = domainTypesByJavaType;
@@ -73,6 +76,7 @@ public class DomainModelImpl implements DomainModel, Serializable {
         this.domainOperationTypeResolversByJavaType = domainOperationTypeResolversByJavaType;
         this.domainPredicateTypeResolvers = domainPredicateTypeResolvers;
         this.domainPredicateTypeResolversByJavaType = domainPredicateTypeResolversByJavaType;
+        this.domainSerializers = domainSerializers;
         this.numericLiteralResolver = numericLiteralResolver;
         this.booleanLiteralResolver = booleanLiteralResolver;
         this.stringLiteralResolver = stringLiteralResolver;
@@ -222,5 +226,22 @@ public class DomainModelImpl implements DomainModel, Serializable {
     @Override
     public CollectionLiteralResolver getCollectionLiteralResolver() {
         return collectionLiteralResolver;
+    }
+
+    @Override
+    public List<DomainSerializer<DomainModel>> getDomainSerializers() {
+        return domainSerializers;
+    }
+
+    @Override
+    public <T> T serialize(Class<T> targetType, String format) {
+        for (DomainSerializer<DomainModel> domainSerializer : domainSerializers) {
+            T result = domainSerializer.serialize(this, targetType, format);
+            if (result != null) {
+                return result;
+            }
+        }
+
+        return null;
     }
 }

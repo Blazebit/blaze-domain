@@ -29,6 +29,7 @@ import com.blazebit.domain.runtime.model.StringLiteralResolver;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
 import com.blazebit.domain.runtime.model.CollectionLiteralResolver;
+import com.blazebit.domain.spi.DomainSerializer;
 
 import java.util.Map;
 
@@ -144,6 +145,14 @@ public interface DomainBuilder {
      * @return this for chaining
      */
     public DomainBuilder withPredicateTypeResolver(Class<?> javaType, DomainPredicateType domainPredicateType, DomainPredicateTypeResolver predicateTypeResolver);
+
+    /**
+     * Adds the given domain model serializer.
+     *
+     * @param serializer The domain model serializer
+     * @return this for chaining
+     */
+    public DomainBuilder withSerializer(DomainSerializer<DomainModel> serializer);
 
     /**
      * Enables the given domain operator for the given type name.

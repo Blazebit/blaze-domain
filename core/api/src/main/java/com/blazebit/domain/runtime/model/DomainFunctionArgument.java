@@ -17,6 +17,8 @@
 package com.blazebit.domain.runtime.model;
 
 /**
+ * Represents the argument to a domain function.
+ *
  * @author Christian Beikov
  * @since 1.0.0
  */

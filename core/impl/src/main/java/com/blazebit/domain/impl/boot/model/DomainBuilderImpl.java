@@ -47,11 +47,14 @@ import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
 import com.blazebit.domain.runtime.model.StaticDomainPredicateTypeResolvers;
 import com.blazebit.domain.runtime.model.StringLiteralResolver;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
+import com.blazebit.domain.spi.DomainSerializer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -75,6 +78,7 @@ public class DomainBuilderImpl implements DomainBuilder {
     private Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType = new HashMap<>();
     private Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolvers = new HashMap<>();
     private Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType = new HashMap<>();
+    private Set<DomainSerializer<DomainModel>> domainSerializers = new LinkedHashSet<>();
     private NumericLiteralResolver numericLiteralResolver;
     private BooleanLiteralResolver booleanLiteralResolver;
     private StringLiteralResolver stringLiteralResolver;
@@ -90,6 +94,7 @@ public class DomainBuilderImpl implements DomainBuilder {
 
     public DomainBuilderImpl(DomainModel domainModel) {
         this.baseModel = domainModel;
+        this.domainSerializers.addAll(domainModel.getDomainSerializers());
         this.numericLiteralResolver = domainModel.getNumericLiteralResolver();
         this.booleanLiteralResolver = domainModel.getBooleanLiteralResolver();
         this.stringLiteralResolver = domainModel.getStringLiteralResolver();
@@ -551,6 +556,12 @@ public class DomainBuilderImpl implements DomainBuilder {
         return this;
     }
 
+    @Override
+    public DomainBuilder withSerializer(DomainSerializer<DomainModel> serializer) {
+        domainSerializers.add(serializer);
+        return this;
+    }
+
     private DomainTypeDefinitionImplementor<?> getType(DomainType type) {
         if (type instanceof EnumDomainType) {
             return getEnumType((EnumDomainType) type);
@@ -709,6 +720,7 @@ public class DomainBuilderImpl implements DomainBuilder {
                 domainOperationTypeResolversByJavaType,
                 domainPredicateTypeResolvers,
                 domainPredicateTypeResolversByJavaType,
+                Collections.unmodifiableList(new ArrayList<>(domainSerializers)),
                 numericLiteralResolver,
                 booleanLiteralResolver,
                 stringLiteralResolver,

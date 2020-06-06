@@ -19,11 +19,13 @@ package com.blazebit.domain.impl.runtime.model;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class RuntimeMetadataDefinition implements MetadataDefinition<Object> {
+public class RuntimeMetadataDefinition implements MetadataDefinition<Object>, Serializable {
 
     private final Object object;
 
