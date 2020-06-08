@@ -59,7 +59,7 @@ public interface DomainType extends MetadataHolder {
      *
      * @return the enabled domain predicates
      */
-    public Set<DomainPredicateType> getEnabledPredicates();
+    public Set<DomainPredicate> getEnabledPredicates();
 
     /**
      * The domain type kinds.

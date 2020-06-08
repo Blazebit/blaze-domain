@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.runtime.model;
 
+import com.blazebit.domain.spi.DomainSerializer;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
@@ -44,12 +46,7 @@ public final class StaticDomainPredicateTypeResolvers {
     public static DomainPredicateTypeResolver returning(final String typeName) {
         DomainPredicateTypeResolver domainOperationTypeResolver = RETURNING_TYPE_NAME_CACHE.get(typeName);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new SerializableDomainPredicateTypeResolver() {
-                @Override
-                public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
-                    return domainModel.getType(typeName);
-                }
-            };
+            domainOperationTypeResolver = new ReturningTypeDomainPredicateTypeResolver(typeName);
             RETURNING_TYPE_NAME_CACHE.put(typeName, domainOperationTypeResolver);
         }
         return domainOperationTypeResolver;
@@ -64,23 +61,61 @@ public final class StaticDomainPredicateTypeResolvers {
     public static DomainPredicateTypeResolver returning(final Class<?> javaType) {
         DomainPredicateTypeResolver domainOperationTypeResolver = RETURNING_JAVA_TYPE_CACHE.get(javaType);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new SerializableDomainPredicateTypeResolver() {
-                @Override
-                public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
-                    return domainModel.getType(javaType);
-                }
-            };
+            domainOperationTypeResolver = new ReturningJavaTypeDomainPredicateTypeResolver(javaType);
             RETURNING_JAVA_TYPE_CACHE.put(javaType, domainOperationTypeResolver);
         }
         return domainOperationTypeResolver;
     }
 
     /**
-     * A serializable version.
-     *
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static interface SerializableDomainPredicateTypeResolver extends DomainPredicateTypeResolver, Serializable {
+    private static class ReturningJavaTypeDomainPredicateTypeResolver implements DomainPredicateTypeResolver, DomainSerializer<DomainPredicateTypeResolver>, Serializable {
+
+        private final Class<?> javaType;
+
+        public ReturningJavaTypeDomainPredicateTypeResolver(Class<?> javaType) {
+            this.javaType = javaType;
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
+            return domainModel.getType(javaType);
+        }
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, DomainPredicateTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            return (T) ("{\"FixedDomainPredicateTypeResolver\":[\"" + domainModel.getType(javaType).getName() + "\"]}");
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class ReturningTypeDomainPredicateTypeResolver implements DomainPredicateTypeResolver, DomainSerializer<DomainPredicateTypeResolver>, Serializable {
+
+        private final String typeName;
+
+        public ReturningTypeDomainPredicateTypeResolver(String typeName) {
+            this.typeName = typeName;
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
+            return domainModel.getType(typeName);
+        }
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, DomainPredicateTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            return (T) ("{\"FixedDomainPredicateTypeResolver\":[\"" + typeName + "\"]}");
+        }
     }
 }

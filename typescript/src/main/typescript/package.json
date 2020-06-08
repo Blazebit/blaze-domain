@@ -1,6 +1,6 @@
 {
   "name": "blaze-domain-runtime",
-  "version": "1.0.0-SNAPSHOT-test",
+  "version": "1.0.0-SNAPSHOT",
   "description": "A Typescript/JS runtime for Blaze-Domain",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

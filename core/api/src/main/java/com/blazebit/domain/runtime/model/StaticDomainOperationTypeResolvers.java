@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.runtime.model;
 
+import com.blazebit.domain.spi.DomainSerializer;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,12 +49,7 @@ public final class StaticDomainOperationTypeResolvers {
     public static DomainOperationTypeResolver returning(final String typeName) {
         DomainOperationTypeResolver domainOperationTypeResolver = RETURNING_TYPE_NAME_CACHE.get(typeName);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new SerializableDomainOperationTypeResolver() {
-                @Override
-                public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
-                    return domainModel.getType(typeName);
-                }
-            };
+            domainOperationTypeResolver = new ReturningTypeDomainOperationTypeResolver(typeName);
             RETURNING_TYPE_NAME_CACHE.put(typeName, domainOperationTypeResolver);
         }
         return domainOperationTypeResolver;
@@ -67,12 +64,7 @@ public final class StaticDomainOperationTypeResolvers {
     public static DomainOperationTypeResolver returning(final Class<?> javaType) {
         DomainOperationTypeResolver domainOperationTypeResolver = RETURNING_JAVA_TYPE_CACHE.get(javaType);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new SerializableDomainOperationTypeResolver() {
-                @Override
-                public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
-                    return domainModel.getType(javaType);
-                }
-            };
+            domainOperationTypeResolver = new ReturningJavaTypeDomainOperationTypeResolver(javaType);
             RETURNING_JAVA_TYPE_CACHE.put(javaType, domainOperationTypeResolver);
         }
         return domainOperationTypeResolver;
@@ -90,22 +82,7 @@ public final class StaticDomainOperationTypeResolvers {
         ClassArray key = new ClassArray(javaTypes);
         DomainOperationTypeResolver domainOperationTypeResolver = WIDEST_CACHE.get(key);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new SerializableDomainOperationTypeResolver() {
-                @Override
-                public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
-                    List<DomainType> preferredTypes = new ArrayList<>(javaTypes.length);
-                    for (Class<?> javaType : javaTypes) {
-                        preferredTypes.add(domainModel.getType(javaType));
-                    }
-                    for (DomainType preferredType : preferredTypes) {
-                        if (domainTypes.contains(preferredType)) {
-                            return preferredType;
-                        }
-                    }
-
-                    return domainTypes.isEmpty() ? preferredTypes.get(0) : domainTypes.get(0);
-                }
-            };
+            domainOperationTypeResolver = new WidestDomainOperationTypeResolver(javaTypes);
             WIDEST_CACHE.put(key, domainOperationTypeResolver);
         }
         return domainOperationTypeResolver;
@@ -139,11 +116,97 @@ public final class StaticDomainOperationTypeResolvers {
     }
 
     /**
-     * A serializable version.
-     *
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static interface SerializableDomainOperationTypeResolver extends DomainOperationTypeResolver, Serializable {
+    private static class WidestDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
+
+        private final Class<?>[] javaTypes;
+
+        public WidestDomainOperationTypeResolver(Class<?>... javaTypes) {
+            this.javaTypes = javaTypes;
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
+            List<DomainType> preferredTypes = new ArrayList<>(javaTypes.length);
+            for (Class<?> javaType : javaTypes) {
+                preferredTypes.add(domainModel.getType(javaType));
+            }
+            for (DomainType preferredType : preferredTypes) {
+                if (domainTypes.contains(preferredType)) {
+                    return preferredType;
+                }
+            }
+
+            return domainTypes.isEmpty() ? preferredTypes.get(0) : domainTypes.get(0);
+        }
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, DomainOperationTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"WidestDomainOperationTypeResolver\":[");
+            for (Class<?> javaType : javaTypes) {
+                sb.append('"').append(domainModel.getType(javaType).getName()).append("\",");
+            }
+            sb.setCharAt(sb.length() - 1, ']');
+            sb.append('}');
+            return (T) sb.toString();
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class ReturningJavaTypeDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
+
+        private final Class<?> javaType;
+
+        public ReturningJavaTypeDomainOperationTypeResolver(Class<?> javaType) {
+            this.javaType = javaType;
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
+            return domainModel.getType(javaType);
+        }
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, DomainOperationTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            return (T) ("{\"FixedDomainOperationTypeResolver\":[\"" + domainModel.getType(javaType).getName() + "\"]}");
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class ReturningTypeDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
+
+        private final String typeName;
+
+        public ReturningTypeDomainOperationTypeResolver(String typeName) {
+            this.typeName = typeName;
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
+            return domainModel.getType(typeName);
+        }
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, DomainOperationTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            return (T) ("{\"FixedDomainOperationTypeResolver\":[\"" + typeName + "\"]}");
+        }
     }
 }

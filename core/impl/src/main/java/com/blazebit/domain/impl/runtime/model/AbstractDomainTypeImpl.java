@@ -21,7 +21,7 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.DomainOperator;
-import com.blazebit.domain.runtime.model.DomainPredicateType;
+import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainType;
 
 import java.io.Serializable;
@@ -38,7 +38,7 @@ public abstract class AbstractDomainTypeImpl implements DomainType, DomainTypeDe
     private final String name;
     private final Class<?> javaType;
     private final Set<DomainOperator> enabledOperators;
-    private final Set<DomainPredicateType> enabledPredicates;
+    private final Set<DomainPredicate> enabledPredicates;
 
     public AbstractDomainTypeImpl(DomainTypeDefinition<?> typeDefinition, MetamodelBuildingContext context) {
         context.addType(typeDefinition, this);
@@ -64,7 +64,7 @@ public abstract class AbstractDomainTypeImpl implements DomainType, DomainTypeDe
     }
 
     @Override
-    public Set<DomainPredicateType> getEnabledPredicates() {
+    public Set<DomainPredicate> getEnabledPredicates() {
         return enabledPredicates;
     }
 

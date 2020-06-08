@@ -21,7 +21,7 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperator;
-import com.blazebit.domain.runtime.model.DomainPredicateType;
+import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainType;
 
 import java.util.*;
@@ -75,7 +75,7 @@ public class MetamodelBuildingContext {
         return domainBuilder.getOperators(typeDefinition);
     }
 
-    public Set<DomainPredicateType> getPredicates(DomainTypeDefinition<?> typeDefinition) {
+    public Set<DomainPredicate> getPredicates(DomainTypeDefinition<?> typeDefinition) {
         return domainBuilder.getPredicates(typeDefinition);
     }
 

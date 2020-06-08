@@ -24,7 +24,7 @@ import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperationTypeResolver;
 import com.blazebit.domain.runtime.model.DomainOperator;
-import com.blazebit.domain.runtime.model.DomainPredicateType;
+import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
@@ -52,8 +52,8 @@ public class DomainModelImpl implements DomainModel, Serializable {
     private final Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers;
     private final Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers;
     private final Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType;
-    private final Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolvers;
-    private final Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType;
+    private final Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers;
+    private final Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType;
     private final List<DomainSerializer<DomainModel>> domainSerializers;
     private final NumericLiteralResolver numericLiteralResolver;
     private final BooleanLiteralResolver booleanLiteralResolver;
@@ -65,7 +65,7 @@ public class DomainModelImpl implements DomainModel, Serializable {
 
     public DomainModelImpl(Map<String, DomainType> domainTypes, Map<Class<?>, DomainType> domainTypesByJavaType, Map<DomainType, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
                            Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers, Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers, Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType,
-                           Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType, List<DomainSerializer<DomainModel>> domainSerializers,
+                           Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType, List<DomainSerializer<DomainModel>> domainSerializers,
                            NumericLiteralResolver numericLiteralResolver, BooleanLiteralResolver booleanLiteralResolver, StringLiteralResolver stringLiteralResolver, TemporalLiteralResolver temporalLiteralResolver, EnumLiteralResolver enumLiteralResolver, EntityLiteralResolver entityLiteralResolver, CollectionLiteralResolver collectionLiteralResolver) {
         this.domainTypes = domainTypes;
         this.domainTypesByJavaType = domainTypesByJavaType;
@@ -162,14 +162,14 @@ public class DomainModelImpl implements DomainModel, Serializable {
     }
 
     @Override
-    public DomainPredicateTypeResolver getPredicateTypeResolver(String typeName, DomainPredicateType predicateType) {
-        Map<DomainPredicateType, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(typeName);
+    public DomainPredicateTypeResolver getPredicateTypeResolver(String typeName, DomainPredicate predicateType) {
+        Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(typeName);
         return predicateTypeResolverMap == null ? null : predicateTypeResolverMap.get(predicateType);
     }
 
     @Override
-    public DomainPredicateTypeResolver getPredicateTypeResolver(Class<?> javaType, DomainPredicateType predicateType) {
-        Map<DomainPredicateType, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolversByJavaType.get(javaType);
+    public DomainPredicateTypeResolver getPredicateTypeResolver(Class<?> javaType, DomainPredicate predicateType) {
+        Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolversByJavaType.get(javaType);
         return predicateTypeResolverMap == null ? null : predicateTypeResolverMap.get(predicateType);
     }
 
@@ -184,12 +184,12 @@ public class DomainModelImpl implements DomainModel, Serializable {
     }
 
     @Override
-    public Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> getPredicateTypeResolvers() {
+    public Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> getPredicateTypeResolvers() {
         return domainPredicateTypeResolvers;
     }
 
     @Override
-    public Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> getPredicateTypeResolversByJavaType() {
+    public Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> getPredicateTypeResolversByJavaType() {
         return domainPredicateTypeResolversByJavaType;
     }
 
@@ -234,9 +234,9 @@ public class DomainModelImpl implements DomainModel, Serializable {
     }
 
     @Override
-    public <T> T serialize(Class<T> targetType, String format) {
+    public <T> T serialize(Class<T> targetType, String format, Map<String, Object> properties) {
         for (DomainSerializer<DomainModel> domainSerializer : domainSerializers) {
-            T result = domainSerializer.serialize(this, targetType, format);
+            T result = domainSerializer.serialize(this, this, targetType, format, properties);
             if (result != null) {
                 return result;
             }

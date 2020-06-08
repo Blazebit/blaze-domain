@@ -41,7 +41,7 @@ import com.blazebit.domain.declarative.spi.TypeResolver;
 import com.blazebit.domain.declarative.spi.TypeResolverDecorator;
 import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
-import com.blazebit.domain.runtime.model.DomainPredicateType;
+import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.reflection.ReflectionUtils;
 
 import java.io.PrintWriter;
@@ -532,7 +532,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 entityType.build();
             }
 
-            domainBuilder.withPredicate(name, DomainPredicateType.NULLNESS, DomainPredicateType.EQUALITY);
+            domainBuilder.withPredicate(name, DomainPredicate.NULLNESS, DomainPredicate.EQUALITY);
         }
     }
 

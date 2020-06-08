@@ -145,7 +145,7 @@ public interface DomainModel {
      * @param predicateType The predicate to apply on the type name
      * @return the predicate type resolver
      */
-    public DomainPredicateTypeResolver getPredicateTypeResolver(String typeName, DomainPredicateType predicateType);
+    public DomainPredicateTypeResolver getPredicateTypeResolver(String typeName, DomainPredicate predicateType);
 
     /**
      * Returns the predicate type resolver for resolving the type of the domain predicate applied to the given java type.
@@ -154,7 +154,7 @@ public interface DomainModel {
      * @param predicateType The predicate to apply on the java type
      * @return the predicate type resolver
      */
-    public DomainPredicateTypeResolver getPredicateTypeResolver(Class<?> javaType, DomainPredicateType predicateType);
+    public DomainPredicateTypeResolver getPredicateTypeResolver(Class<?> javaType, DomainPredicate predicateType);
 
     /**
      * Returns the operation type resolvers of the domain model as map indexed by their type name.
@@ -175,14 +175,14 @@ public interface DomainModel {
      *
      * @return the predicate type resolvers of the domain model
      */
-    public Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> getPredicateTypeResolvers();
+    public Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> getPredicateTypeResolvers();
 
     /**
      * Returns the predicate type resolvers of the domain model as map indexed by their java type.
      *
      * @return the predicate type resolvers of the domain model
      */
-    public Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> getPredicateTypeResolversByJavaType();
+    public Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> getPredicateTypeResolversByJavaType();
 
     /**
      * Returns the numeric literal resolver.
@@ -245,8 +245,9 @@ public interface DomainModel {
      *
      * @param targetType The target type
      * @param format The serialization format
+     * @param properties Serialization properties
      * @param <T> The target type
      * @return The serialized form
      */
-    public <T> T serialize(Class<T> targetType, String format);
+    public <T> T serialize(Class<T> targetType, String format, Map<String, Object> properties);
 }

@@ -26,7 +26,7 @@ import java.util.Set;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public enum DomainPredicateType {
+public enum DomainPredicate {
     /**
      * The nullness predicates <code>IS NULL</code>/<code>IS NOT NULL</code>.
      */
@@ -47,15 +47,15 @@ public enum DomainPredicateType {
     /**
      * The comparable predicates.
      */
-    public static final Set<DomainPredicateType> COMPARABLE;
+    public static final Set<DomainPredicate> COMPARABLE;
     /**
      * The distinguishable predicates.
      */
-    public static final Set<DomainPredicateType> DISTINGUISHABLE;
+    public static final Set<DomainPredicate> DISTINGUISHABLE;
 
     static {
-        COMPARABLE = Collections.unmodifiableSet(EnumSet.of(DomainPredicateType.RELATIONAL, DomainPredicateType.EQUALITY, DomainPredicateType.NULLNESS));
-        DISTINGUISHABLE = Collections.unmodifiableSet(EnumSet.of(DomainPredicateType.EQUALITY, DomainPredicateType.NULLNESS));
+        COMPARABLE = Collections.unmodifiableSet(EnumSet.of(DomainPredicate.RELATIONAL, DomainPredicate.EQUALITY, DomainPredicate.NULLNESS));
+        DISTINGUISHABLE = Collections.unmodifiableSet(EnumSet.of(DomainPredicate.EQUALITY, DomainPredicate.NULLNESS));
     }
 
     /**
@@ -63,8 +63,8 @@ public enum DomainPredicateType {
      *
      * @return the comparable predicates
      */
-    public static DomainPredicateType[] comparable() {
-        return COMPARABLE.toArray(new DomainPredicateType[0]);
+    public static DomainPredicate[] comparable() {
+        return COMPARABLE.toArray(new DomainPredicate[0]);
     }
 
     /**
@@ -72,7 +72,7 @@ public enum DomainPredicateType {
      *
      * @return the distinguishable predicates
      */
-    public static DomainPredicateType[] distinguishable() {
-        return DISTINGUISHABLE.toArray(new DomainPredicateType[0]);
+    public static DomainPredicate[] distinguishable() {
+        return DISTINGUISHABLE.toArray(new DomainPredicate[0]);
     }
 }

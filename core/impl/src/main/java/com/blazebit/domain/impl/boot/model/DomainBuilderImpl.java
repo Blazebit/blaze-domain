@@ -35,7 +35,7 @@ import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperationTypeResolver;
 import com.blazebit.domain.runtime.model.DomainOperator;
-import com.blazebit.domain.runtime.model.DomainPredicateType;
+import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
@@ -68,7 +68,7 @@ public class DomainBuilderImpl implements DomainBuilder {
     private final DomainModel baseModel;
     private Map<String, DomainFunctionDefinitionImpl> domainFunctionDefinitions = new HashMap<>();
     private Map<String, Set<DomainOperator>> enabledOperators = new HashMap<>();
-    private Map<String, Set<DomainPredicateType>> enabledPredicates = new HashMap<>();
+    private Map<String, Set<DomainPredicate>> enabledPredicates = new HashMap<>();
     private Map<String, DomainTypeDefinitionImplementor<?>> domainTypeDefinitions = new HashMap<>();
     private Map<Class<?>, DomainTypeDefinitionImplementor<?>> domainTypeDefinitionsByJavaType = new HashMap<>();
     private Map<String, CollectionDomainTypeDefinitionImpl> collectionDomainTypeDefinitions = new HashMap<>();
@@ -76,8 +76,8 @@ public class DomainBuilderImpl implements DomainBuilder {
     private Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers = new HashMap<>();
     private Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers = new HashMap<>();
     private Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType = new HashMap<>();
-    private Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolvers = new HashMap<>();
-    private Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType = new HashMap<>();
+    private Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers = new HashMap<>();
+    private Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType = new HashMap<>();
     private Set<DomainSerializer<DomainModel>> domainSerializers = new LinkedHashSet<>();
     private NumericLiteralResolver numericLiteralResolver;
     private BooleanLiteralResolver booleanLiteralResolver;
@@ -167,7 +167,7 @@ public class DomainBuilderImpl implements DomainBuilder {
                 if (typeDefinition.getJavaType() != null) {
                     collectionDomainTypeDefinitionsByJavaType.put(typeDefinition.getJavaType(), collectionDomainTypeDefinition);
                 }
-                withPredicate(collectionDomainTypeDefinition.getName(), DomainPredicateType.COLLECTION);
+                withPredicate(collectionDomainTypeDefinition.getName(), DomainPredicate.COLLECTION);
             }
         }
         return collectionDomainTypeDefinition;
@@ -244,24 +244,24 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
-    public DomainBuilder withPredicateTypeResolver(String typeName, DomainPredicateType domainPredicateType, DomainPredicateTypeResolver predicateTypeResolver) {
-        Map<DomainPredicateType, DomainPredicateTypeResolver> operationTypeResolverMap = domainPredicateTypeResolvers.get(typeName);
+    public DomainBuilder withPredicateTypeResolver(String typeName, DomainPredicate domainPredicate, DomainPredicateTypeResolver predicateTypeResolver) {
+        Map<DomainPredicate, DomainPredicateTypeResolver> operationTypeResolverMap = domainPredicateTypeResolvers.get(typeName);
         if (operationTypeResolverMap == null) {
             operationTypeResolverMap = new HashMap<>();
             domainPredicateTypeResolvers.put(typeName, operationTypeResolverMap);
         }
-        operationTypeResolverMap.put(domainPredicateType, predicateTypeResolver);
+        operationTypeResolverMap.put(domainPredicate, predicateTypeResolver);
         return this;
     }
 
     @Override
-    public DomainBuilder withPredicateTypeResolver(Class<?> javaType, DomainPredicateType domainPredicateType, DomainPredicateTypeResolver predicateTypeResolver) {
-        Map<DomainPredicateType, DomainPredicateTypeResolver> operationTypeResolverMap = domainPredicateTypeResolversByJavaType.get(javaType);
+    public DomainBuilder withPredicateTypeResolver(Class<?> javaType, DomainPredicate domainPredicate, DomainPredicateTypeResolver predicateTypeResolver) {
+        Map<DomainPredicate, DomainPredicateTypeResolver> operationTypeResolverMap = domainPredicateTypeResolversByJavaType.get(javaType);
         if (operationTypeResolverMap == null) {
             operationTypeResolverMap = new HashMap<>();
             domainPredicateTypeResolversByJavaType.put(javaType, operationTypeResolverMap);
         }
-        operationTypeResolverMap.put(domainPredicateType, predicateTypeResolver);
+        operationTypeResolverMap.put(domainPredicate, predicateTypeResolver);
         return this;
     }
 
@@ -271,7 +271,7 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
-    public DomainBuilder withPredicate(String typeName, DomainPredicateType predicate) {
+    public DomainBuilder withPredicate(String typeName, DomainPredicate predicate) {
         return withElement(enabledPredicates, typeName, predicate);
     }
 
@@ -281,7 +281,7 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
-    public DomainBuilder withPredicate(String typeName, DomainPredicateType... predicates) {
+    public DomainBuilder withPredicate(String typeName, DomainPredicate... predicates) {
         return withElements(enabledPredicates, typeName, predicates);
     }
 
@@ -289,7 +289,7 @@ public class DomainBuilderImpl implements DomainBuilder {
         return getElements(enabledOperators, typeDefinition.getName());
     }
 
-    public Set<DomainPredicateType> getPredicates(DomainTypeDefinition<?> typeDefinition) {
+    public Set<DomainPredicate> getPredicates(DomainTypeDefinition<?> typeDefinition) {
         return getElements(enabledPredicates, typeDefinition.getName());
     }
 
@@ -663,8 +663,8 @@ public class DomainBuilderImpl implements DomainBuilder {
             resolveDomainOperationTypeResolversByJavaType(context, domainTypesByJavaType, domainOperationTypeResolvers, domainOperationTypeResolversByJavaType);
         }
 
-        Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolvers = new HashMap<>(this.domainPredicateTypeResolvers.size());
-        Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType = new HashMap<>(this.domainPredicateTypeResolversByJavaType.size());
+        Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers = new HashMap<>(this.domainPredicateTypeResolvers.size());
+        Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType = new HashMap<>(this.domainPredicateTypeResolversByJavaType.size());
         if (!context.hasErrors()) {
             resolveDomainPredicateTypeResolvers(context, domainTypes, domainPredicateTypeResolvers, domainPredicateTypeResolversByJavaType);
         }
@@ -687,12 +687,12 @@ public class DomainBuilderImpl implements DomainBuilder {
                     }
                 }
 
-                Map<DomainPredicateType, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(domainType.getName());
+                Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(domainType.getName());
                 if (predicateTypeResolverMap == null && !domainType.getEnabledPredicates().isEmpty()) {
                     predicateTypeResolverMap = new HashMap<>();
                     domainPredicateTypeResolvers.put(domainType.getName(), predicateTypeResolverMap);
                 }
-                for (DomainPredicateType enabledPredicate : domainType.getEnabledPredicates()) {
+                for (DomainPredicate enabledPredicate : domainType.getEnabledPredicates()) {
                     if (!predicateTypeResolverMap.containsKey(enabledPredicate)) {
                         predicateTypeResolverMap.put(enabledPredicate, StaticDomainPredicateTypeResolvers.returning(Boolean.class));
                     }
@@ -800,31 +800,31 @@ public class DomainBuilderImpl implements DomainBuilder {
         }
     }
 
-    private void resolveDomainPredicateTypeResolvers(MetamodelBuildingContext context, Map<String, DomainType> domainTypes, Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType) {
+    private void resolveDomainPredicateTypeResolvers(MetamodelBuildingContext context, Map<String, DomainType> domainTypes, Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType) {
         if (baseModel != null) {
-            for (Map.Entry<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> entry : baseModel.getPredicateTypeResolvers().entrySet()) {
+            for (Map.Entry<String, Map<DomainPredicate, DomainPredicateTypeResolver>> entry : baseModel.getPredicateTypeResolvers().entrySet()) {
                 domainPredicateTypeResolvers.put(entry.getKey(), entry.getValue());
             }
-            for (Map.Entry<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> entry : baseModel.getPredicateTypeResolversByJavaType().entrySet()) {
+            for (Map.Entry<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> entry : baseModel.getPredicateTypeResolversByJavaType().entrySet()) {
                 domainPredicateTypeResolversByJavaType.put(entry.getKey(), entry.getValue());
             }
         }
-        for (Map.Entry<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> entry : this.domainPredicateTypeResolvers.entrySet()) {
+        for (Map.Entry<String, Map<DomainPredicate, DomainPredicateTypeResolver>> entry : this.domainPredicateTypeResolvers.entrySet()) {
             String typeName = entry.getKey();
             DomainType domainType = domainTypes.get(typeName);
             if (domainType == null) {
                 context.addError("An operation type resolver was registered but no type with the name '" + typeName + "' was found: " + entry.getValue());
             } else {
-                Map<DomainPredicateType, DomainPredicateTypeResolver> predicateTypeResolverMap = new HashMap<>(entry.getValue().size());
+                Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = new HashMap<>(entry.getValue().size());
                 domainPredicateTypeResolvers.put(typeName, predicateTypeResolverMap);
 
-                Map<DomainPredicateType, DomainPredicateTypeResolver> predicateTypeResolverMapByJavaType = domainPredicateTypeResolversByJavaType.get(domainType.getJavaType());
+                Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMapByJavaType = domainPredicateTypeResolversByJavaType.get(domainType.getJavaType());
                 if (predicateTypeResolverMapByJavaType == null && domainType.getJavaType() != null) {
                     predicateTypeResolverMapByJavaType = new HashMap<>();
                     domainPredicateTypeResolversByJavaType.put(domainType.getJavaType(), predicateTypeResolverMapByJavaType);
                 }
 
-                for (Map.Entry<DomainPredicateType, DomainPredicateTypeResolver> resolverEntry : entry.getValue().entrySet()) {
+                for (Map.Entry<DomainPredicate, DomainPredicateTypeResolver> resolverEntry : entry.getValue().entrySet()) {
                     if (domainType.getEnabledPredicates().contains(resolverEntry.getKey())) {
                         predicateTypeResolverMap.put(resolverEntry.getKey(), resolverEntry.getValue());
                         if (predicateTypeResolverMapByJavaType != null) {
@@ -838,26 +838,26 @@ public class DomainBuilderImpl implements DomainBuilder {
         }
     }
 
-    private void resolveDomainPredicateTypeResolversByJavaType(MetamodelBuildingContext context, Map<Class<?>, DomainType> domainTypesByJavaType, Map<String, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType) {
-        for (Map.Entry<Class<?>, Map<DomainPredicateType, DomainPredicateTypeResolver>> entry : this.domainPredicateTypeResolversByJavaType.entrySet()) {
+    private void resolveDomainPredicateTypeResolversByJavaType(MetamodelBuildingContext context, Map<Class<?>, DomainType> domainTypesByJavaType, Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType) {
+        for (Map.Entry<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> entry : this.domainPredicateTypeResolversByJavaType.entrySet()) {
             Class<?> javaType = entry.getKey();
             DomainType domainType = domainTypesByJavaType.get(javaType);
             if (domainType == null) {
                 context.addError("An operation type resolver was registered but no type with the java type '" + javaType + "' was found: " + entry.getValue());
             } else {
-                Map<DomainPredicateType, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(domainType.getName());
+                Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(domainType.getName());
                 if (predicateTypeResolverMap == null) {
                     predicateTypeResolverMap = new HashMap<>(entry.getValue().size());
                     domainPredicateTypeResolvers.put(domainType.getName(), predicateTypeResolverMap);
                 }
 
-                Map<DomainPredicateType, DomainPredicateTypeResolver> predicateTypeResolverMapByJavaType = domainPredicateTypeResolversByJavaType.get(domainType.getJavaType());
+                Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMapByJavaType = domainPredicateTypeResolversByJavaType.get(domainType.getJavaType());
                 if (predicateTypeResolverMapByJavaType == null) {
                     predicateTypeResolverMapByJavaType = new HashMap<>();
                     domainPredicateTypeResolversByJavaType.put(domainType.getJavaType(), predicateTypeResolverMapByJavaType);
                 }
 
-                for (Map.Entry<DomainPredicateType, DomainPredicateTypeResolver> resolverEntry : entry.getValue().entrySet()) {
+                for (Map.Entry<DomainPredicate, DomainPredicateTypeResolver> resolverEntry : entry.getValue().entrySet()) {
                     if (domainType.getEnabledPredicates().contains(resolverEntry.getKey())) {
                         predicateTypeResolverMap.put(resolverEntry.getKey(), resolverEntry.getValue());
                         predicateTypeResolverMapByJavaType.put(resolverEntry.getKey(), resolverEntry.getValue());

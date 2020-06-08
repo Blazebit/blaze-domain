@@ -16,6 +16,10 @@
 
 package com.blazebit.domain.spi;
 
+import com.blazebit.domain.runtime.model.DomainModel;
+
+import java.util.Map;
+
 /**
  * A {@link java.util.ServiceLoader} loaded serializer that can serialize a domain model elements.
  *
@@ -28,12 +32,14 @@ public interface DomainSerializer<X> {
     /**
      * Serializes the domain model to the given target type with the given format.
      *
+     * @param domainModel The domain model
      * @param element The domain element to serialize
      * @param targetType The target type
      * @param format The serialization format
+     * @param properties Serialization properties
      * @param <T> The target type
      * @return The serialized form or <code>null</code> if the type or format is unsupported
      */
-    public <T> T serialize(X element, Class<T> targetType, String format);
+    public <T> T serialize(DomainModel domainModel, X element, Class<T> targetType, String format, Map<String, Object> properties);
 
 }

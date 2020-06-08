@@ -96,7 +96,7 @@ export enum DomainOperator {
  * @author Christian Beikov
  * @since 1.0.0
  */
-export enum DomainPredicateType {
+export enum DomainPredicate {
     /**
      * The nullness predicates <code>IS NULL</code>/<code>IS NOT NULL</code>.
      */
@@ -154,9 +154,9 @@ export abstract class DomainType extends MetadataHolder {
     /**
      * The domain predicates that are enabled for this domain type.
      */
-    enabledPredicates: readonly DomainPredicateType[];
+    enabledPredicates: readonly DomainPredicate[];
 
-    constructor(name: string, kind: DomainTypeKind, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicateType[], metadata: any[]) {
+    constructor(name: string, kind: DomainTypeKind, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicate[], metadata: any[]) {
         super(metadata);
         this.name = name;
         this.kind = kind;
@@ -173,7 +173,7 @@ export abstract class DomainType extends MetadataHolder {
  */
 export class BasicDomainType extends DomainType {
 
-    constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicateType[], metadata: any[]) {
+    constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicate[], metadata: any[]) {
         super(name, DomainTypeKind.BASIC, enabledOperators, enabledPredicates, metadata);
     }
 }
@@ -190,10 +190,155 @@ export class CollectionDomainType extends DomainType {
      */
     elementType: DomainType;
 
-    constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicateType[], elementType: DomainType, metadata: any[]) {
+    constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicate[], elementType: DomainType, metadata: any[]) {
         super(name, DomainTypeKind.COLLECTION, enabledOperators, enabledPredicates, metadata);
         this.elementType = elementType;
     }
+}
+
+/**
+ * A domain predicate type resolver.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export interface DomainPredicateTypeResolver {
+    /**
+     * Resolves the domain type for applying a predicate on the given operand domain type.
+     *
+     * @param domainModel The domain model
+     * @param domainTypes The operand domain types
+     * @return the resolved type
+     */
+    resolveType(domainModel: DomainModel, domainTypes: DomainType[]): DomainType;
+}
+
+/**
+ * A domain operation type resolver.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export interface DomainOperationTypeResolver {
+    /**
+     * Resolves the domain type for applying an operator on the given operand domain type.
+     *
+     * @param domainModel The domain model
+     * @param domainTypes The operand domain types
+     * @return the resolved type
+     */
+    resolveType(domainModel: DomainModel, domainTypes: DomainType[]): DomainType;
+}
+
+/**
+ * A domain function return type resolver.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export interface DomainFunctionTypeResolver {
+    /**
+     * Resolves the domain function return type for the given argument type assignments.
+     *
+     * @param domainModel The domain model
+     * @param domainFunction The domain function
+     * @param argumentTypes The domain function argument types
+     * @return the resolved function return type
+     */
+    resolveType(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType;
+}
+
+/**
+ * An entity literal.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export interface EntityLiteral {
+    /**
+     * The entity type.
+     */
+    entityType: EntityDomainType;
+    /**
+     * The entity attribute values.
+     */
+    attributeValues: StringMap<any>;
+}
+
+/**
+ * A collection literal.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export interface CollectionLiteral {
+    /**
+     * The collection type.
+     */
+    type: CollectionDomainType;
+    /**
+     * The collection values.
+     */
+    values: any[];
+}
+
+/**
+ * The literal kind.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export enum LiteralKind {
+    /**
+     * Boolean literal.
+     */
+    BOOLEAN,
+    /**
+     * Numeric literal.
+     */
+    NUMERIC,
+    /**
+     * String literal.
+     */
+    STRING,
+    /**
+     * Timestamp literal.
+     */
+    TIMESTAMP,
+    /**
+     * Interval literal.
+     */
+    INTERVAL,
+    /**
+     * Entity literal.
+     */
+    ENTITY,
+    /**
+     * Enum literal.
+     */
+    ENUM,
+    /**
+     * Collection literal.
+     */
+    COLLECTION
+}
+
+/**
+ * A resolver for literal values.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export interface LiteralResolver {
+    /**
+     * Resolves the domain type of the given literal value.
+     *
+     * @param domainModel The domain model
+     * @param kind The kind of literal
+     * @param value The boolean value
+     * @return the resolved literal
+     */
+    resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | CollectionLiteral): DomainType;
 }
 
 /**
@@ -220,6 +365,10 @@ export class DomainFunction extends MetadataHolder {
      */
     resultType: DomainType;
     /**
+     * The domain function result type resolver if the return type is not fixed, otherwise <code>null</code>.
+     */
+    resultTypeResolver: DomainFunctionTypeResolver;
+    /**
      * The function documentation.
      */
     documentation: string;
@@ -228,12 +377,13 @@ export class DomainFunction extends MetadataHolder {
      */
     arguments: readonly DomainFunctionArgument[];
 
-    constructor(name: string, minArgumentCount: number, argumentCount: number, resultType: DomainType, documentation: string, args: readonly DomainFunctionArgument[], metadata: any[]) {
+    constructor(name: string, minArgumentCount: number, argumentCount: number, resultType: DomainType, resultTypeResolver: DomainFunctionTypeResolver, documentation: string, args: readonly DomainFunctionArgument[], metadata: any[]) {
         super(metadata);
         this.name = name;
         this.minArgumentCount = minArgumentCount;
         this.argumentCount = argumentCount;
         this.resultType = resultType;
+        this.resultTypeResolver = resultTypeResolver;
         this.documentation = documentation;
         this.arguments = args;
     }
@@ -282,7 +432,7 @@ export class EntityDomainType extends DomainType {
      */
     attributes: StringMap<EntityAttribute>;
 
-    constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicateType[], attributes: StringMap<EntityAttribute>, metadata: any[]) {
+    constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicate[], attributes: StringMap<EntityAttribute>, metadata: any[]) {
         super(name, DomainTypeKind.ENTITY, enabledOperators, enabledPredicates, metadata);
         this.attributes = attributes;
     }
@@ -328,7 +478,7 @@ export class EnumDomainType extends DomainType {
      */
     enumValues: StringMap<EnumDomainTypeValue>;
 
-    constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicateType[], enumValues: StringMap<EnumDomainTypeValue>, metadata: any[]) {
+    constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicate[], enumValues: StringMap<EnumDomainTypeValue>, metadata: any[]) {
         super(name, DomainTypeKind.ENUM, enabledOperators, enabledPredicates, metadata);
         this.enumValues = enumValues;
     }
@@ -373,13 +523,104 @@ export class DomainModel {
      * Returns the functions of the domain model as map indexed by their function name.
      */
     functions: StringMap<DomainFunction>;
+    /**
+     * Returns the operation type resolvers of the domain model as map indexed by their type name.
+     */
+    operationTypeResolvers: StringMap<StringMap<DomainOperationTypeResolver>>;
+    /**
+     * Returns the predicate type resolvers of the domain model as map indexed by their type name.
+     */
+    predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>>;
+    /**
+     * Returns the resolver for boolean literals.
+     */
+    booleanLiteralResolver: LiteralResolver;
+    /**
+     * Returns the resolver for numeric literals.
+     */
+    numericLiteralResolver: LiteralResolver;
+    /**
+     * Returns the resolver for string literals.
+     */
+    stringLiteralResolver: LiteralResolver;
+    /**
+     * Returns the resolver for temporal literals.
+     */
+    temporalLiteralResolver: LiteralResolver;
+    /**
+     * Returns the resolver for entity literals.
+     */
+    entityLiteralResolver: LiteralResolver;
+    /**
+     * Returns the resolver for enum literals.
+     */
+    enumLiteralResolver: LiteralResolver;
+    /**
+     * Returns the resolver for collection literals.
+     */
+    collectionLiteralResolver: LiteralResolver;
 
     /**
      * Parses the given JSON string to a domain model.
      *
      * @param input The JSON string
+     * @param extensions The extension functions like resolver constructors
      */
-    static parse(input: string): DomainModel {
+    static parse(input: string, extensions: StringMap<Function>): DomainModel {
+        if (typeof extensions === "undefined") {
+            extensions = {};
+        }
+        let registerIfAbsent = function(k: string, f: Function) {
+            if (!(extensions[k] instanceof Function)) {
+                extensions[k] = f;
+            }
+        };
+        registerIfAbsent("FixedDomainPredicateTypeResolver", function(type: string): DomainPredicateTypeResolver {
+            return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
+                return domainModel.types[type];
+            }};
+        });
+        registerIfAbsent("FixedDomainOperationTypeResolver", function(type: string): DomainOperationTypeResolver {
+            return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
+                return domainModel.types[type];
+            }};
+        });
+        registerIfAbsent("WidestDomainOperationTypeResolver", function(types: string[]): DomainOperationTypeResolver {
+            return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
+                for (let type of types) {
+                    for (let domainType of domainTypes) {
+                        if (domainType.name == type) {
+                            return domainType;
+                        }
+                    }
+                }
+
+                return domainTypes.length == 0 ? domainModel.types[types[0]] : domainTypes[0];
+            }};
+        });
+        registerIfAbsent("FirstArgumentDomainFunctionTypeResolver", function(type: string): DomainFunctionTypeResolver {
+            return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
+                return argumentTypes.length == 0 ? null : domainModel.types[type];
+            }};
+        });
+        registerIfAbsent("FixedDomainFunctionTypeResolver", function(type: string): DomainFunctionTypeResolver {
+            return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
+                return domainModel.types[type];
+            }};
+        });
+        registerIfAbsent("WidestDomainFunctionTypeResolver", function(types: string[]): DomainFunctionTypeResolver {
+            return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
+                for (let type of types) {
+                    for (let domainType of argumentTypes) {
+                        if (domainType.name == type) {
+                            return domainType;
+                        }
+                    }
+                }
+
+                return argumentTypes.length == 0 ? domainModel.types[types[0]] : argumentTypes[0];
+            }};
+        });
         let parseMeta = function(m: any): any[] {
             if (Array.isArray(m)) {
                 return m;
@@ -395,57 +636,78 @@ export class DomainModel {
             }
             return null;
         };
-        let json = JSON.parse(input), types = json['types'], functions = json['funcs'];
+        let parseOp = function(op: string): DomainOperator {
+            switch (op) {
+                case 'M':
+                    return DomainOperator.UNARY_MINUS;
+                case 'P':
+                    return DomainOperator.UNARY_PLUS;
+                case '/':
+                    return DomainOperator.DIVISION;
+                case '-':
+                    return DomainOperator.MINUS;
+                case '%':
+                    return DomainOperator.MODULO;
+                case '*':
+                    return DomainOperator.MULTIPLICATION;
+                case '!':
+                    return DomainOperator.NOT;
+                case '+':
+                    return DomainOperator.PLUS;
+            }
+            return null;
+        };
+        let parsePred = function(pred: string): DomainPredicate {
+            switch (pred) {
+                case 'C':
+                    return DomainPredicate.COLLECTION;
+                case 'E':
+                    return DomainPredicate.EQUALITY;
+                case 'N':
+                    return DomainPredicate.NULLNESS;
+                case 'R':
+                    return DomainPredicate.RELATIONAL;
+            }
+            return null;
+        };
+        let resolver = function(resolver) {
+            if (resolver !== undefined) {
+                let typeResolver = null, args = [];
+                if (typeof resolver === "string") {
+                    typeResolver = extensions[resolver];
+                } else {
+                    for (let prop in resolver) {
+                        if ((typeResolver = extensions[prop]) != null) {
+                            args = resolver[prop];
+                            break;
+                        }
+                    }
+                }
+                if (typeResolver != null) {
+                    return typeResolver(args);
+                }
+            }
+            return null;
+        };
+        let json = JSON.parse(input), types = json['types'], functions = json['funcs'], opResolvers = json['opResolvers'], predResolvers = json['predResolvers'];
         var domainTypes: StringMap<DomainType> = {};
         types.forEach(function (type) {
             let name = type['name'];
             let ops: DomainOperator[] = [];
             if (Array.isArray(type['ops'])) {
                 type['ops'].forEach(function (op) {
-                    switch (op) {
-                        case 'M':
-                            ops.push(DomainOperator.UNARY_MINUS);
-                            break;
-                        case 'P':
-                            ops.push(DomainOperator.UNARY_PLUS);
-                            break;
-                        case '/':
-                            ops.push(DomainOperator.DIVISION);
-                            break;
-                        case '-':
-                            ops.push(DomainOperator.MINUS);
-                            break;
-                        case '%':
-                            ops.push(DomainOperator.MODULO);
-                            break;
-                        case '*':
-                            ops.push(DomainOperator.MULTIPLICATION);
-                            break;
-                        case '!':
-                            ops.push(DomainOperator.NOT);
-                            break;
-                        case '+':
-                            ops.push(DomainOperator.PLUS);
-                            break;
+                    let o = parseOp(op);
+                    if (o != null) {
+                        ops.push(o);
                     }
                 });
             }
-            let preds: DomainPredicateType[] = [];
+            let preds: DomainPredicate[] = [];
             if (Array.isArray(type['preds'])) {
                 type['preds'].forEach(function (pred) {
-                    switch (pred) {
-                        case 'C':
-                            preds.push(DomainPredicateType.COLLECTION);
-                            break;
-                        case 'E':
-                            preds.push(DomainPredicateType.EQUALITY);
-                            break;
-                        case 'N':
-                            preds.push(DomainPredicateType.NULLNESS);
-                            break;
-                        case 'R':
-                            preds.push(DomainPredicateType.RELATIONAL);
-                            break;
+                    let p = parsePred(pred);
+                    if (p != null) {
+                        preds.push(p);
                     }
                 });
             }
@@ -500,10 +762,89 @@ export class DomainModel {
                     }
                 }
                 let meta = parseMeta(func['meta']);
-                funcs[func['name']] = new DomainFunction(func['name'], func['minArgCount'], func['argCount'], domainTypes[func['type']], doc(meta), params, meta);
+                let resultTypeResolver: DomainFunctionTypeResolver = resolver(func['typeResolver']);
+                let resultType: DomainType = null;
+                if (resultTypeResolver == null) {
+                    resultType = domainTypes[func['type']];
+                }
+                funcs[func['name']] = new DomainFunction(func['name'], func['minArgCount'], func['argCount'], resultType, resultTypeResolver, doc(meta), params, meta);
+            });
+        }
+        let operationTypeResolvers: StringMap<StringMap<DomainOperationTypeResolver>> = {};
+        if (Array.isArray(opResolvers)) {
+            opResolvers.forEach(function (op) {
+                let typeOps = op['typeOps'];
+                let r: DomainOperationTypeResolver = resolver(op['resolver']);
+                if (r != null) {
+                    for (let prop in typeOps) {
+                        if (domainTypes[prop] != null && Array.isArray(typeOps[prop])) {
+                            let opMap = operationTypeResolvers[prop];
+                            if (opMap == null) {
+                                opMap = operationTypeResolvers[prop] = {};
+                            }
+
+                            typeOps[prop].forEach(function(op) {
+                                let o = parseOp(op);
+                                if (o != null) {
+                                    opMap[DomainOperator[o]] = r;
+                                }
+                            });
+
+                        }
+                    }
+                }
+            });
+        }
+        let predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>> = {};
+        if (Array.isArray(predResolvers)) {
+            predResolvers.forEach(function (pred) {
+                let typePreds = pred['typePreds'];
+                let r: DomainPredicateTypeResolver = resolver(pred['resolver']);
+                if (r != null) {
+                    if (typePreds === undefined) {
+                        // Special case that will just use the resolver for all registered type predicates
+                        for (let name in domainTypes) {
+                            let predMap = predicateTypeResolvers[name];
+                            if (predMap == null) {
+                                predMap = predicateTypeResolvers[name] = {};
+                            }
+                            for (let p of domainTypes[name].enabledPredicates) {
+                                predMap[DomainPredicate[p]] = r;
+                            }
+                        }
+                    } else {
+                        for (let prop in typePreds) {
+                            if (domainTypes[prop] != null && Array.isArray(typePreds[prop])) {
+                                let predMap = predicateTypeResolvers[prop];
+                                if (predMap == null) {
+                                    predMap = predicateTypeResolvers[prop] = {};
+                                }
+
+                                typePreds[prop].forEach(function (pred) {
+                                    let p = parsePred(pred);
+                                    if (p != null) {
+                                        predMap[DomainPredicate[p]] = r;
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
             });
         }
 
-        return { types: domainTypes, functions: funcs };
+        return {
+            types:                      domainTypes,
+            functions:                  funcs,
+            operationTypeResolvers:     operationTypeResolvers,
+            predicateTypeResolvers:     predicateTypeResolvers,
+            booleanLiteralResolver:     resolver(json['booleanLiteralResolver']),
+            numericLiteralResolver:     resolver(json['numericLiteralResolver']),
+            stringLiteralResolver:      resolver(json['stringLiteralResolver']),
+            temporalLiteralResolver:    resolver(json['temporalLiteralResolver']),
+            entityLiteralResolver:      resolver(json['entityLiteralResolver']),
+            enumLiteralResolver:        resolver(json['enumLiteralResolver']),
+            collectionLiteralResolver:  resolver(json['collectionLiteralResolver'])
+        };
     }
 }

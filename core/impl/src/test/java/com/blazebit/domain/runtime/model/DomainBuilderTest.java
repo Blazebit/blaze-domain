@@ -29,7 +29,7 @@ public class DomainBuilderTest {
         DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
         domainBuilder.createBasicType("String", String.class)
             .withOperator("String", DomainOperator.PLUS)
-            .withPredicate("String", DomainPredicateType.comparable());
+            .withPredicate("String", DomainPredicate.comparable());
         return domainBuilder;
     }
 

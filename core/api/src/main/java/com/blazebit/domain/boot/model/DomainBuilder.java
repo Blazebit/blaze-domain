@@ -20,7 +20,7 @@ import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperationTypeResolver;
 import com.blazebit.domain.runtime.model.DomainOperator;
-import com.blazebit.domain.runtime.model.DomainPredicateType;
+import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.EntityLiteralResolver;
 import com.blazebit.domain.runtime.model.EnumLiteralResolver;
@@ -130,21 +130,21 @@ public interface DomainBuilder {
      * Adds the given predicate type resolver for the given type name and domain predicate type.
      *
      * @param typeName The type name of a domain type for which to register the predicate type resolver
-     * @param domainPredicateType The domain predicate for which to register the predicate type resolver
+     * @param domainPredicate The domain predicate for which to register the predicate type resolver
      * @param predicateTypeResolver The predicate type resolver to register
      * @return this for chaining
      */
-    public DomainBuilder withPredicateTypeResolver(String typeName, DomainPredicateType domainPredicateType, DomainPredicateTypeResolver predicateTypeResolver);
+    public DomainBuilder withPredicateTypeResolver(String typeName, DomainPredicate domainPredicate, DomainPredicateTypeResolver predicateTypeResolver);
 
     /**
      * Adds the given predicate type resolver for the given java type and domain predicate type.
      *
      * @param javaType The java type of a domain type for which to register the predicate type resolver
-     * @param domainPredicateType The domain predicate for which to register the predicate type resolver
+     * @param domainPredicate The domain predicate for which to register the predicate type resolver
      * @param predicateTypeResolver The predicate type resolver to register
      * @return this for chaining
      */
-    public DomainBuilder withPredicateTypeResolver(Class<?> javaType, DomainPredicateType domainPredicateType, DomainPredicateTypeResolver predicateTypeResolver);
+    public DomainBuilder withPredicateTypeResolver(Class<?> javaType, DomainPredicate domainPredicate, DomainPredicateTypeResolver predicateTypeResolver);
 
     /**
      * Adds the given domain model serializer.
@@ -179,7 +179,7 @@ public interface DomainBuilder {
      * @param predicate The domain predicate to enable
      * @return this for chaining
      */
-    public DomainBuilder withPredicate(String typeName, DomainPredicateType predicate);
+    public DomainBuilder withPredicate(String typeName, DomainPredicate predicate);
 
     /**
      * Enables the given domain predicates for the given type name.
@@ -188,7 +188,7 @@ public interface DomainBuilder {
      * @param predicates The domain predicates to enable
      * @return this for chaining
      */
-    public DomainBuilder withPredicate(String typeName, DomainPredicateType... predicates);
+    public DomainBuilder withPredicate(String typeName, DomainPredicate... predicates);
 
     /**
      * Creates a builder for a domain function with the given name.
