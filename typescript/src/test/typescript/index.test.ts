@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-var expect = require('chai').expect;
-var domain = require("./dist/index.js");
+import { expect } from 'chai';
+import 'mocha';
+import * as domain from '../../../dist/index';
 
 describe('Test parse ', function() {
     it('Should parse!', function() {
@@ -188,7 +189,7 @@ describe('Test parse ', function() {
                 { resolver: { "FixedDomainOperationTypeResolver": ["Boolean"] }, typeOps: { "Boolean": ["!"] } }
             ],
             predResolvers: []
-        }));
+        }), {});
         expect(domainModel.types['Integer'].name).to.equal("Integer");
     });
 
@@ -684,7 +685,7 @@ describe('Test parse ', function() {
                     resolver: {"FixedDomainPredicateTypeResolver": ["Boolean"]}
                 }
             ]
-        }));
+        }), {});
         expect(domainModel.types['Integer'].name).to.equal("Integer");
         expect(domainModel.operationTypeResolvers['Integer'][domain.DomainOperator[domain.DomainOperator.PLUS]].resolveType(domainModel, [domainModel.types['Integer'], domainModel.types['Integer']]).name).to.equal("Integer");
     });
