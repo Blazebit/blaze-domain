@@ -1,9 +1,9 @@
 [![Build Status](https://travis-ci.com/Blazebit/blaze-domain.svg?branch=master)](https://travis-ci.org/Blazebit/blaze-domain)
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.blazebit/blaze-domain-api/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.blazebit/blaze-domain-api)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.blazebit/blaze-domain-core-api/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.blazebit/blaze-domain-core-api)
 [![Slack Status](https://blazebit.herokuapp.com/badge.svg)](https://blazebit.herokuapp.com)
 
-[![Javadoc - Domain](https://www.javadoc.io/badge/com.blazebit/blaze-domain-api.svg?label=javadoc%20-%20domain-api)](http://www.javadoc.io/doc/com.blazebit/blaze-domain-api)
+[![Javadoc - Domain](https://www.javadoc.io/badge/com.blazebit/blaze-domain-api.svg?label=javadoc%20-%20domain-core-api)](http://www.javadoc.io/doc/com.blazebit/blaze-domain-core-api)
 
 Blaze-Domain
 ==========
@@ -12,7 +12,7 @@ Blaze-Domain is a toolkit that can be used to build a runtime model of a domain 
 What is it?
 ===========
 
-Blaze-Domain provides a builder API and runtime model to describe a domain in an extendible way. 
+Blaze-Domain provides a builder API and runtime model to describe a domain in an extensible way. 
 
 The domain description does not require that Java classes or methods/fields exist for domain entity types and their attributes or functions.
 The _declarative_ submodule allows to determine a domain model based on class structures and their annotations which can be combined with the builder API to combine static and dynamic domain models.
@@ -30,7 +30,7 @@ Blaze-Domain has support for
 * Definition of enumeration types
 * Definition of collection types
 * Configuration of enabled arithmetic operators and predicates per type
-* Extendible metadata for every domain element
+* Extensible metadata for every domain element
 * Metadata extension for JPA related models
 * Declarative definition of domain models
 
@@ -41,7 +41,7 @@ Blaze-Domain is split up into different modules. We recommend that you define a 
 
 ```xml
 <properties>
-    <blaze-domain.version>1.0.0-Alpha3</blaze-domain.version>
+    <blaze-domain.version>1.0.2</blaze-domain.version>
 </properties>
 ```
 
