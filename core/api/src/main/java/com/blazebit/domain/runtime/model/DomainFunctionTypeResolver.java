@@ -33,6 +33,7 @@ public interface DomainFunctionTypeResolver {
      * @param function The domain function
      * @param argumentTypes The domain function argument types
      * @return the resolved function return type
+     * @throws DomainTypeResolverException when the function is invoked with the wrong argument types
      */
     public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes);
 

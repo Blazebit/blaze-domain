@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.boot.model;
 
+import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
+import com.blazebit.domain.runtime.model.CollectionLiteralResolver;
 import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperationTypeResolver;
@@ -27,11 +29,10 @@ import com.blazebit.domain.runtime.model.EnumLiteralResolver;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
 import com.blazebit.domain.runtime.model.StringLiteralResolver;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
-import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
-import com.blazebit.domain.runtime.model.CollectionLiteralResolver;
 import com.blazebit.domain.spi.DomainSerializer;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A builder for a domain model.
@@ -189,6 +190,24 @@ public interface DomainBuilder {
      * @return this for chaining
      */
     public DomainBuilder withPredicate(String typeName, DomainPredicate... predicates);
+
+    /**
+     * Returns the enabled operators for the type with the given name.
+     *
+     * @param typeName The type name
+     * @return The enabled operators
+     * @since 1.0.4
+     */
+    public Set<DomainOperator> getEnabledOperators(String typeName);
+
+    /**
+     * Returns the enabled predicates for the type with the given name.
+     *
+     * @param typeName The type name
+     * @return The enabled predicates
+     * @since 1.0.4
+     */
+    public Set<DomainPredicate> getEnabledPredicates(String typeName);
 
     /**
      * Creates a builder for a domain function with the given name.

@@ -21,10 +21,9 @@ import com.blazebit.domain.spi.DomainSerializer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A domain function type resolver utility that caches static resolvers.
@@ -39,9 +38,9 @@ public final class StaticDomainFunctionTypeResolvers {
      */
     public static final DomainFunctionTypeResolver FIRST_ARGUMENT_TYPE = new FirstArgumentDomainFunctionTypeResolver();
 
-    private static final Map<String, DomainFunctionTypeResolver> RETURNING_TYPE_NAME_CACHE = new HashMap<>();
-    private static final Map<Class<?>, DomainFunctionTypeResolver> RETURNING_JAVA_TYPE_CACHE = new HashMap<>();
-    private static final Map<ClassArray, DomainFunctionTypeResolver> WIDEST_CACHE = new HashMap<>();
+    private static final Map<String, DomainFunctionTypeResolver> RETURNING_TYPE_NAME_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, DomainFunctionTypeResolver> RETURNING_JAVA_TYPE_CACHE = new ConcurrentHashMap<>();
+    private static final Map<ClassArray, DomainFunctionTypeResolver> WIDEST_CACHE = new ConcurrentHashMap<>();
 
     private StaticDomainFunctionTypeResolvers() {
     }
@@ -94,6 +93,18 @@ public final class StaticDomainFunctionTypeResolvers {
         return domainFunctionTypeResolver;
     }
 
+    private static void validateArgumentTypes(Map<DomainFunctionArgument, DomainType> argumentTypes) {
+        for (Map.Entry<DomainFunctionArgument, DomainType> entry : argumentTypes.entrySet()) {
+            DomainFunctionArgument functionArgument = entry.getKey();
+            if (functionArgument.getType() == null) {
+                continue;
+            }
+            if (functionArgument.getType() != entry.getValue()) {
+                throw new DomainTypeResolverException("Unsupported argument type '" + entry.getValue() + "' for argument '" + functionArgument + "' of function '" + functionArgument.getOwner().getName() + "'! Expected type: " + functionArgument.getType());
+            }
+        }
+    }
+
     /**
      * @author Christian Beikov
      * @since 1.0.0
@@ -139,14 +150,20 @@ public final class StaticDomainFunctionTypeResolvers {
             for (Class<?> javaType : javaTypes) {
                 preferredTypes.add(domainModel.getType(javaType));
             }
-            Collection<DomainType> domainTypes = argumentTypes.values();
-            for (DomainType preferredType : preferredTypes) {
-                if (domainTypes.contains(preferredType)) {
-                    return preferredType;
+            int typeIndex = Integer.MAX_VALUE;
+            for (Map.Entry<DomainFunctionArgument, DomainType> entry : argumentTypes.entrySet()) {
+                int idx = preferredTypes.indexOf(entry.getValue());
+                if (idx == -1) {
+                    throw new DomainTypeResolverException("Unsupported argument type '" + entry.getValue() + "' for argument '" + entry.getKey() + "' of function '" + function.getName() + "'! Expected one of the following types: " + preferredTypes);
                 }
+                typeIndex = Math.min(typeIndex, idx);
             }
 
-            return argumentTypes.isEmpty() ? preferredTypes.get(0) : domainTypes.iterator().next();
+            if (typeIndex == Integer.MAX_VALUE) {
+                return preferredTypes.get(0);
+            } else {
+                return preferredTypes.get(typeIndex);
+            }
         }
 
         @Override
@@ -179,6 +196,7 @@ public final class StaticDomainFunctionTypeResolvers {
 
         @Override
         public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes) {
+            validateArgumentTypes(argumentTypes);
             return domainModel.getType(javaType);
         }
 
@@ -205,6 +223,7 @@ public final class StaticDomainFunctionTypeResolvers {
 
         @Override
         public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes) {
+            validateArgumentTypes(argumentTypes);
             return domainModel.getType(typeName);
         }
 

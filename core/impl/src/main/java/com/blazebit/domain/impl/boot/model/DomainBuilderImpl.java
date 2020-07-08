@@ -285,6 +285,24 @@ public class DomainBuilderImpl implements DomainBuilder {
         return withElements(enabledPredicates, typeName, predicates);
     }
 
+    @Override
+    public Set<DomainOperator> getEnabledOperators(String typeName) {
+        Set<DomainOperator> domainOperators = enabledOperators.get(typeName);
+        if (domainOperators == null) {
+            return Collections.emptySet();
+        }
+        return Collections.unmodifiableSet(domainOperators);
+    }
+
+    @Override
+    public Set<DomainPredicate> getEnabledPredicates(String typeName) {
+        Set<DomainPredicate> domainPredicates = enabledPredicates.get(typeName);
+        if (domainPredicates == null) {
+            return Collections.emptySet();
+        }
+        return Collections.unmodifiableSet(domainPredicates);
+    }
+
     public Set<DomainOperator> getOperators(DomainTypeDefinition<?> typeDefinition) {
         return getElements(enabledOperators, typeDefinition.getName());
     }
@@ -293,27 +311,27 @@ public class DomainBuilderImpl implements DomainBuilder {
         return getElements(enabledPredicates, typeDefinition.getName());
     }
 
-    private <T extends Enum<T>> DomainBuilder withElement(Map<String, Set<T>> map, String typeName, T predicate) {
-        Set<T> domainPredicates = map.get(typeName);
-        if (domainPredicates == null) {
-            domainPredicates = EnumSet.of(predicate);
-            map.put(typeName, domainPredicates);
+    private <T extends Enum<T>> DomainBuilder withElement(Map<String, Set<T>> map, String typeName, T element) {
+        Set<T> set = map.get(typeName);
+        if (set == null) {
+            set = EnumSet.of(element);
+            map.put(typeName, set);
         } else {
-            domainPredicates.add(predicate);
+            set.add(element);
         }
         return this;
     }
 
-    private <T extends Enum<T>> DomainBuilder withElements(Map<String, Set<T>> map, String typeName, T... predicates) {
-        Set<T> domainPredicates = map.get(typeName);
-        if (domainPredicates == null) {
-            domainPredicates = EnumSet.noneOf((Class<T>) predicates[0].getClass());
-            map.put(typeName, domainPredicates);
+    private <T extends Enum<T>> DomainBuilder withElements(Map<String, Set<T>> map, String typeName, T... elements) {
+        Set<T> set = map.get(typeName);
+        if (set == null) {
+            set = EnumSet.noneOf((Class<T>) elements[0].getClass());
+            map.put(typeName, set);
         }
 
-        for (int i = 0; i < predicates.length; i++) {
-            T predicate = predicates[i];
-            domainPredicates.add(predicate);
+        for (int i = 0; i < elements.length; i++) {
+            T element = elements[i];
+            set.add(element);
         }
 
         return this;

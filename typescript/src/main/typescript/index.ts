@@ -163,6 +163,10 @@ export abstract class DomainType extends MetadataHolder {
         this.enabledOperators = enabledOperators;
         this.enabledPredicates = enabledPredicates;
     }
+
+    toString(): string {
+        return this.name == null ? "n/a" : this.name;
+    }
 }
 
 /**
@@ -175,6 +179,10 @@ export class BasicDomainType extends DomainType {
 
     constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicate[], metadata: any[]) {
         super(name, DomainTypeKind.BASIC, enabledOperators, enabledPredicates, metadata);
+    }
+
+    toString(): string {
+        return this.name;
     }
 }
 
@@ -193,6 +201,10 @@ export class CollectionDomainType extends DomainType {
     constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicate[], elementType: DomainType, metadata: any[]) {
         super(name, DomainTypeKind.COLLECTION, enabledOperators, enabledPredicates, metadata);
         this.elementType = elementType;
+    }
+
+    toString(): string {
+        return "Collection[" + this.elementType + "]";;
     }
 }
 
@@ -404,6 +416,40 @@ export class DomainFunction extends MetadataHolder {
         this.documentation = documentation;
         this.arguments = args;
     }
+
+    toString(): string {
+        let signature = this.name;
+        signature += " (";
+        if (this.arguments.length == 0) {
+            if (this.minArgumentCount != 0) {
+                for (var i = 0; i < this.minArgumentCount; i++) {
+                    signature += "argument" + (i + 1) + ", ";
+                }
+                if (this.argumentCount < this.minArgumentCount) {
+                    signature += "...";
+                } else {
+                    signature = signature.substring(0, signature.length - 2);
+                }
+            } else if (this.argumentCount > 0) {
+                for (var i = 0; i < this.minArgumentCount; i++) {
+                    signature += "argument" + (i + 1) + ", ";
+                }
+                signature = signature.substring(0, signature.length - 2);
+            }
+        } else {
+            for (var i = 0; i < this.arguments.length; i++) {
+                let argument = this.arguments[i];
+                if (argument.name == null) {
+                    signature += "argument" + (i + 1) + ", ";
+                } else {
+                    signature += argument.name + ", ";
+                }
+            }
+            signature = signature.substring(0, signature.length - 2);
+        }
+        signature += ")";
+        return signature;
+    }
 }
 /**
  * Represents the argument to a domain function.
@@ -435,6 +481,21 @@ export class DomainFunctionArgument extends MetadataHolder {
         this.position = position;
         this.type = type;
         this.documentation = documentation;
+    }
+
+    toString(): string {
+        if (this.name == null) {
+            return "DomainFunctionArgument{" +
+                "index=" + this.position +
+                ", type=" + this.type +
+                '}';
+        } else {
+            return "DomainFunctionArgument{" +
+                "name='" + this.name + '\'' +
+                ", index=" + this.position +
+                ", type=" + this.type +
+                '}';
+        }
     }
 }
 /**
@@ -523,6 +584,23 @@ export class EnumDomainTypeValue extends MetadataHolder {
         this.value = value;
         this.documentation = documentation;
     }
+
+    toString(): string {
+        return this.value;
+    }
+}
+
+/**
+ * A domain type resolver exception.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export class DomainTypeResolverException extends Error {
+    constructor(message: string) {
+        super(message);
+    }
+
 }
 
 /**
@@ -597,6 +675,22 @@ export class DomainModel {
                 return domainModel.types[type];
             }};
         });
+        registerIfAbsent("RestrictedDomainPredicateTypeResolver", function(returningType: string, supportedTypes: string[]): DomainPredicateTypeResolver {
+            return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
+                for (var i = 0; i < domainTypes.length; i++) {
+                    let domainType = domainTypes[i];
+                    if (supportedTypes.indexOf(domainType.name) == -1) {
+                        let typesString = "[";
+                        for (let supportedType of supportedTypes) {
+                            typesString += supportedType + ", ";
+                        }
+                        typesString = typesString.substring(0, typesString.length - 2) + "]";
+                        throw new DomainTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType.name + "' is unsupported! Expected one of the following types: " + typesString);
+                    }
+                }
+                return domainModel.types[returningType];
+            }};
+        });
         registerIfAbsent("FixedDomainOperationTypeResolver", function(type: string): DomainOperationTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
                 return domainModel.types[type];
@@ -604,17 +698,56 @@ export class DomainModel {
         });
         registerIfAbsent("WidestDomainOperationTypeResolver", function(types: string[]): DomainOperationTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
-                for (let type of types) {
-                    for (let domainType of domainTypes) {
-                        if (domainType.name == type) {
-                            return domainType;
+                let typeIndex = Number.MAX_VALUE;
+                for (var i = 0; i < domainTypes.length; i++) {
+                    let domainType = domainTypes[i];
+                    let idx = types.indexOf(domainType.name);
+                    if (idx == -1) {
+                        let typesString = "[";
+                        for (let supportedType of types) {
+                            typesString += supportedType + ", ";
                         }
+                        typesString = typesString.substring(0, typesString.length - 2) + "]";
+                        throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + typesString);
+                    }
+                    typeIndex = Math.min(typeIndex, idx);
+                }
+
+                if (typeIndex == Number.MAX_VALUE) {
+                    return domainModel.types[types[0]];
+                } else {
+                    return domainModel.types[types[typeIndex]];
+                }
+            }};
+        });
+        registerIfAbsent("RestrictedDomainOperationTypeResolver", function(returningType: string, supportedTypes: string[]): DomainOperationTypeResolver {
+            return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
+                for (var i = 0; i < domainTypes.length; i++) {
+                    let domainType = domainTypes[i];
+                    if (supportedTypes.indexOf(domainType.name) == -1) {
+                        let typesString = "[";
+                        for (let supportedType of supportedTypes) {
+                            typesString += supportedType + ", ";
+                        }
+                        typesString = typesString.substring(0, typesString.length - 2) + "]";
+                        throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + typesString);
                     }
                 }
 
-                return domainTypes.length == 0 ? domainModel.types[types[0]] : domainTypes[0];
+                return domainModel.types[returningType];
             }};
         });
+        let validateArgumentTypes = function(domainFunction: DomainFunction, argumentTypes: DomainType[]) {
+            for (var i = 0; i < argumentTypes.length; i++) {
+                let functionArgument = domainFunction.arguments[i];
+                if (functionArgument.type == null || argumentTypes[i] == null) {
+                    continue;
+                }
+                if (functionArgument.type != argumentTypes[i]) {
+                    throw new DomainTypeResolverException("Unsupported argument type '" + argumentTypes[i] + "' for argument '" + functionArgument + "' of function '" + domainFunction.name + "'! Expected type: " + functionArgument.type);
+                }
+            }
+        };
         registerIfAbsent("FirstArgumentDomainFunctionTypeResolver", function(type: string): DomainFunctionTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
                 return argumentTypes.length == 0 ? null : domainModel.types[type];
@@ -622,20 +755,32 @@ export class DomainModel {
         });
         registerIfAbsent("FixedDomainFunctionTypeResolver", function(type: string): DomainFunctionTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
+                validateArgumentTypes(domainFunction, argumentTypes);
                 return domainModel.types[type];
             }};
         });
         registerIfAbsent("WidestDomainFunctionTypeResolver", function(types: string[]): DomainFunctionTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
-                for (let type of types) {
-                    for (let domainType of argumentTypes) {
-                        if (domainType.name == type) {
-                            return domainType;
+                let typeIndex = Number.MAX_VALUE;
+                for (var i = 0; i < argumentTypes.length; i++) {
+                    let domainType = argumentTypes[i];
+                    let idx = types.indexOf(domainType.name);
+                    if (idx == -1) {
+                        let typesString = "[";
+                        for (let supportedType of types) {
+                            typesString += supportedType + ", ";
                         }
+                        typesString = typesString.substring(0, typesString.length - 2) + "]";
+                        throw new DomainTypeResolverException("Unsupported argument type '" + domainType + "' for argument '" + domainFunction.arguments[i] + "' of function '" + domainFunction.name + "'! Expected one of the following types: " + typesString);
                     }
+                    typeIndex = Math.min(typeIndex, idx);
                 }
 
-                return argumentTypes.length == 0 ? domainModel.types[types[0]] : argumentTypes[0];
+                if (typeIndex == Number.MAX_VALUE) {
+                    return domainModel.types[types[0]];
+                } else {
+                    return domainModel.types[types[typeIndex]];
+                }
             }};
         });
         let parseMeta = function(m: any): any[] {

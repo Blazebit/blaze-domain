@@ -32,6 +32,7 @@ public interface DomainOperationTypeResolver {
      * @param domainModel The domain model
      * @param domainTypes The operand domain types
      * @return the resolved type
+     * @throws DomainTypeResolverException when one of the operands has an unsupported type
      */
     public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes);
 
