@@ -44,9 +44,12 @@ import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.reflection.ReflectionUtils;
 
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -759,8 +762,21 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class SimpleMetadataDefinition<X> implements MetadataDefinition<X> {
-        private final Class<X> type;
+    private static class SimpleMetadataDefinition<X> implements MetadataDefinition<X>, Serializable {
+
+        private static final Field TYPE;
+
+        static {
+            try {
+                Field field = SimpleMetadataDefinition.class.getDeclaredField("type");
+                field.setAccessible(true);
+                TYPE = field;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private final transient Class<X> type;
         private final X object;
 
         public SimpleMetadataDefinition(Class<X> type, X object) {
@@ -776,6 +792,21 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         @Override
         public X build(MetadataDefinitionHolder<?> definitionHolder) {
             return object;
+        }
+
+        private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+            out.writeUTF(type.getName());
+        }
+
+        private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
+            String className = in.readUTF();
+            try {
+                TYPE.set(this, Class.forName(className));
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
         }
     }
 

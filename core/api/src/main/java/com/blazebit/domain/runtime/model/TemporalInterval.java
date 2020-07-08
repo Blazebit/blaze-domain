@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class TemporalInterval {
+public class TemporalInterval implements Comparable<TemporalInterval> {
 
     private final int years;
     private final int months;
@@ -282,5 +282,30 @@ public class TemporalInterval {
         return localTime.minusHours(hours)
             .minusMinutes(minutes)
             .minusSeconds(seconds);
+    }
+
+    @Override
+    public int compareTo(TemporalInterval o) {
+        int cmp = Integer.compare(years, o.years);
+        if (cmp != 0) {
+            return cmp;
+        }
+        cmp = Integer.compare(months, o.months);
+        if (cmp != 0) {
+            return cmp;
+        }
+        cmp = Integer.compare(days, o.days);
+        if (cmp != 0) {
+            return cmp;
+        }
+        cmp = Integer.compare(hours, o.hours);
+        if (cmp != 0) {
+            return cmp;
+        }
+        cmp = Integer.compare(minutes, o.minutes);
+        if (cmp != 0) {
+            return cmp;
+        }
+        return Integer.compare(seconds, o.seconds);
     }
 }

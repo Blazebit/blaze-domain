@@ -266,6 +266,23 @@ export interface EntityLiteral {
 }
 
 /**
+ * An enum literal.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export interface EnumLiteral {
+    /**
+     * The enum type.
+     */
+    enumType: EnumDomainType;
+    /**
+     * The enum value.
+     */
+    value: EnumDomainTypeValue;
+}
+
+/**
  * A collection literal.
  *
  * @author Christian Beikov
@@ -338,7 +355,7 @@ export interface LiteralResolver {
      * @param value The boolean value
      * @return the resolved literal
      */
-    resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | CollectionLiteral): DomainType;
+    resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType;
 }
 
 /**
