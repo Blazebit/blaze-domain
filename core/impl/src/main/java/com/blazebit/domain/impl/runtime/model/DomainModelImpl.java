@@ -31,6 +31,7 @@ import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityLiteralResolver;
 import com.blazebit.domain.runtime.model.EnumLiteralResolver;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
+import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.domain.runtime.model.StringLiteralResolver;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.domain.spi.DomainSerializer;
@@ -139,7 +140,7 @@ public class DomainModelImpl implements DomainModel, Serializable {
     public DomainFunctionTypeResolver getFunctionTypeResolver(String functionName) {
         DomainFunctionTypeResolver typeResolver = domainFunctionTypeResolvers.get(functionName.toUpperCase());
         if (typeResolver == null) {
-            return StaticDomainFunctionTypeResolver.INSTANCE;
+            return StaticDomainFunctionTypeResolvers.STATIC_RETURN_TYPE;
         }
         return typeResolver;
     }

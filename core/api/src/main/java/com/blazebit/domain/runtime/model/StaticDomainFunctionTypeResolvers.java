@@ -38,6 +38,11 @@ public final class StaticDomainFunctionTypeResolvers {
      */
     public static final DomainFunctionTypeResolver FIRST_ARGUMENT_TYPE = new FirstArgumentDomainFunctionTypeResolver();
 
+    /**
+     * A domain function type resolver that always resolves to the static domain function return type.
+     */
+    public static final DomainFunctionTypeResolver STATIC_RETURN_TYPE = new StaticDomainFunctionTypeResolver();
+
     private static final Map<String, DomainFunctionTypeResolver> RETURNING_TYPE_NAME_CACHE = new ConcurrentHashMap<>();
     private static final Map<Class<?>, DomainFunctionTypeResolver> RETURNING_JAVA_TYPE_CACHE = new ConcurrentHashMap<>();
     private static final Map<ClassArray, DomainFunctionTypeResolver> WIDEST_CACHE = new ConcurrentHashMap<>();
@@ -244,6 +249,7 @@ public final class StaticDomainFunctionTypeResolvers {
 
         @Override
         public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes) {
+            validateArgumentTypes(argumentTypes);
             for (DomainFunctionArgument argument : function.getArguments()) {
                 DomainType domainType = argumentTypes.get(argument);
                 if (domainType != null) {
@@ -262,4 +268,21 @@ public final class StaticDomainFunctionTypeResolvers {
             return (T) "\"FirstArgumentDomainFunctionTypeResolver\"";
         }
     }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class StaticDomainFunctionTypeResolver implements DomainFunctionTypeResolver, Serializable {
+
+        private StaticDomainFunctionTypeResolver() {
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes) {
+            validateArgumentTypes(argumentTypes);
+            return function.getResultType();
+        }
+    }
+
 }

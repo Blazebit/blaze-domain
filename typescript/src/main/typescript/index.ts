@@ -750,6 +750,7 @@ export class DomainModel {
         };
         registerIfAbsent("FirstArgumentDomainFunctionTypeResolver", function(type: string): DomainFunctionTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
+                validateArgumentTypes(domainFunction, argumentTypes);
                 return argumentTypes.length == 0 ? null : domainModel.types[type];
             }};
         });
@@ -928,6 +929,12 @@ export class DomainModel {
                 let resultType: DomainType = null;
                 if (resultTypeResolver == null) {
                     resultType = domainTypes[func['type']];
+                    resultTypeResolver = {
+                        resolveType(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
+                            validateArgumentTypes(domainFunction, argumentTypes);
+                            return domainFunction.resultType;
+                        }
+                    };
                 }
                 funcs[func['name']] = new DomainFunction(func['name'], func['minArgCount'], func['argCount'], resultType, resultTypeResolver, doc(meta), params, meta);
             });
