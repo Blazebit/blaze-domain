@@ -37,6 +37,8 @@ import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.domain.spi.DomainSerializer;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +48,7 @@ import java.util.Map;
  */
 public class DomainModelImpl implements DomainModel, Serializable {
 
+    private final Map<String, Object> properties;
     private final Map<String, DomainType> domainTypes;
     private final Map<Class<?>, DomainType> domainTypesByJavaType;
     private final Map<DomainType, CollectionDomainType> collectionDomainTypes;
@@ -64,10 +67,11 @@ public class DomainModelImpl implements DomainModel, Serializable {
     private final EntityLiteralResolver entityLiteralResolver;
     private final CollectionLiteralResolver collectionLiteralResolver;
 
-    public DomainModelImpl(Map<String, DomainType> domainTypes, Map<Class<?>, DomainType> domainTypesByJavaType, Map<DomainType, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
+    public DomainModelImpl(Map<String, Object> properties, Map<String, DomainType> domainTypes, Map<Class<?>, DomainType> domainTypesByJavaType, Map<DomainType, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
                            Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers, Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers, Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType,
                            Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType, List<DomainSerializer<DomainModel>> domainSerializers,
                            NumericLiteralResolver numericLiteralResolver, BooleanLiteralResolver booleanLiteralResolver, StringLiteralResolver stringLiteralResolver, TemporalLiteralResolver temporalLiteralResolver, EnumLiteralResolver enumLiteralResolver, EntityLiteralResolver entityLiteralResolver, CollectionLiteralResolver collectionLiteralResolver) {
+        this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
         this.domainTypes = domainTypes;
         this.domainTypesByJavaType = domainTypesByJavaType;
         this.collectionDomainTypes = collectionDomainTypes;
@@ -244,5 +248,15 @@ public class DomainModelImpl implements DomainModel, Serializable {
         }
 
         return null;
+    }
+
+    @Override
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    @Override
+    public Object getProperty(String propertyName) {
+        return properties.get(propertyName);
     }
 }

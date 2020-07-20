@@ -20,8 +20,10 @@ import com.blazebit.domain.declarative.DeclarativeDomain;
 import com.blazebit.domain.declarative.DeclarativeDomainConfiguration;
 import com.blazebit.domain.declarative.DomainFunctions;
 import com.blazebit.domain.declarative.DomainType;
+import com.blazebit.domain.declarative.spi.ServiceProvider;
 
 import javax.enterprise.context.Dependent;
+import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.Bean;
@@ -31,6 +33,8 @@ import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -72,7 +76,37 @@ public class DeclarativeDomainExtension implements Extension {
         Class<? extends Annotation> scope = Dependent.class;
         Bean<DeclarativeDomainConfiguration> bean = new CustomBean<DeclarativeDomainConfiguration>(beanClass, types, qualifiers, scope, configuration);
 
+        configuration.getProperties().put(ServiceProvider.USER_SERVICE_PROVIDER, new BeanManagerServiceProvider(bm));
         abd.addBean(bean);
     }
-    
+
+    private static class BeanManagerServiceProvider implements ServiceProvider<BeanManagerServiceProvider> {
+
+        private final BeanManager beanManager;
+
+        public BeanManagerServiceProvider(BeanManager beanManager) {
+            this.beanManager = beanManager;
+        }
+
+        @Override
+        public <T> T getService(Class<T> serviceClass) {
+            Set<Bean<?>> beans = beanManager.getBeans(serviceClass);
+            if (beans.isEmpty()) {
+                return null;
+            }
+            Bean<?> bean = beanManager.resolve(beans);
+            CreationalContext<?> creationalContext = beanManager.createCreationalContext(bean);
+            return (T) beanManager.getReference(bean, serviceClass, creationalContext);
+        }
+
+        @Override
+        public Map<Class<?>, Object> getServices() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <T> BeanManagerServiceProvider withService(Class<T> serviceClass, T service) {
+            throw new UnsupportedOperationException();
+        }
+    }
 }

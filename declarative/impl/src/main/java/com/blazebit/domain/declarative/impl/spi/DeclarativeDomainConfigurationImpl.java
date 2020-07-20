@@ -17,6 +17,7 @@
 package com.blazebit.domain.declarative.impl.spi;
 
 import com.blazebit.annotation.AnnotationUtils;
+import com.blazebit.domain.Domain;
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.boot.model.DomainFunctionBuilder;
 import com.blazebit.domain.boot.model.EntityDomainTypeBuilder;
@@ -72,6 +73,7 @@ import java.util.Set;
 public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConfiguration {
 
     private static final MetadataDefinition[] EMPTY = new MetadataDefinition[0];
+    private final Map<String, Object> properties = new HashMap<>();
     private final Map<Class<?>, DomainType> domainTypes = new HashMap<>();
     private final Map<Class<?>, DomainFunctions> domainFunctions = new HashMap<>();
     private final DomainBuilder domainBuilder;
@@ -83,6 +85,11 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
     private final List<TypeResolverDecorator> typeResolverDecorators = new ArrayList<>();
     private TypeResolver typeResolver;
     private TypeResolver configuredTypeResolver;
+    private boolean functionCaseSensitive;
+
+    public DeclarativeDomainConfigurationImpl() {
+        this.domainBuilder = null;
+    }
 
     public DeclarativeDomainConfigurationImpl(DomainBuilder domainBuilder) {
         this.domainBuilder = domainBuilder;
@@ -152,12 +159,27 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
 
     @Override
     public DeclarativeDomainConfiguration setFunctionCaseSensitive(boolean caseSensitive) {
-        domainBuilder.setFunctionCaseSensitive(caseSensitive);
+        functionCaseSensitive = caseSensitive;
         return this;
     }
 
     @Override
     public DomainModel createDomainModel() {
+        DomainBuilder domainBuilder;
+        if (this.domainBuilder == null) {
+            domainBuilder = Domain.getDefaultProvider().createEmptyBuilder();
+            domainBuilder.getProperties().putAll(properties);
+            domainBuilder.withDefaults();
+        } else {
+            domainBuilder = this.domainBuilder;
+        }
+        return createDomainModel(domainBuilder);
+    }
+
+    @Override
+    public DomainModel createDomainModel(DomainBuilder domainBuilder) {
+        domainBuilder.getProperties().putAll(properties);
+        domainBuilder.setFunctionCaseSensitive(functionCaseSensitive);
         TypeResolver r = typeResolver == null ? TypeResolver.NOOP : typeResolver;
         for (int i = 0; i < typeResolverDecorators.size(); i++) {
             r = typeResolverDecorators.get(i).decorate(r);
@@ -166,8 +188,8 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         List<String> errors = new ArrayList<>();
         RuntimeException exception = null;
         try {
-            analyzeDomainTypes(errors);
-            analyzeDomainFunctions(errors);
+            analyzeDomainTypes(domainBuilder, errors);
+            analyzeDomainFunctions(domainBuilder, errors);
         } catch (RuntimeException ex) {
             exception = ex;
         }
@@ -209,7 +231,17 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         return this;
     }
 
-    public void analyzeDomainFunctions(List<String> errors) {
+    @Override
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    @Override
+    public Object getProperty(String propertyName) {
+        return properties.get(propertyName);
+    }
+
+    public void analyzeDomainFunctions(DomainBuilder domainBuilder, List<String> errors) {
         for (Map.Entry<Class<?>, DomainFunctions> entry : domainFunctions.entrySet()) {
             Class<?> domainFunctionsClass = entry.getKey();
             DomainFunctions domainFunctions = entry.getValue();
@@ -228,7 +260,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                     if (!method.isBridge() && method.getDeclaringClass() != Object.class) {
                         final String methodName = method.getName();
                         if (handledMethods.add(methodName)) {
-                            handleDomainFunctionMethod(domainFunctionsClass, method, implicitDiscovery, errors);
+                            handleDomainFunctionMethod(domainFunctionsClass, method, implicitDiscovery, domainBuilder, errors);
                         }
                     }
                 }
@@ -236,7 +268,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         }
     }
 
-    private void handleDomainFunctionMethod(Class<?> domainFunctionsClass, Method method, boolean implicitDiscovery, List<String> errors) {
+    private void handleDomainFunctionMethod(Class<?> domainFunctionsClass, Method method, boolean implicitDiscovery, DomainBuilder domainBuilder, List<String> errors) {
         DomainFunction domainFunction = AnnotationUtils.findAnnotation(method, DomainFunction.class);
         if (domainFunction == null) {
             if (implicitDiscovery && AnnotationUtils.findAnnotation(method, Transient.class) == null) {
@@ -455,7 +487,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         return list;
     }
 
-    private void analyzeDomainTypes(List<String> errors) {
+    private void analyzeDomainTypes(DomainBuilder domainBuilder, List<String> errors) {
         for (Map.Entry<Class<?>, DomainType> entry : domainTypes.entrySet()) {
             Class<?> domainTypeClass = entry.getKey();
             DomainType domainType = entry.getValue();

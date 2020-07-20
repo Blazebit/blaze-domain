@@ -47,6 +47,7 @@ import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
 import com.blazebit.domain.runtime.model.StaticDomainPredicateTypeResolvers;
 import com.blazebit.domain.runtime.model.StringLiteralResolver;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
+import com.blazebit.domain.spi.DomainContributor;
 import com.blazebit.domain.spi.DomainSerializer;
 
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -66,6 +68,7 @@ import java.util.TreeMap;
 public class DomainBuilderImpl implements DomainBuilder {
 
     private final DomainModel baseModel;
+    private final Map<String, Object> properties = new HashMap<>();
     private Map<String, DomainFunctionDefinitionImpl> domainFunctionDefinitions = new HashMap<>();
     private Map<String, Set<DomainOperator>> enabledOperators = new HashMap<>();
     private Map<String, Set<DomainPredicate>> enabledPredicates = new HashMap<>();
@@ -94,6 +97,7 @@ public class DomainBuilderImpl implements DomainBuilder {
 
     public DomainBuilderImpl(DomainModel domainModel) {
         this.baseModel = domainModel;
+        this.properties.putAll(domainModel.getProperties());
         this.domainSerializers.addAll(domainModel.getDomainSerializers());
         this.numericLiteralResolver = domainModel.getNumericLiteralResolver();
         this.booleanLiteralResolver = domainModel.getBooleanLiteralResolver();
@@ -174,6 +178,17 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
+    public DomainBuilder withDefaults() {
+        for (DomainContributor domainContributor : ServiceLoader.load(DomainContributor.class)) {
+            domainContributor.contribute(this);
+        }
+        for (DomainSerializer domainSerializer : ServiceLoader.load(DomainSerializer.class)) {
+            withSerializer(domainSerializer);
+        }
+        return this;
+    }
+
+    @Override
     public DomainBuilder withBooleanLiteralResolver(BooleanLiteralResolver literalResolver) {
         this.booleanLiteralResolver = literalResolver;
         return this;
@@ -213,6 +228,41 @@ public class DomainBuilderImpl implements DomainBuilder {
     public DomainBuilder withCollectionLiteralResolver(CollectionLiteralResolver literalResolver) {
         this.collectionLiteralResolver = literalResolver;
         return this;
+    }
+
+    @Override
+    public NumericLiteralResolver getNumericLiteralResolver() {
+        return numericLiteralResolver;
+    }
+
+    @Override
+    public BooleanLiteralResolver getBooleanLiteralResolver() {
+        return booleanLiteralResolver;
+    }
+
+    @Override
+    public StringLiteralResolver getStringLiteralResolver() {
+        return stringLiteralResolver;
+    }
+
+    @Override
+    public TemporalLiteralResolver getTemporalLiteralResolver() {
+        return temporalLiteralResolver;
+    }
+
+    @Override
+    public EnumLiteralResolver getEnumLiteralResolver() {
+        return enumLiteralResolver;
+    }
+
+    @Override
+    public EntityLiteralResolver getEntityLiteralResolver() {
+        return entityLiteralResolver;
+    }
+
+    @Override
+    public CollectionLiteralResolver getCollectionLiteralResolver() {
+        return collectionLiteralResolver;
     }
 
     @Override
@@ -580,6 +630,16 @@ public class DomainBuilderImpl implements DomainBuilder {
         return this;
     }
 
+    @Override
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    @Override
+    public Object getProperty(String propertyName) {
+        return properties.get(propertyName);
+    }
+
     private DomainTypeDefinitionImplementor<?> getType(DomainType type) {
         if (type instanceof EnumDomainType) {
             return getEnumType((EnumDomainType) type);
@@ -729,23 +789,24 @@ public class DomainBuilderImpl implements DomainBuilder {
         }
 
         return new DomainModelImpl(
-                domainTypes,
-                domainTypesByJavaType,
-                collectionDomainTypes,
-                domainFunctions,
-                domainFunctionTypeResolvers,
-                domainOperationTypeResolvers,
-                domainOperationTypeResolversByJavaType,
-                domainPredicateTypeResolvers,
-                domainPredicateTypeResolversByJavaType,
-                Collections.unmodifiableList(new ArrayList<>(domainSerializers)),
-                numericLiteralResolver,
-                booleanLiteralResolver,
-                stringLiteralResolver,
-                temporalLiteralResolver,
-                enumLiteralResolver,
-                entityLiteralResolver,
-                collectionLiteralResolver
+            properties,
+            domainTypes,
+            domainTypesByJavaType,
+            collectionDomainTypes,
+            domainFunctions,
+            domainFunctionTypeResolvers,
+            domainOperationTypeResolvers,
+            domainOperationTypeResolversByJavaType,
+            domainPredicateTypeResolvers,
+            domainPredicateTypeResolversByJavaType,
+            Collections.unmodifiableList(new ArrayList<>(domainSerializers)),
+            numericLiteralResolver,
+            booleanLiteralResolver,
+            stringLiteralResolver,
+            temporalLiteralResolver,
+            enumLiteralResolver,
+            entityLiteralResolver,
+            collectionLiteralResolver
         );
     }
 

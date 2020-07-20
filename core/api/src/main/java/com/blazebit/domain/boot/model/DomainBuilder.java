@@ -43,6 +43,13 @@ import java.util.Set;
 public interface DomainBuilder {
 
     /**
+     * Loads the default settings in this domain builder.
+     *
+     * @return this for chaining
+     */
+    public DomainBuilder withDefaults();
+
+    /**
      * Adds the given boolean literal resolver.
      *
      * @param literalResolver The boolean literal resolver to add
@@ -97,6 +104,62 @@ public interface DomainBuilder {
      * @return this for chaining
      */
     public DomainBuilder withCollectionLiteralResolver(CollectionLiteralResolver literalResolver);
+
+    /**
+     * Returns the boolean literal resolver.
+     *
+     * @return The boolean literal resolver
+     * @since 1.0.6
+     */
+    public BooleanLiteralResolver getBooleanLiteralResolver();
+
+    /**
+     * Returns the numeric literal resolver.
+     *
+     * @return the numeric literal resolver
+     * @since 1.0.6
+     */
+    public NumericLiteralResolver getNumericLiteralResolver();
+
+    /**
+     * Returns the string literal resolver.
+     *
+     * @return the string literal resolver
+     * @since 1.0.6
+     */
+    public StringLiteralResolver getStringLiteralResolver();
+
+    /**
+     * Returns the temporal literal resolver.
+     *
+     * @return the temporal literal resolver
+     * @since 1.0.6
+     */
+    public TemporalLiteralResolver getTemporalLiteralResolver();
+
+    /**
+     * Returns the enum literal resolver.
+     *
+     * @return the enum literal resolver
+     * @since 1.0.6
+     */
+    public EnumLiteralResolver getEnumLiteralResolver();
+
+    /**
+     * Returns the entity literal resolver.
+     *
+     * @return the entity literal resolver
+     * @since 1.0.6
+     */
+    public EntityLiteralResolver getEntityLiteralResolver();
+
+    /**
+     * Returns the collection literal resolver.
+     *
+     * @return the collection literal resolver
+     * @since 1.0.6
+     */
+    public CollectionLiteralResolver getCollectionLiteralResolver();
 
     /**
      * Adds the given function type resolver for the given function name.
@@ -404,6 +467,23 @@ public interface DomainBuilder {
      * @return the function definitions of the domain builder
      */
     public Map<String, DomainFunctionDefinition> getFunctions();
+
+    /**
+     * Returns all properties.
+     *
+     * @return All properties
+     * @since 1.0.6
+     */
+    public Map<String, Object> getProperties();
+
+    /**
+     * Returns a property value by name.
+     *
+     * @param propertyName The name of the property
+     * @return The value currently associated with that property name; may be null.
+     * @since 1.0.6
+     */
+    public Object getProperty(String propertyName);
 
     /**
      * Builds and validates the domain model as defined via this builder.

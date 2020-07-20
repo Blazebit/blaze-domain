@@ -210,8 +210,7 @@ public final class StaticDomainOperationTypeResolvers {
                 sb.append('"').append(domainModel.getType(javaType).getName()).append("\",");
             }
             sb.setCharAt(sb.length() - 1, ']');
-            sb.append(']');
-            sb.append('}');
+            sb.append(']').append('}');
             return (T) sb.toString();
         }
     }
@@ -257,12 +256,12 @@ public final class StaticDomainOperationTypeResolvers {
                 return null;
             }
             StringBuilder sb = new StringBuilder();
-            sb.append("{\"WidestDomainOperationTypeResolver\":[");
+            sb.append("{\"WidestDomainOperationTypeResolver\":[[");
             for (Class<?> javaType : javaTypes) {
                 sb.append('"').append(domainModel.getType(javaType).getName()).append("\",");
             }
             sb.setCharAt(sb.length() - 1, ']');
-            sb.append('}');
+            sb.append(']').append('}');
             return (T) sb.toString();
         }
     }

@@ -52,7 +52,7 @@ public class DeclarativeDomainBuilderProviderImpl implements DeclarativeDomainBu
 
     @Override
     public DeclarativeDomainConfiguration createDefaultConfiguration() {
-        return createDefaultConfiguration(Domain.getDefaultProvider().createDefaultBuilder());
+        return createDefaultConfiguration(null);
     }
 
     @Override

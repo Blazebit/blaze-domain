@@ -25,6 +25,8 @@ import java.util.Map;
  */
 public interface ServiceProvider<B> {
 
+    String USER_SERVICE_PROVIDER = "com.blazebit.domain.declarative.UserServiceProvider";
+
     /**
      * Returns the registered service for the given type.
      *

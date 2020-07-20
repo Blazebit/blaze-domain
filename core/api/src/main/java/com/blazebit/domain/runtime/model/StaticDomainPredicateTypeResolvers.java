@@ -164,8 +164,7 @@ public final class StaticDomainPredicateTypeResolvers {
                 sb.append('"').append(domainModel.getType(javaType).getName()).append("\",");
             }
             sb.setCharAt(sb.length() - 1, ']');
-            sb.append(']');
-            sb.append('}');
+            sb.append(']').append('}');
             return (T) sb.toString();
         }
     }

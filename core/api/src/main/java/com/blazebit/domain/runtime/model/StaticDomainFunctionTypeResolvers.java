@@ -177,12 +177,12 @@ public final class StaticDomainFunctionTypeResolvers {
                 return null;
             }
             StringBuilder sb = new StringBuilder();
-            sb.append("{\"WidestDomainFunctionTypeResolver\":[");
+            sb.append("{\"WidestDomainFunctionTypeResolver\":[[");
             for (Class<?> javaType : javaTypes) {
                 sb.append('"').append(domainModel.getType(javaType).getName()).append("\",");
             }
             sb.setCharAt(sb.length() - 1, ']');
-            sb.append('}');
+            sb.append(']').append('}');
             return (T) sb.toString();
         }
     }

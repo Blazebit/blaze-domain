@@ -599,6 +599,7 @@ export class EnumDomainTypeValue extends MetadataHolder {
 export class DomainTypeResolverException extends Error {
     constructor(message: string) {
         super(message);
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 
 }
@@ -670,6 +671,17 @@ export class DomainModel {
                 extensions[k] = f;
             }
         };
+        let validateArgumentTypes = function(domainFunction: DomainFunction, argumentTypes: DomainType[]) {
+            for (var i = 0; i < argumentTypes.length; i++) {
+                let functionArgument = domainFunction.arguments[i];
+                if (functionArgument.type == null || argumentTypes[i] == null) {
+                    continue;
+                }
+                if (functionArgument.type != argumentTypes[i]) {
+                    throw new DomainTypeResolverException("Unsupported argument type '" + argumentTypes[i] + "' for argument '" + functionArgument + "' of function '" + domainFunction.name + "'! Expected type: " + functionArgument.type);
+                }
+            }
+        };
         registerIfAbsent("FixedDomainPredicateTypeResolver", function(type: string): DomainPredicateTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
                 return domainModel.types[type];
@@ -737,21 +749,34 @@ export class DomainModel {
                 return domainModel.types[returningType];
             }};
         });
-        let validateArgumentTypes = function(domainFunction: DomainFunction, argumentTypes: DomainType[]) {
-            for (var i = 0; i < argumentTypes.length; i++) {
-                let functionArgument = domainFunction.arguments[i];
-                if (functionArgument.type == null || argumentTypes[i] == null) {
-                    continue;
-                }
-                if (functionArgument.type != argumentTypes[i]) {
-                    throw new DomainTypeResolverException("Unsupported argument type '" + argumentTypes[i] + "' for argument '" + functionArgument + "' of function '" + domainFunction.name + "'! Expected type: " + functionArgument.type);
-                }
+        registerIfAbsent("DelegatingEntityLiteralResolver", function(main: any, delegate: any): LiteralResolver {
+            let mainResolver: LiteralResolver = resolver(main);
+            let delegateResolver: LiteralResolver = null;
+            if (delegate != null) {
+                delegateResolver = resolver(delegate);
             }
-        };
-        registerIfAbsent("FirstArgumentDomainFunctionTypeResolver", function(type: string): DomainFunctionTypeResolver {
+            return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
+                let result = mainResolver.resolveLiteral(domainModel, kind, value);
+                if (result == null) {
+                    return delegateResolver == null ? null : delegateResolver.resolveLiteral(domainModel, kind, value);
+                }
+                return result;
+            }};
+        });
+        registerIfAbsent("FixedEntityLiteralResolver", function(supportedEntityTypeIds: StringMap<string>): LiteralResolver {
+            return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
+                let entityLiteral = value as EntityLiteral;
+                let idName = supportedEntityTypeIds[entityLiteral.entityType.name]
+                if (idName == null || entityLiteral.attributeValues[idName] == null) {
+                    return null;
+                }
+                return entityLiteral.entityType;
+            }};
+        });
+        registerIfAbsent("FirstArgumentDomainFunctionTypeResolver", function(): DomainFunctionTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
                 validateArgumentTypes(domainFunction, argumentTypes);
-                return argumentTypes.length == 0 ? null : domainModel.types[type];
+                return argumentTypes.length == 0 ? null : argumentTypes[0];
             }};
         });
         registerIfAbsent("FixedDomainFunctionTypeResolver", function(type: string): DomainFunctionTypeResolver {
@@ -847,7 +872,7 @@ export class DomainModel {
                     }
                 }
                 if (typeResolver != null) {
-                    return typeResolver(args);
+                    return typeResolver(...args);
                 }
             }
             return null;

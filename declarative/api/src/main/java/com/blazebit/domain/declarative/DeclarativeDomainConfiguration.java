@@ -16,6 +16,7 @@
 
 package com.blazebit.domain.declarative;
 
+import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.declarative.spi.DeclarativeAttributeMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeFunctionMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeFunctionParameterMetadataProcessor;
@@ -27,6 +28,7 @@ import com.blazebit.domain.runtime.model.DomainModel;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Christian Beikov
@@ -139,9 +141,35 @@ public interface DeclarativeDomainConfiguration extends ServiceProvider<Declarat
     DeclarativeDomainConfiguration setFunctionCaseSensitive(boolean caseSensitive);
 
     /**
+     * Returns all properties.
+     *
+     * @return All properties
+     * @since 1.0.6
+     */
+    Map<String, Object> getProperties();
+
+    /**
+     * Returns a property value by name.
+     *
+     * @param propertyName The name of the property
+     * @return The value currently associated with that property name; may be null.
+     * @since 1.0.6
+     */
+    Object getProperty(String propertyName);
+
+    /**
      * Builds and validates the domain model as defined via this builder.
      *
      * @return The domain model
      */
     DomainModel createDomainModel();
+
+    /**
+     * Builds and validates the domain model as defined via this builder.
+     *
+     * @param domainBuilder The domain builder on which to apply the declarative configuration
+     * @return The domain model
+     * @since 1.0.6
+     */
+    DomainModel createDomainModel(DomainBuilder domainBuilder);
 }

@@ -241,6 +241,23 @@ public interface DomainModel {
     public List<DomainSerializer<DomainModel>> getDomainSerializers();
 
     /**
+     * Returns all properties.
+     *
+     * @return All properties
+     * @since 1.0.6
+     */
+    public Map<String, Object> getProperties();
+
+    /**
+     * Returns a property value by name.
+     *
+     * @param propertyName The name of the property
+     * @return The value currently associated with that property name; may be null.
+     * @since 1.0.6
+     */
+    public Object getProperty(String propertyName);
+
+    /**
      * Serializes the domain model to the given target type with the given format.
      *
      * @param targetType The target type

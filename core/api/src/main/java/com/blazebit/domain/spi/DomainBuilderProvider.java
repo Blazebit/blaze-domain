@@ -45,7 +45,7 @@ public interface DomainBuilderProvider {
     public DomainBuilder createBuilder(DomainModel domainModel);
 
     /**
-     * Creates an empty domain builder and returns it after running {@link DomainContributor} on it.
+     * Creates an empty domain builder and returns it after running {@link DomainBuilder#withDefaults()} on it.
      *
      * @return the domain builder
      */

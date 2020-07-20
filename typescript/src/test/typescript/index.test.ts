@@ -676,7 +676,7 @@ describe('Test parse ', function() {
                     typeOps: {"Integer": ["P", "M", "%"], "Numeric": ["%"]}
                 },
                 {
-                    resolver: {"WidestDomainOperationTypeResolver": ["Numeric", "Integer"]},
+                    resolver: {"WidestDomainOperationTypeResolver": [["Numeric", "Integer"]]},
                     typeOps: {"Integer": ["+", "-", "*"], "Numeric": ["+", "-", "*"]}
                 }
             ],
