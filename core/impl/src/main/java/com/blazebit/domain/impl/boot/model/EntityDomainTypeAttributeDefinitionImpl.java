@@ -47,6 +47,7 @@ public class EntityDomainTypeAttributeDefinitionImpl extends MetadataDefinitionH
     }
 
     public EntityDomainTypeAttributeDefinitionImpl(EntityDomainTypeDefinitionImpl owner, EntityDomainTypeAttribute attribute) {
+        super(attribute);
         this.owner = owner;
         this.name = attribute.getName();
         if (attribute.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {

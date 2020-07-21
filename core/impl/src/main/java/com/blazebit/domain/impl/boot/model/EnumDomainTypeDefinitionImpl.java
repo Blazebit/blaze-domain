@@ -48,7 +48,7 @@ public class EnumDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<E
         this.name = enumDomainType.getName();
         this.javaType = enumDomainType.getJavaType();
         for (Map.Entry<String, EnumDomainTypeValue> entry : enumDomainType.getEnumValues().entrySet()) {
-            enumValues.put(entry.getKey(), new EnumDomainTypeValueDefinitionImpl(this, entry.getValue().getValue()));
+            enumValues.put(entry.getKey(), new EnumDomainTypeValueDefinitionImpl(this, entry.getValue()));
         }
     }
 

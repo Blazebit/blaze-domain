@@ -36,6 +36,12 @@ public class EnumDomainTypeValueDefinitionImpl extends MetadataDefinitionHolderI
         this.value = value;
     }
 
+    public EnumDomainTypeValueDefinitionImpl(EnumDomainTypeDefinitionImpl owner, EnumDomainTypeValue value) {
+        super(value);
+        this.owner = owner;
+        this.value = value.getValue();
+    }
+
     @Override
     public String getValue() {
         return value;

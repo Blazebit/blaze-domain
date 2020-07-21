@@ -50,6 +50,7 @@ public class DomainFunctionArgumentDefinitionImpl extends MetadataDefinitionHold
     }
 
     public DomainFunctionArgumentDefinitionImpl(DomainFunctionDefinitionImpl owner, DomainFunctionArgument argument) {
+        super(argument);
         this.owner = owner;
         this.name = argument.getName();
         this.index = argument.getPosition();

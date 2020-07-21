@@ -50,6 +50,7 @@ public class CollectionDomainTypeDefinitionImpl extends MetadataDefinitionHolder
     }
 
     public CollectionDomainTypeDefinitionImpl(CollectionDomainType collectionDomainType) {
+        super(collectionDomainType);
         this.name = collectionDomainType.getName();
         this.javaType = collectionDomainType.getJavaType();
         this.elementTypeName = collectionDomainType.getElementType().getName();

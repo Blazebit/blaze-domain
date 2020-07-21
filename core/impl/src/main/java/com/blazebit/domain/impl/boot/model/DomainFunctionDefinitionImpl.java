@@ -51,6 +51,7 @@ public class DomainFunctionDefinitionImpl extends MetadataDefinitionHolderImpl<D
     }
 
     public DomainFunctionDefinitionImpl(DomainFunction domainFunction) {
+        super(domainFunction);
         this.name = domainFunction.getName();
         this.minArgumentCount = domainFunction.getMinArgumentCount();
         this.argumentCount = domainFunction.getArgumentCount();
