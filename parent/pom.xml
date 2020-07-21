@@ -3,7 +3,7 @@
     <parent>
         <artifactId>blaze-domain</artifactId>
         <groupId>com.blazebit</groupId>
-        <version>1.0.7-SNAPSHOT</version>
+        <version>1.0.7</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <packaging>pom</packaging>
