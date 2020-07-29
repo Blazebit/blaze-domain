@@ -79,7 +79,7 @@ public abstract class AbstractDomainTypeImpl implements DomainType, DomainTypeDe
         }
         Map<Class<?>, MetadataDefinition<?>> map = new HashMap<>(metadata.size());
         for (Map.Entry<Class<?>, Object> entry : metadata.entrySet()) {
-            map.put(entry.getKey(), new RuntimeMetadataDefinition(entry.getValue()));
+            map.put(entry.getKey(), new RuntimeMetadataDefinition(javaType, entry.getValue()));
         }
         return map;
     }

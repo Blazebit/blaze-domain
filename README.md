@@ -33,6 +33,7 @@ Blaze-Domain has support for
 * Extensible metadata for every domain element
 * Metadata extension for JPA related models
 * Declarative definition of domain models
+* TypeScript implementation for the client side validation of models
 
 How to use it?
 ==============
@@ -41,7 +42,7 @@ Blaze-Domain is split up into different modules. We recommend that you define a 
 
 ```xml
 <properties>
-    <blaze-domain.version>1.0.2</blaze-domain.version>
+    <blaze-domain.version>1.0.8</blaze-domain.version>
 </properties>
 ```
 
@@ -151,7 +152,7 @@ The domain model can then be queried.
 
 ```java
 // Returns a basic domain type for the java type String
-((EntityDomainType) domain.getType("Cat")).getAttribute("name").getType();
+domain.getEntityType("Cat").getAttribute("name").getType();
 ```
 
 This alone is not very spectacular, but the declarative module allows to interpret class structures as domain types which saves a lot of typing and is safer.

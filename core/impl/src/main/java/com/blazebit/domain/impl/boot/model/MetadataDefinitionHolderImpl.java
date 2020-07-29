@@ -37,7 +37,7 @@ public class MetadataDefinitionHolderImpl<X extends MetadataDefinitionHolder<X>>
 
     public MetadataDefinitionHolderImpl(MetadataHolder metadataHolder) {
         for (Map.Entry<Class<?>, Object> entry : metadataHolder.getMetadata().entrySet()) {
-            metadataDefinitions.put(entry.getKey(), new RuntimeMetadataDefinition(entry.getValue()));
+            metadataDefinitions.put(entry.getKey(), new RuntimeMetadataDefinition(entry.getKey(), entry.getValue()));
         }
     }
 

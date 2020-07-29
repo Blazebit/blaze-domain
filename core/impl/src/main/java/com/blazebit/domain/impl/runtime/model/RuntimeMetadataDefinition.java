@@ -27,19 +27,21 @@ import java.io.Serializable;
  */
 public class RuntimeMetadataDefinition implements MetadataDefinition<Object>, Serializable {
 
+    private final Class<?> type;
     private final Object object;
 
-    public RuntimeMetadataDefinition(Object object) {
+    public RuntimeMetadataDefinition(Class<?> type, Object object) {
+        this.type = type;
         this.object = object;
     }
 
     @Override
     public Class<Object> getJavaType() {
-        return (Class<Object>) object.getClass();
+        return (Class<Object>) type;
     }
 
     @Override
     public Object build(MetadataDefinitionHolder<?> definitionHolder) {
-        throw new UnsupportedOperationException();
+        return object;
     }
 }
