@@ -193,7 +193,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         } catch (RuntimeException ex) {
             exception = ex;
         }
-        if (!errors.isEmpty()) {
+        if (!errors.isEmpty() || exception != null) {
             StringBuilder sb = new StringBuilder();
             sb.append("There are error(s) the declarative domain configuration!");
 
