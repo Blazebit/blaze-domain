@@ -204,7 +204,11 @@ export class CollectionDomainType extends DomainType {
     }
 
     toString(): string {
-        return "Collection[" + this.elementType + "]";;
+        if (this.elementType == null) {
+            return "Collection";
+        } else {
+            return "Collection[" + this.elementType + "]";
+        }
     }
 }
 
@@ -933,8 +937,10 @@ export class DomainModel {
                 }
             } else if (type['kind'] == 'C') {
                 let collectionType = domainTypes[name] as CollectionDomainType;
-                let prefix = 'Collection<';
-                collectionType.elementType = domainTypes[name.substring(prefix.length + 1, name.length - 1)];
+                let prefix = 'Collection[';
+                if (name.length > prefix.length) {
+                    collectionType.elementType = domainTypes[name.substring(prefix.length + 1, name.length - 1)];
+                }
             }
         });
         var funcs: StringMap<DomainFunction> = {};

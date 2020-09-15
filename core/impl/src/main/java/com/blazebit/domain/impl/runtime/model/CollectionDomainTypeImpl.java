@@ -82,6 +82,10 @@ public class CollectionDomainTypeImpl extends AbstractDomainTypeImpl implements 
 
     @Override
     public String toString() {
-        return "Collection[" + elementType.toString() + "]";
+        if (elementType == null) {
+            return "Collection";
+        } else {
+            return "Collection[" + elementType.toString() + "]";
+        }
     }
 }

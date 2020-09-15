@@ -75,6 +75,17 @@ public class EntityDomainTypeBuilderImpl implements EntityDomainTypeBuilder {
     }
 
     @Override
+    public EntityDomainTypeBuilder addCollectionAttribute(String attributeName, MetadataDefinition<?>... metadataDefinitions) {
+        EntityDomainTypeAttributeDefinitionImpl attributeDefinition = new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, null, null, true);
+        for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
+            attributeDefinition.withMetadataDefinition(metadataDefinition);
+        }
+
+        domainTypeDefinition.addAttribute(attributeDefinition);
+        return this;
+    }
+
+    @Override
     public EntityDomainTypeBuilderImpl addCollectionAttribute(String attributeName, String typeName) {
         domainTypeDefinition.addAttribute(new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, typeName, null, true));
         return this;

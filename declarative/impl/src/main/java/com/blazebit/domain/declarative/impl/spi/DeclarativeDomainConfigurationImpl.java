@@ -56,6 +56,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -364,7 +365,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 elementType = parameter.getType().getComponentType();
                 elementTypeName = "";
             } else {
-                type = parameter.getType();
+                type = void.class;
                 typeName = "";
                 elementType = null;
                 elementTypeName = "";
@@ -685,108 +686,126 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         if (!typeName.isEmpty()) {
             if ("Collection".equals(typeName)) {
                 if (elementTypeName.isEmpty()) {
-                    return ResolvedType.collection(elementType);
+                    if (elementType != Object.class && elementType != void.class) {
+                        return ResolvedType.collection(elementType);
+                    }
                 } else {
                     return ResolvedType.collection(elementTypeName);
                 }
             } else {
                 return ResolvedType.basic(typeName);
             }
-        } else {
-            Class<?> returnType;
-            if (configuredTypeResolver != null) {
-                Type t;
-                if (type == void.class) {
-                    if (parameter == null) {
-                        t = method.getGenericReturnType();
-                    } else {
-                        t = parameter.getParameterizedType();
-                    }
+        } else if (configuredTypeResolver != null) {
+            Type t;
+            if (type == void.class) {
+                if (parameter == null) {
+                    t = method.getGenericReturnType();
                 } else {
-                    t = type;
+                    t = parameter.getParameterizedType();
                 }
-                Object resolvedType = configuredTypeResolver.resolve(baseClass, t);
-                if (resolvedType == Object.class) {
-                    return null;
+            } else {
+                t = type;
+            }
+            Object resolvedType = configuredTypeResolver.resolve(baseClass, t);
+            if (resolvedType == Object.class) {
+                return null;
+            }
+            if (resolvedType == null && !(t instanceof Class<?>)) {
+                // If the type could not be resolved, we try to resolve to a class type first and then invoke the resolver again
+                if (parameter == null) {
+                    resolvedType = configuredTypeResolver.resolve(baseClass, ReflectionUtils.getResolvedMethodReturnType(baseClass, method));
+                } else {
+                    int idx = Arrays.asList(method.getParameters()).indexOf(parameter);
+                    resolvedType = configuredTypeResolver.resolve(baseClass, ReflectionUtils.getResolvedMethodParameterTypes(baseClass, method)[idx]);
                 }
-                if (resolvedType == null && !(t instanceof Class<?>)) {
-                    // If the type could not be resolved, we try to resolve to a class type first and then invoke the resolver again
-                    if (parameter == null) {
-                        resolvedType = configuredTypeResolver.resolve(baseClass, ReflectionUtils.getResolvedMethodReturnType(baseClass, method));
-                    } else {
-                        int idx = Arrays.asList(method.getParameters()).indexOf(parameter);
-                        resolvedType = configuredTypeResolver.resolve(baseClass, ReflectionUtils.getResolvedMethodParameterTypes(baseClass, method)[idx]);
+            }
+            if (resolvedType instanceof String) {
+                return ResolvedType.basic((String) resolvedType);
+            } else if (resolvedType instanceof Class<?>) {
+                return ResolvedType.basic((Class<?>) resolvedType);
+            } else if (resolvedType instanceof ParameterizedType) {
+                ParameterizedType parameterizedType = (ParameterizedType) resolvedType;
+                Type rawType = parameterizedType.getRawType();
+                if ("Collection".equals(rawType.getTypeName()) || rawType instanceof Class<?> && Collection.class.isAssignableFrom((Class<?>) rawType)) {
+                    Type[] typeArguments = parameterizedType.getActualTypeArguments();
+                    if (typeArguments.length != 0 && !(typeArguments[0] instanceof WildcardType) && typeArguments[0] != Object.class) {
+                        if (typeArguments[0] instanceof Class<?>) {
+                            return ResolvedType.collection((Class<?>) typeArguments[0]);
+                        } else {
+                            return ResolvedType.collection(typeArguments[0].getTypeName());
+                        }
                     }
+                    return ResolvedType.collection();
+                } else if (rawType instanceof Class<?>) {
+                    return ResolvedType.basic((Class<?>) rawType);
                 }
+            }
+        }
+
+        Class<?> returnType;
+        if (type == Object.class) {
+            return null;
+        } else if (type == void.class) {
+            if (parameter == null) {
+                returnType = ReflectionUtils.getResolvedMethodReturnType(baseClass, method);
+            } else {
+                returnType = parameter.getType();
+            }
+            elementType = resolveElementType(baseClass, method, parameter, returnType);
+        } else {
+            returnType = type;
+            elementType = resolveElementType(baseClass, method, parameter, returnType);
+        }
+        if (Object.class == returnType) {
+            return null;
+        } else if (Collection.class.isAssignableFrom(returnType)) {
+            if (configuredTypeResolver != null) {
+                Object resolvedType = configuredTypeResolver.resolve(baseClass, elementType);
+                if (resolvedType instanceof String) {
+                    return ResolvedType.collection((String) resolvedType);
+                } else if (resolvedType instanceof Class<?>) {
+                    return ResolvedType.collection((Class<?>) resolvedType);
+                }
+            }
+            return ResolvedType.collection(elementType);
+        } else {
+            if (configuredTypeResolver != null) {
+                Object resolvedType = configuredTypeResolver.resolve(baseClass, returnType);
                 if (resolvedType instanceof String) {
                     return ResolvedType.basic((String) resolvedType);
                 } else if (resolvedType instanceof Class<?>) {
                     return ResolvedType.basic((Class<?>) resolvedType);
-                } else if (resolvedType instanceof ParameterizedType) {
-                    ParameterizedType parameterizedType = (ParameterizedType) resolvedType;
-                    Type rawType = parameterizedType.getRawType();
-                    if ("Collection".equals(rawType.getTypeName()) || rawType instanceof Class<?> && Collection.class.isAssignableFrom((Class<?>) rawType)) {
-                        Type[] typeArguments = parameterizedType.getActualTypeArguments();
-                        if (typeArguments.length > 0) {
-                            if (typeArguments[0] instanceof Class<?>) {
-                                return ResolvedType.collection((Class<?>) typeArguments[0]);
-                            } else {
-                                return ResolvedType.collection(typeArguments[0].getTypeName());
-                            }
-                        }
-                    } else if (rawType instanceof Class<?>) {
-                        return ResolvedType.basic((Class<?>) rawType);
-                    }
                 }
             }
+            return ResolvedType.basic(returnType);
+        }
+    }
 
-            if (type == Object.class) {
-                return null;
-            } else if (type == void.class) {
-                if (parameter == null) {
-                    returnType = ReflectionUtils.getResolvedMethodReturnType(baseClass, method);
-                    if (Collection.class.isAssignableFrom(returnType)) {
-                        Class<?>[] typeArguments = ReflectionUtils.getResolvedMethodReturnTypeArguments(baseClass, method);
-                        elementType = typeArguments[0];
-                    } else {
-                        elementType = null;
-                    }
-                } else {
-                    returnType = parameter.getType();
-                    if (Collection.class.isAssignableFrom(returnType)) {
-                        Type[] typeArguments = ((ParameterizedType) parameter.getParameterizedType()).getActualTypeArguments();
-                        elementType = (Class<?>) ReflectionUtils.resolve(baseClass, typeArguments[0]);
-                    } else {
-                        elementType = null;
-                    }
-                }
+    private Class<?> resolveElementType(Class<?> baseClass, Method method, Parameter parameter, Class<?> returnType) {
+        Class<?> elementType;
+        if (parameter == null) {
+            if (Collection.class.isAssignableFrom(returnType)) {
+                Class<?>[] typeArguments = ReflectionUtils.getResolvedMethodReturnTypeArguments(baseClass, method);
+                elementType = typeArguments.length == 0 || typeArguments[0] == Object.class ? null : typeArguments[0];
             } else {
-                returnType = type;
+                elementType = null;
             }
-            if (Object.class == returnType) {
-                return null;
-            } else if (Collection.class.isAssignableFrom(returnType)) {
-                if (configuredTypeResolver != null) {
-                    Object resolvedType = configuredTypeResolver.resolve(baseClass, elementType);
-                    if (resolvedType instanceof String) {
-                        return ResolvedType.collection((String) resolvedType);
-                    } else if (resolvedType instanceof Class<?>) {
-                        return ResolvedType.collection((Class<?>) resolvedType);
+        } else {
+            if (Collection.class.isAssignableFrom(returnType)) {
+                Type parameterType = parameter.getParameterizedType();
+                elementType = null;
+                if (parameterType instanceof ParameterizedType) {
+                    Type[] typeArguments = ((ParameterizedType) parameterType).getActualTypeArguments();
+                    Type resolvedType = ReflectionUtils.resolve(baseClass, typeArguments[0]);
+                    if (resolvedType != Object.class) {
+                        elementType = (Class<?>) resolvedType;
                     }
                 }
-                return ResolvedType.collection(elementType);
             } else {
-                if (configuredTypeResolver != null) {
-                    Object resolvedType = configuredTypeResolver.resolve(baseClass, returnType);
-                    if (resolvedType instanceof String) {
-                        return ResolvedType.basic((String) resolvedType);
-                    } else if (resolvedType instanceof Class<?>) {
-                        return ResolvedType.basic((Class<?>) resolvedType);
-                    }
-                }
-                return ResolvedType.basic(returnType);
+                elementType = null;
             }
         }
+        return elementType;
     }
 
     /**
@@ -863,6 +882,10 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
 
         public static ResolvedType basic(Class<?> type) {
             return new ResolvedType("", type, false);
+        }
+
+        public static ResolvedType collection() {
+            return new ResolvedType(null, null, true);
         }
 
         public static ResolvedType collection(String typeName) {

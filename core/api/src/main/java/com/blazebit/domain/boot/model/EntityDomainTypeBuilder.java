@@ -102,6 +102,15 @@ public interface EntityDomainTypeBuilder {
     public EntityDomainTypeBuilder addAttribute(String attributeName, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions);
 
     /**
+     * Adds a collection attribute with the given name and a generic element type as well as metadata definitions.
+     *
+     * @param attributeName The attribute name
+     * @param metadataDefinitions The metadata for the attribute
+     * @return this for chaining
+     */
+    public EntityDomainTypeBuilder addCollectionAttribute(String attributeName, MetadataDefinition<?>... metadataDefinitions);
+
+    /**
      * Adds a collection attribute with the given name and element type name.
      *
      * @param attributeName The attribute name

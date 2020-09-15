@@ -58,9 +58,13 @@ public class DomainBuilderTest {
         DomainBuilder domainBuilder = createDefaultDomainBuilder();
         domainBuilder.createEntityType("Test")
                 .addCollectionAttribute("names", "String", MetadataSample.INSTANCE)
+                .addCollectionAttribute("objects", MetadataSample.INSTANCE)
                 .withMetadata(MetadataSample.INSTANCE)
                 .build();
-
+        domainBuilder.createFunction("size")
+            .withCollectionArgument("collection")
+            .withResultType("String")
+            .build();
         // When
         DomainModel domainModel = domainBuilder.build();
 
@@ -68,8 +72,11 @@ public class DomainBuilderTest {
         EntityDomainType entityDomainType = (EntityDomainType) domainModel.getType("Test");
         Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType.getMetadata(MetadataSample.class));
         Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType.getAttribute("names").getMetadata(MetadataSample.class));
+        Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType.getAttribute("objects").getMetadata(MetadataSample.class));
         Assert.assertEquals("Collection[String]", entityDomainType.getAttribute("names").getType().getName());
+        Assert.assertEquals("Collection", entityDomainType.getAttribute("objects").getType().getName());
         Assert.assertEquals("String", ((CollectionDomainType) entityDomainType.getAttribute("names").getType()).getElementType().getName());
+        Assert.assertNull(((CollectionDomainType) entityDomainType.getAttribute("objects").getType()).getElementType());
     }
 
     @Test

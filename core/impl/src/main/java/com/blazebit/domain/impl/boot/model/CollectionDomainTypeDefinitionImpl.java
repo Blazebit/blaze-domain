@@ -44,8 +44,8 @@ public class CollectionDomainTypeDefinitionImpl extends MetadataDefinitionHolder
     public CollectionDomainTypeDefinitionImpl(String name, Class<?> javaType, DomainTypeDefinition<?> elementTypeDefinition) {
         this.name = name;
         this.javaType = javaType;
-        this.elementTypeName = elementTypeDefinition.getName();
-        this.elementTypeClass = elementTypeDefinition.getJavaType();
+        this.elementTypeName = elementTypeDefinition == null ? null : elementTypeDefinition.getName();
+        this.elementTypeClass = elementTypeDefinition == null ? null : elementTypeDefinition.getJavaType();
         this.elementTypeDefinition = elementTypeDefinition;
     }
 
@@ -53,8 +53,8 @@ public class CollectionDomainTypeDefinitionImpl extends MetadataDefinitionHolder
         super(collectionDomainType);
         this.name = collectionDomainType.getName();
         this.javaType = collectionDomainType.getJavaType();
-        this.elementTypeName = collectionDomainType.getElementType().getName();
-        this.elementTypeClass = collectionDomainType.getElementType().getJavaType();
+        this.elementTypeName = collectionDomainType.getElementType() == null ? null : collectionDomainType.getElementType().getName();
+        this.elementTypeClass = collectionDomainType.getElementType() == null ? null : collectionDomainType.getElementType().getJavaType();
     }
 
     @Override
@@ -75,7 +75,14 @@ public class CollectionDomainTypeDefinitionImpl extends MetadataDefinitionHolder
     @Override
     public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context) {
         this.domainType = null;
-        elementTypeDefinition = elementTypeName == null ? null : domainBuilder.getDomainTypeDefinition(elementTypeName);
+        if (elementTypeName == null) {
+            elementTypeDefinition = null;
+            if (elementTypeClass == null) {
+                return;
+            }
+        } else {
+            elementTypeDefinition = domainBuilder.getDomainTypeDefinition(elementTypeName);
+        }
         if (elementTypeDefinition == null) {
             elementTypeDefinition = domainBuilder.getDomainTypeDefinition(elementTypeClass);
             if (elementTypeDefinition == null) {

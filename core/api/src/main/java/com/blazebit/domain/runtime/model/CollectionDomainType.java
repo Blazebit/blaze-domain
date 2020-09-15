@@ -25,9 +25,9 @@ package com.blazebit.domain.runtime.model;
 public interface CollectionDomainType extends DomainType {
 
     /**
-     * The domain type of the collection element.
+     * The domain type of the collection element or <code>null</code> if any type is allowed.
      *
-     * @return the domain type of the collection element
+     * @return the domain type of the collection element or <code>null</code>
      */
     public DomainType getElementType();
 

@@ -151,19 +151,19 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     public CollectionDomainTypeDefinitionImpl getCollectionDomainTypeDefinition(DomainTypeDefinition<?> typeDefinition) {
+        CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition;
         if (typeDefinition == null) {
-            return null;
-        }
-        CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition = collectionDomainTypeDefinitions.get(typeDefinition.getName());
-        if (collectionDomainTypeDefinition == null && typeDefinition.getJavaType() != null) {
-            collectionDomainTypeDefinition = collectionDomainTypeDefinitionsByJavaType.get(typeDefinition.getJavaType());
-        }
-        if (collectionDomainTypeDefinition == null) {
-            if (baseModel != null) {
-                collectionDomainTypeDefinition = collectionDomainTypeDefinitions.get(typeDefinition.getName());
-                if (collectionDomainTypeDefinition == null && typeDefinition.getJavaType() != null) {
-                    collectionDomainTypeDefinition = collectionDomainTypeDefinitionsByJavaType.get(typeDefinition.getJavaType());
-                }
+            collectionDomainTypeDefinition = collectionDomainTypeDefinitions.get(null);
+            if (collectionDomainTypeDefinition == null) {
+                collectionDomainTypeDefinition = new CollectionDomainTypeDefinitionImpl("Collection", Collection.class, null);
+                collectionDomainTypeDefinitions.put(null, collectionDomainTypeDefinition);
+                collectionDomainTypeDefinitionsByJavaType.put(null, collectionDomainTypeDefinition);
+                withPredicate(collectionDomainTypeDefinition.getName(), DomainPredicate.COLLECTION);
+            }
+        } else {
+            collectionDomainTypeDefinition = collectionDomainTypeDefinitions.get(typeDefinition.getName());
+            if (collectionDomainTypeDefinition == null && typeDefinition.getJavaType() != null) {
+                collectionDomainTypeDefinition = collectionDomainTypeDefinitionsByJavaType.get(typeDefinition.getJavaType());
             }
             if (collectionDomainTypeDefinition == null) {
                 collectionDomainTypeDefinition = new CollectionDomainTypeDefinitionImpl("Collection[" + typeDefinition.getName() + "]", Collection.class, typeDefinition);
@@ -679,6 +679,10 @@ public class DomainBuilderImpl implements DomainBuilder {
         for (DomainFunctionDefinitionImpl domainFunctionDefinition : domainFunctionDefinitions.values()) {
             domainFunctionDefinition.bindTypes(this, context);
         }
+        // Collection types might be added during type binding of functions or entity types so this must be done last
+        for (CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition : collectionDomainTypeDefinitions.values()) {
+            collectionDomainTypeDefinition.bindTypes(this, context);
+        }
 
         Map<String, DomainType> domainTypes = new HashMap<>(domainTypeDefinitions.size());
         Map<Class<?>, DomainType> domainTypesByJavaType = new HashMap<>(domainTypeDefinitions.size());
@@ -696,10 +700,10 @@ public class DomainBuilderImpl implements DomainBuilder {
                 if (typeDefinition.getJavaType() != null) {
                     domainTypesByJavaType.put(domainType.getJavaType(), domainType);
                 }
-                CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition = getCollectionDomainTypeDefinition(typeDefinition);
-                collectionDomainTypeDefinition.bindTypes(this, context);
+            }
+            for (CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition : collectionDomainTypeDefinitions.values()) {
                 CollectionDomainType collectionDomainType = collectionDomainTypeDefinition.getType(context);
-                collectionDomainTypes.put(domainType, collectionDomainType);
+                collectionDomainTypes.put(collectionDomainType.getElementType(), collectionDomainType);
                 domainTypes.put(collectionDomainType.getName(), collectionDomainType);
             }
         }

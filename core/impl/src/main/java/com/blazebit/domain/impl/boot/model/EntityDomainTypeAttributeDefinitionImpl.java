@@ -52,8 +52,13 @@ public class EntityDomainTypeAttributeDefinitionImpl extends MetadataDefinitionH
         this.name = attribute.getName();
         if (attribute.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
             CollectionDomainType collectionDomainType = (CollectionDomainType) attribute.getType();
-            this.typeName = collectionDomainType.getElementType().getName();
-            this.javaType = collectionDomainType.getElementType().getJavaType();
+            if (collectionDomainType.getElementType() == null) {
+                this.typeName = null;
+                this.javaType = null;
+            } else {
+                this.typeName = collectionDomainType.getElementType().getName();
+                this.javaType = collectionDomainType.getElementType().getJavaType();
+            }
             this.collection = true;
         } else {
             this.typeName = attribute.getType().getName();
@@ -93,7 +98,15 @@ public class EntityDomainTypeAttributeDefinitionImpl extends MetadataDefinitionH
 
     public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context) {
         this.attribute = null;
-        typeDefinition = typeName == null ? null : domainBuilder.getDomainTypeDefinition(typeName);
+        if (typeName == null) {
+            typeDefinition = null;
+            if (collection && javaType == null) {
+                typeDefinition = domainBuilder.getCollectionDomainTypeDefinition(null);
+                return;
+            }
+        } else {
+            typeDefinition = domainBuilder.getDomainTypeDefinition(typeName);
+        }
         if (typeDefinition == null) {
             typeDefinition = domainBuilder.getDomainTypeDefinition(javaType);
             if (typeDefinition == null) {

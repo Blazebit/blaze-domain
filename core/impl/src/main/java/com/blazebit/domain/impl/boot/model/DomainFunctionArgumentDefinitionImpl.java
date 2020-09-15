@@ -69,7 +69,7 @@ public class DomainFunctionArgumentDefinitionImpl extends MetadataDefinitionHold
 
     public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context) {
         if (typeName == null && javaType == null) {
-            typeDefinition = null;
+            typeDefinition = collection ? domainBuilder.getCollectionDomainTypeDefinition(null) : null;
         } else {
             typeDefinition = typeName == null ? null : domainBuilder.getDomainTypeDefinition(typeName);
             if (typeDefinition == null) {

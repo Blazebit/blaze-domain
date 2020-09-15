@@ -69,7 +69,7 @@ describe('Test parse ', function() {
                         { name: "id", type: "Integer", meta: [] },
                         { name: "name", type: "String", meta: [] },
                         { name: "writer", type: "User", meta: [] },
-                        { name: "comments", type: "Collection<Comment>", meta: [] }
+                        { name: "comments", type: "Collection[Comment]", meta: [] }
                     ]
                 },
                 {
@@ -84,7 +84,13 @@ describe('Test parse ', function() {
                     ]
                 },
                 {
-                    name: "Collection<Comment>",
+                    name: "Collection",
+                    kind: "C",
+                    preds: ["C"],
+                    meta: []
+                },
+                {
+                    name: "Collection[Comment]",
                     kind: "C",
                     preds: ["C"],
                     meta: []
@@ -179,6 +185,18 @@ describe('Test parse ', function() {
                             ]
                         }
                     ]
+                },
+                {
+                    name: "SIZE",
+                    argCount: 1,
+                    minArgCount: 1,
+                    type: "Integer",
+                    args: [
+                        {
+                            name: "collection",
+                            type: "Collection"
+                        }
+                    ]
                 }
             ],
             opResolvers: [
@@ -191,6 +209,7 @@ describe('Test parse ', function() {
             predResolvers: []
         }), {});
         expect(domainModel.types['Integer'].name).to.equal("Integer");
+        expect((domainModel.types['Collection'] as domain.CollectionDomainType).elementType).to.equal(null);
     });
 
     it('Real-model parse!', function() {
