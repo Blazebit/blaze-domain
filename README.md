@@ -42,7 +42,7 @@ Blaze-Domain is split up into different modules. We recommend that you define a 
 
 ```xml
 <properties>
-    <blaze-domain.version>1.0.10</blaze-domain.version>
+    <blaze-domain.version>1.0.11</blaze-domain.version>
 </properties>
 ```
 

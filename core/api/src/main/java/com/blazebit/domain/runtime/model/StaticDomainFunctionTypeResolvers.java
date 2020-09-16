@@ -101,8 +101,13 @@ public final class StaticDomainFunctionTypeResolvers {
     private static void validateArgumentTypes(Map<DomainFunctionArgument, DomainType> argumentTypes) {
         for (Map.Entry<DomainFunctionArgument, DomainType> entry : argumentTypes.entrySet()) {
             DomainFunctionArgument functionArgument = entry.getKey();
-            if (functionArgument.getType() == null) {
+            if (functionArgument.getType() == null || entry.getValue() == null) {
                 continue;
+            }
+            if (functionArgument.getType() instanceof CollectionDomainType && entry.getValue() instanceof CollectionDomainType) {
+                if (((CollectionDomainType) functionArgument.getType()).getElementType() == null || ((CollectionDomainType) entry.getValue()).getElementType() == null) {
+                    continue;
+                }
             }
             if (functionArgument.getType() != entry.getValue()) {
                 throw new DomainTypeResolverException("Unsupported argument type '" + entry.getValue() + "' for argument '" + functionArgument + "' of function '" + functionArgument.getOwner().getName() + "'! Expected type: " + functionArgument.getType());
