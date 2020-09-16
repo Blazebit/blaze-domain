@@ -210,6 +210,8 @@ describe('Test parse ', function() {
         }), {});
         expect(domainModel.types['Integer'].name).to.equal("Integer");
         expect((domainModel.types['Collection'] as domain.CollectionDomainType).elementType).to.equal(null);
+        let func = domainModel.functions['SIZE'];
+        expect(func.resultTypeResolver.resolveType(domainModel, func, [domainModel.types['Collection[Comment]']])).to.equal(domainModel.types['Integer']);
     });
 
     it('Real-model parse!', function() {

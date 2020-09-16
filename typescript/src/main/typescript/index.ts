@@ -678,11 +678,17 @@ export class DomainModel {
         let validateArgumentTypes = function(domainFunction: DomainFunction, argumentTypes: DomainType[]) {
             for (var i = 0; i < argumentTypes.length; i++) {
                 let functionArgument = domainFunction.arguments[i];
-                if (functionArgument.type == null || argumentTypes[i] == null) {
+                let argType = argumentTypes[i];
+                if (functionArgument.type == null || argType == null) {
                     continue;
                 }
-                if (functionArgument.type != argumentTypes[i]) {
-                    throw new DomainTypeResolverException("Unsupported argument type '" + argumentTypes[i] + "' for argument '" + functionArgument + "' of function '" + domainFunction.name + "'! Expected type: " + functionArgument.type);
+                if (functionArgument.type instanceof CollectionDomainType && argType instanceof CollectionDomainType) {
+                    if (functionArgument.type.elementType == null || argType.elementType == null) {
+                        continue;
+                    }
+                }
+                if (functionArgument.type != argType) {
+                    throw new DomainTypeResolverException("Unsupported argument type '" + argType + "' for argument '" + functionArgument + "' of function '" + domainFunction.name + "'! Expected type: " + functionArgument.type);
                 }
             }
         };
