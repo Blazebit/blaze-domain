@@ -247,10 +247,12 @@ public final class StaticDomainFunctionTypeResolvers {
     }
 
     /**
+     * A resolver that returns the first argument type as result type.
+     *
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class FirstArgumentDomainFunctionTypeResolver implements DomainFunctionTypeResolver, DomainSerializer<DomainFunctionTypeResolver>, Serializable {
+    public static class FirstArgumentDomainFunctionTypeResolver implements DomainFunctionTypeResolver, DomainSerializer<DomainFunctionTypeResolver>, Serializable {
 
         @Override
         public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes) {

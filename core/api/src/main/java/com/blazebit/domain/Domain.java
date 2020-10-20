@@ -30,6 +30,8 @@ import java.util.ServiceLoader;
  */
 public final class Domain {
 
+    private static volatile DomainBuilderProvider cachedDefaultProvider;
+
     private Domain() {
     }
 
@@ -39,14 +41,18 @@ public final class Domain {
      * @return The first {@linkplain DomainBuilderProvider} that is found
      */
     public static DomainBuilderProvider getDefaultProvider() {
-        ServiceLoader<DomainBuilderProvider> serviceLoader = ServiceLoader.load(DomainBuilderProvider.class);
-        Iterator<DomainBuilderProvider> iterator = serviceLoader.iterator();
+        DomainBuilderProvider defaultProvider = Domain.cachedDefaultProvider;
+        if (defaultProvider == null) {
+            ServiceLoader<DomainBuilderProvider> serviceLoader = ServiceLoader.load(DomainBuilderProvider.class);
+            Iterator<DomainBuilderProvider> iterator = serviceLoader.iterator();
 
-        if (iterator.hasNext()) {
-            return iterator.next();
+            if (iterator.hasNext()) {
+                return Domain.cachedDefaultProvider = iterator.next();
+            }
+
+            throw new IllegalStateException("No DomainBuilderProvider found on the class path. Please check if a valid implementation is on the class path.");
         }
-
-        throw new IllegalStateException("No DomainBuilderProvider found on the class path. Please check if a valid implementation is on the class path.");
+        return defaultProvider;
     }
 
 

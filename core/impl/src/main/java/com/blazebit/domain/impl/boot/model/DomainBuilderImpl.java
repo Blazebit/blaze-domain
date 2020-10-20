@@ -50,6 +50,9 @@ import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.domain.spi.DomainContributor;
 import com.blazebit.domain.spi.DomainSerializer;
 
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,12 +63,19 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
 public class DomainBuilderImpl implements DomainBuilder {
+
+    private static final ReferenceQueue<ClassLoader> REFERENCE_QUEUE = new ReferenceQueue<>();
+    private static final ConcurrentMap<WeakClassLoaderKey, Providers> PROVIDERS = new ConcurrentHashMap<>();
 
     private final DomainModel baseModel;
     private final Map<String, Object> properties = new HashMap<>();
@@ -179,10 +189,11 @@ public class DomainBuilderImpl implements DomainBuilder {
 
     @Override
     public DomainBuilder withDefaults() {
-        for (DomainContributor domainContributor : ServiceLoader.load(DomainContributor.class)) {
+        Providers providers = getProviders();
+        for (DomainContributor domainContributor : providers.domainContributors) {
             domainContributor.contribute(this);
         }
-        for (DomainSerializer domainSerializer : ServiceLoader.load(DomainSerializer.class)) {
+        for (DomainSerializer<DomainModel> domainSerializer : providers.domainSerializers) {
             withSerializer(domainSerializer);
         }
         return this;
@@ -949,6 +960,67 @@ public class DomainBuilderImpl implements DomainBuilder {
                     }
                 }
             }
+        }
+    }
+
+    private static Providers getProviders() {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = DomainBuilderImpl.class.getClassLoader();
+        }
+        // Cleanup old references
+        Reference<? extends ClassLoader> reference;
+        while ((reference = REFERENCE_QUEUE.poll()) != null) {
+            PROVIDERS.remove(reference);
+        }
+        WeakClassLoaderKey key = new WeakClassLoaderKey(classLoader, REFERENCE_QUEUE);
+        Providers providers = PROVIDERS.get(key);
+        if (providers == null) {
+            PROVIDERS.put(key, providers = new Providers());
+        }
+        return providers;
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class WeakClassLoaderKey extends WeakReference<ClassLoader> {
+
+        private final int hash;
+
+        public WeakClassLoaderKey(ClassLoader referent, ReferenceQueue<ClassLoader> referenceQueue) {
+            super(referent, referenceQueue);
+            this.hash = referent.hashCode();
+        }
+
+        @Override
+        public int hashCode() {
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return this == obj || obj instanceof WeakClassLoaderKey && ((WeakClassLoaderKey) obj).get() == get();
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class Providers {
+        private final Iterable<DomainContributor> domainContributors;
+        private final Iterable<DomainSerializer<DomainModel>> domainSerializers;
+
+        public Providers() {
+            domainContributors = load(DomainContributor.class);
+            domainSerializers = load(DomainSerializer.class);
+        }
+
+        @SuppressWarnings("unchecked")
+        private static <T> Iterable<T> load(Class<? super T> clazz) {
+            return (Iterable<T>) StreamSupport.stream(ServiceLoader.load(clazz).spliterator(), false).collect(Collectors.toList());
         }
     }
 }

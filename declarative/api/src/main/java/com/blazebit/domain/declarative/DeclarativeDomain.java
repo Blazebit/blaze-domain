@@ -29,6 +29,8 @@ import java.util.ServiceLoader;
  */
 public final class DeclarativeDomain {
 
+    private static volatile DeclarativeDomainBuilderProvider cachedDefaultProvider;
+
     private DeclarativeDomain() {
     }
 
@@ -38,14 +40,18 @@ public final class DeclarativeDomain {
      * @return The first {@linkplain DeclarativeDomainBuilderProvider} that is found
      */
     public static DeclarativeDomainBuilderProvider getDefaultProvider() {
-        ServiceLoader<DeclarativeDomainBuilderProvider> serviceLoader = ServiceLoader.load(DeclarativeDomainBuilderProvider.class);
-        Iterator<DeclarativeDomainBuilderProvider> iterator = serviceLoader.iterator();
+        DeclarativeDomainBuilderProvider defaultProvider = DeclarativeDomain.cachedDefaultProvider;
+        if (defaultProvider == null) {
+            ServiceLoader<DeclarativeDomainBuilderProvider> serviceLoader = ServiceLoader.load(DeclarativeDomainBuilderProvider.class);
+            Iterator<DeclarativeDomainBuilderProvider> iterator = serviceLoader.iterator();
 
-        if (iterator.hasNext()) {
-            return iterator.next();
+            if (iterator.hasNext()) {
+                return DeclarativeDomain.cachedDefaultProvider = iterator.next();
+            }
+
+            throw new IllegalStateException("No DeclarativeDomainBuilderProvider found on the class path. Please check if a valid implementation is on the class path.");
         }
-
-        throw new IllegalStateException("No DeclarativeDomainBuilderProvider found on the class path. Please check if a valid implementation is on the class path.");
+        return defaultProvider;
     }
 
 

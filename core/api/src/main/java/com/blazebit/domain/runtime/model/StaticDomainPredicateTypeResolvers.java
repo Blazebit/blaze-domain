@@ -37,7 +37,8 @@ public final class StaticDomainPredicateTypeResolvers {
 
     private static final Map<String, DomainPredicateTypeResolver> RETURNING_TYPE_NAME_CACHE = new ConcurrentHashMap<>();
     private static final Map<Class<?>, DomainPredicateTypeResolver> RETURNING_JAVA_TYPE_CACHE = new ConcurrentHashMap<>();
-    private static final Map<RestrictedCacheKey, DomainPredicateTypeResolver> RESTRICTED_CACHE = new ConcurrentHashMap<>();
+    private static final Map<RestrictedCacheKey<Class<?>>, DomainPredicateTypeResolver> RESTRICTED_JAVA_TYPE_CACHE = new ConcurrentHashMap<>();
+    private static final Map<RestrictedCacheKey<String>, DomainPredicateTypeResolver> RESTRICTED_TYPE_NAME_CACHE = new ConcurrentHashMap<>();
 
     private StaticDomainPredicateTypeResolvers() {
     }
@@ -73,6 +74,25 @@ public final class StaticDomainPredicateTypeResolvers {
     }
 
     /**
+     * Returns a domain predicate type resolver that returns the domain type with the given type name.
+     * If the arguments for a predicate are none of the supported types, the predicate type resolver will throw an
+     * {@link IllegalArgumentException}.
+     *
+     * @param returningTypeName The domain type name that a predicate produces
+     * @param supportedTypeNames The domain type names that are supported for a predicate
+     * @return the domain predicate type resolver
+     */
+    public static DomainPredicateTypeResolver returning(final String returningTypeName, final String... supportedTypeNames) {
+        RestrictedCacheKey<String> key = new RestrictedCacheKey<>(returningTypeName, supportedTypeNames);
+        DomainPredicateTypeResolver domainPredicateTypeResolver = RESTRICTED_TYPE_NAME_CACHE.get(key);
+        if (domainPredicateTypeResolver == null) {
+            domainPredicateTypeResolver = new RestrictedTypeDomainPredicateTypeResolver(returningTypeName, supportedTypeNames);
+            RESTRICTED_TYPE_NAME_CACHE.put(key, domainPredicateTypeResolver);
+        }
+        return domainPredicateTypeResolver;
+    }
+
+    /**
      * Returns a domain predicate type resolver that returns the domain type with the given java type.
      * If the arguments for a predicate are none of the supported types, the predicate type resolver will throw an
      * {@link IllegalArgumentException}.
@@ -82,11 +102,11 @@ public final class StaticDomainPredicateTypeResolvers {
      * @return the domain predicate type resolver
      */
     public static DomainPredicateTypeResolver returning(final Class<?> returningJavaType, final Class<?>... supportedJavaTypes) {
-        RestrictedCacheKey key = new RestrictedCacheKey(returningJavaType, supportedJavaTypes);
-        DomainPredicateTypeResolver domainPredicateTypeResolver = RESTRICTED_CACHE.get(key);
+        RestrictedCacheKey<Class<?>> key = new RestrictedCacheKey<>(returningJavaType, supportedJavaTypes);
+        DomainPredicateTypeResolver domainPredicateTypeResolver = RESTRICTED_JAVA_TYPE_CACHE.get(key);
         if (domainPredicateTypeResolver == null) {
-            domainPredicateTypeResolver = new RestrictedDomainPredicateTypeResolver(returningJavaType, supportedJavaTypes);
-            RESTRICTED_CACHE.put(key, domainPredicateTypeResolver);
+            domainPredicateTypeResolver = new RestrictedJavaTypeDomainPredicateTypeResolver(returningJavaType, supportedJavaTypes);
+            RESTRICTED_JAVA_TYPE_CACHE.put(key, domainPredicateTypeResolver);
         }
         return domainPredicateTypeResolver;
     }
@@ -95,44 +115,12 @@ public final class StaticDomainPredicateTypeResolvers {
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class RestrictedCacheKey {
-
-        private final Class<?> returningType;
-        private final Class<?>[] classes;
-
-        private RestrictedCacheKey(Class<?> returningType, Class<?>[] classes) {
-            this.returningType = returningType;
-            this.classes = classes;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-
-            RestrictedCacheKey restrictedCacheKey = (RestrictedCacheKey) o;
-            return returningType.equals(restrictedCacheKey.returningType) && Arrays.equals(classes, restrictedCacheKey.classes);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = returningType.hashCode();
-            result = 31 * result + Arrays.hashCode(classes);
-            return result;
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class RestrictedDomainPredicateTypeResolver implements DomainPredicateTypeResolver, DomainSerializer<DomainPredicateTypeResolver>, Serializable {
+    private static class RestrictedJavaTypeDomainPredicateTypeResolver implements DomainPredicateTypeResolver, DomainSerializer<DomainPredicateTypeResolver>, Serializable {
 
         private final Class<?> returningType;
         private final Set<Class<?>> supportedJavaTypes;
 
-        public RestrictedDomainPredicateTypeResolver(Class<?> returningType, Class<?>... supportedJavaTypes) {
+        public RestrictedJavaTypeDomainPredicateTypeResolver(Class<?> returningType, Class<?>... supportedJavaTypes) {
             this.returningType = returningType;
             this.supportedJavaTypes = new HashSet<>(Arrays.asList(supportedJavaTypes));
         }
@@ -192,6 +180,52 @@ public final class StaticDomainPredicateTypeResolvers {
                 return null;
             }
             return (T) ("{\"FixedDomainPredicateTypeResolver\":[\"" + domainModel.getType(javaType).getName() + "\"]}");
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class RestrictedTypeDomainPredicateTypeResolver implements DomainPredicateTypeResolver, DomainSerializer<DomainPredicateTypeResolver>, Serializable {
+
+        private final String returningTypeName;
+        private final Set<String> supportedTypeNames;
+
+        public RestrictedTypeDomainPredicateTypeResolver(String returningTypeName, String... supportedTypeNames) {
+            this.returningTypeName = returningTypeName;
+            this.supportedTypeNames = new HashSet<>(Arrays.asList(supportedTypeNames));
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
+            for (int i = 0; i < domainTypes.size(); i++) {
+                DomainType domainType = domainTypes.get(i);
+                if (!supportedTypeNames.contains(domainType.getName())) {
+                    List<DomainType> types = new ArrayList<>(supportedTypeNames.size());
+                    for (String typeName : supportedTypeNames) {
+                        types.add(domainModel.getType(typeName));
+                    }
+                    throw new DomainTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + types);
+                }
+            }
+            return domainModel.getType(returningTypeName);
+        }
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, DomainPredicateTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"RestrictedDomainPredicateTypeResolver\":[");
+            sb.append('"').append(returningTypeName).append("\",[");
+            for (String typeName : supportedTypeNames) {
+                sb.append('"').append(typeName).append("\",");
+            }
+            sb.setCharAt(sb.length() - 1, ']');
+            sb.append(']').append('}');
+            return (T) sb.toString();
         }
     }
 

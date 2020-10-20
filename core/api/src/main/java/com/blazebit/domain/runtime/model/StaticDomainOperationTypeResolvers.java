@@ -36,9 +36,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class StaticDomainOperationTypeResolvers {
 
     private static final Map<String, DomainOperationTypeResolver> RETURNING_TYPE_NAME_CACHE = new ConcurrentHashMap<>();
+    private static final Map<ArrayCacheKey<String>, DomainOperationTypeResolver> WIDEST_TYPE_NAME_CACHE = new ConcurrentHashMap<>();
+    private static final Map<RestrictedCacheKey<String>, DomainOperationTypeResolver> RESTRICTED_TYPE_NAME_CACHE = new ConcurrentHashMap<>();
     private static final Map<Class<?>, DomainOperationTypeResolver> RETURNING_JAVA_TYPE_CACHE = new ConcurrentHashMap<>();
-    private static final Map<ClassArray, DomainOperationTypeResolver> WIDEST_CACHE = new ConcurrentHashMap<>();
-    private static final Map<RestrictedCacheKey, DomainOperationTypeResolver> RESTRICTED_CACHE = new ConcurrentHashMap<>();
+    private static final Map<ArrayCacheKey<Class<?>>, DomainOperationTypeResolver> WIDEST_JAVA_TYPE_CACHE = new ConcurrentHashMap<>();
+    private static final Map<RestrictedCacheKey<Class<?>>, DomainOperationTypeResolver> RESTRICTED_JAVA_TYPE_CACHE = new ConcurrentHashMap<>();
 
     private StaticDomainOperationTypeResolvers() {
     }
@@ -74,6 +76,25 @@ public final class StaticDomainOperationTypeResolvers {
     }
 
     /**
+     * Returns a domain operation type resolver that returns the domain type with the given type name.
+     * If the arguments for a operation are none of the supported types, the operation type resolver will throw an
+     * {@link IllegalArgumentException}.
+     *
+     * @param returningTypeName The domain type name that a operation produces
+     * @param supportedTypeNames The domain type names that are supported for a operation
+     * @return the domain operation type resolver
+     */
+    public static DomainOperationTypeResolver returning(final String returningTypeName, final String... supportedTypeNames) {
+        RestrictedCacheKey<String> key = new RestrictedCacheKey<>(returningTypeName, supportedTypeNames);
+        DomainOperationTypeResolver domainOperationTypeResolver = RESTRICTED_TYPE_NAME_CACHE.get(key);
+        if (domainOperationTypeResolver == null) {
+            domainOperationTypeResolver = new RestrictedTypeDomainOperationTypeResolver(returningTypeName, supportedTypeNames);
+            RESTRICTED_TYPE_NAME_CACHE.put(key, domainOperationTypeResolver);
+        }
+        return domainOperationTypeResolver;
+    }
+
+    /**
      * Returns a domain operation type resolver that returns the domain type with the given java type.
      * If the arguments for a operation are none of the supported types, the operation type resolver will throw an
      * {@link IllegalArgumentException}.
@@ -83,11 +104,29 @@ public final class StaticDomainOperationTypeResolvers {
      * @return the domain operation type resolver
      */
     public static DomainOperationTypeResolver returning(final Class<?> returningJavaType, final Class<?>... supportedJavaTypes) {
-        RestrictedCacheKey key = new RestrictedCacheKey(returningJavaType, supportedJavaTypes);
-        DomainOperationTypeResolver domainOperationTypeResolver = RESTRICTED_CACHE.get(key);
+        RestrictedCacheKey<Class<?>> key = new RestrictedCacheKey<>(returningJavaType, supportedJavaTypes);
+        DomainOperationTypeResolver domainOperationTypeResolver = RESTRICTED_JAVA_TYPE_CACHE.get(key);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new RestrictedDomainOperationTypeResolver(returningJavaType, supportedJavaTypes);
-            RESTRICTED_CACHE.put(key, domainOperationTypeResolver);
+            domainOperationTypeResolver = new RestrictedJavaTypeDomainOperationTypeResolver(returningJavaType, supportedJavaTypes);
+            RESTRICTED_JAVA_TYPE_CACHE.put(key, domainOperationTypeResolver);
+        }
+        return domainOperationTypeResolver;
+    }
+
+    /**
+     * Returns a domain operation type resolver that returns the domain type with one of the given type names,
+     * preferring "smaller" types with lower indices. A "wider" type is chosen if one of the operator arguments
+     * has a wider type.
+     *
+     * @param typeNames The domain type names from small to wide
+     * @return the domain operation type resolver
+     */
+    public static DomainOperationTypeResolver widest(final String... typeNames) {
+        ArrayCacheKey<String> key = new ArrayCacheKey<>(typeNames);
+        DomainOperationTypeResolver domainOperationTypeResolver = WIDEST_TYPE_NAME_CACHE.get(key);
+        if (domainOperationTypeResolver == null) {
+            domainOperationTypeResolver = new WidestTypeDomainOperationTypeResolver(typeNames);
+            WIDEST_TYPE_NAME_CACHE.put(key, domainOperationTypeResolver);
         }
         return domainOperationTypeResolver;
     }
@@ -101,11 +140,11 @@ public final class StaticDomainOperationTypeResolvers {
      * @return the domain operation type resolver
      */
     public static DomainOperationTypeResolver widest(final Class<?>... javaTypes) {
-        ClassArray key = new ClassArray(javaTypes);
-        DomainOperationTypeResolver domainOperationTypeResolver = WIDEST_CACHE.get(key);
+        ArrayCacheKey<Class<?>> key = new ArrayCacheKey<>(javaTypes);
+        DomainOperationTypeResolver domainOperationTypeResolver = WIDEST_JAVA_TYPE_CACHE.get(key);
         if (domainOperationTypeResolver == null) {
-            domainOperationTypeResolver = new WidestDomainOperationTypeResolver(javaTypes);
-            WIDEST_CACHE.put(key, domainOperationTypeResolver);
+            domainOperationTypeResolver = new WidestJavaTypeDomainOperationTypeResolver(javaTypes);
+            WIDEST_JAVA_TYPE_CACHE.put(key, domainOperationTypeResolver);
         }
         return domainOperationTypeResolver;
     }
@@ -114,71 +153,12 @@ public final class StaticDomainOperationTypeResolvers {
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class ClassArray {
-
-        private final Class<?>[] classes;
-
-        private ClassArray(Class<?>[] classes) {
-            this.classes = classes;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-
-            return Arrays.equals(classes, ((ClassArray) o).classes);
-        }
-
-        @Override
-        public int hashCode() {
-            return Arrays.hashCode(classes);
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class RestrictedCacheKey {
-
-        private final Class<?> returningType;
-        private final Class<?>[] classes;
-
-        private RestrictedCacheKey(Class<?> returningType, Class<?>[] classes) {
-            this.returningType = returningType;
-            this.classes = classes;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-
-            RestrictedCacheKey restrictedCacheKey = (RestrictedCacheKey) o;
-            return returningType.equals(restrictedCacheKey.returningType) && Arrays.equals(classes, restrictedCacheKey.classes);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = returningType.hashCode();
-            result = 31 * result + Arrays.hashCode(classes);
-            return result;
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class RestrictedDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
+    private static class RestrictedJavaTypeDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
 
         private final Class<?> returningType;
         private final Set<Class<?>> supportedJavaTypes;
 
-        public RestrictedDomainOperationTypeResolver(Class<?> returningType, Class<?>... supportedJavaTypes) {
+        public RestrictedJavaTypeDomainOperationTypeResolver(Class<?> returningType, Class<?>... supportedJavaTypes) {
             this.returningType = returningType;
             this.supportedJavaTypes = new HashSet<>(Arrays.asList(supportedJavaTypes));
         }
@@ -219,11 +199,11 @@ public final class StaticDomainOperationTypeResolvers {
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class WidestDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
+    private static class WidestJavaTypeDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
 
         private final Class<?>[] javaTypes;
 
-        public WidestDomainOperationTypeResolver(Class<?>... javaTypes) {
+        public WidestJavaTypeDomainOperationTypeResolver(Class<?>... javaTypes) {
             this.javaTypes = javaTypes;
         }
 
@@ -289,6 +269,103 @@ public final class StaticDomainOperationTypeResolvers {
                 return null;
             }
             return (T) ("{\"FixedDomainOperationTypeResolver\":[\"" + domainModel.getType(javaType).getName() + "\"]}");
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class RestrictedTypeDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
+
+        private final String returningTypeName;
+        private final Set<String> supportedTypeNames;
+
+        public RestrictedTypeDomainOperationTypeResolver(String returningTypeName, String... supportedTypeNames) {
+            this.returningTypeName = returningTypeName;
+            this.supportedTypeNames = new HashSet<>(Arrays.asList(supportedTypeNames));
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
+            for (int i = 0; i < domainTypes.size(); i++) {
+                DomainType domainType = domainTypes.get(i);
+                if (!supportedTypeNames.contains(domainType.getName())) {
+                    List<DomainType> types = new ArrayList<>(supportedTypeNames.size());
+                    for (String typeName : supportedTypeNames) {
+                        types.add(domainModel.getType(typeName));
+                    }
+                    throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following: " + types);
+                }
+            }
+            return domainModel.getType(returningTypeName);
+        }
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, DomainOperationTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"RestrictedDomainOperationTypeResolver\":[");
+            sb.append('"').append(returningTypeName).append("\",[");
+            for (String typeName : supportedTypeNames) {
+                sb.append('"').append(typeName).append("\",");
+            }
+            sb.setCharAt(sb.length() - 1, ']');
+            sb.append(']').append('}');
+            return (T) sb.toString();
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class WidestTypeDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
+
+        private final String[] typeNames;
+
+        public WidestTypeDomainOperationTypeResolver(String... typeNames) {
+            this.typeNames = typeNames;
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
+            List<DomainType> preferredTypes = new ArrayList<>(typeNames.length);
+            for (String typeName : typeNames) {
+                preferredTypes.add(domainModel.getType(typeName));
+            }
+            int typeIndex = Integer.MAX_VALUE;
+            for (int i = 0; i < domainTypes.size(); i++) {
+                DomainType domainType = domainTypes.get(i);
+                int idx = preferredTypes.indexOf(domainType);
+                if (idx == -1) {
+                    throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + preferredTypes);
+                }
+                typeIndex = Math.min(typeIndex, idx);
+            }
+
+            if (typeIndex == Integer.MAX_VALUE) {
+                return preferredTypes.get(0);
+            } else {
+                return preferredTypes.get(typeIndex);
+            }
+        }
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, DomainOperationTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"WidestDomainOperationTypeResolver\":[[");
+            for (String typeName : typeNames) {
+                sb.append('"').append(typeName).append("\",");
+            }
+            sb.setCharAt(sb.length() - 1, ']');
+            sb.append(']').append('}');
+            return (T) sb.toString();
         }
     }
 

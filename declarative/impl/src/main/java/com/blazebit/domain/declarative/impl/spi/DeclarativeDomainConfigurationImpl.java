@@ -402,7 +402,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                     }
                 }
             } else {
-                Annotation annotation = AnnotationUtils.findAnnotation(method, entry.getKey());
+                Annotation annotation = parameter.getAnnotation(entry.getKey());
                 if (annotation != null) {
                     for (DeclarativeFunctionParameterMetadataProcessor<Annotation> processor : entry.getValue()) {
                         MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, parameter, annotation, this);
