@@ -42,7 +42,7 @@ Blaze-Domain is split up into different modules. We recommend that you define a 
 
 ```xml
 <properties>
-    <blaze-domain.version>1.0.11</blaze-domain.version>
+    <blaze-domain.version>1.0.12</blaze-domain.version>
 </properties>
 ```
 
@@ -141,8 +141,8 @@ Building a domain model works through the `DomainBuilder` API.
 ```java
 DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
 domainBuilder.createEntityType("Cat")
-    .addAttribute("name", String.class)
-    .addAttribute("age", Integer.class)
+    .addAttribute("name", "String")
+    .addAttribute("age", "Integer")
   .build();
 DomainModel domain = domainBuilder.build();
 ```
