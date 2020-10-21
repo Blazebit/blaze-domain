@@ -20,7 +20,6 @@ import com.blazebit.domain.spi.DomainSerializer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +44,8 @@ public final class StaticDomainFunctionTypeResolvers {
 
     private static final Map<String, DomainFunctionTypeResolver> RETURNING_TYPE_NAME_CACHE = new ConcurrentHashMap<>();
     private static final Map<Class<?>, DomainFunctionTypeResolver> RETURNING_JAVA_TYPE_CACHE = new ConcurrentHashMap<>();
-    private static final Map<ClassArray, DomainFunctionTypeResolver> WIDEST_CACHE = new ConcurrentHashMap<>();
+    private static final Map<ArrayCacheKey<String>, DomainFunctionTypeResolver> WIDEST_TYPE_NAME_CACHE = new ConcurrentHashMap<>();
+    private static final Map<ArrayCacheKey<Class<?>>, DomainFunctionTypeResolver> WIDEST_JAVA_TYPE_CACHE = new ConcurrentHashMap<>();
 
     private StaticDomainFunctionTypeResolvers() {
     }
@@ -70,12 +70,33 @@ public final class StaticDomainFunctionTypeResolvers {
      *
      * @param javaType The static domain java type
      * @return the domain function type resolver
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #returning(String)} instead
      */
+    @Deprecated
     public static DomainFunctionTypeResolver returning(final Class<?> javaType) {
         DomainFunctionTypeResolver domainFunctionTypeResolver = RETURNING_JAVA_TYPE_CACHE.get(javaType);
         if (domainFunctionTypeResolver == null) {
             domainFunctionTypeResolver = new ReturningJavaTypeDomainFunctionTypeResolver(javaType);
             RETURNING_JAVA_TYPE_CACHE.put(javaType, domainFunctionTypeResolver);
+        }
+        return domainFunctionTypeResolver;
+    }
+
+    /**
+     * Returns a domain function type resolver that returns the domain type with one of the given type names,
+     * preferring "smaller" types with lower indices. A "wider" type is chosen if one of the operator arguments
+     * has a wider type.
+     *
+     * @param typeNames The domain type names from small to wide
+     * @return the domain function type resolver
+     * @since 1.0.12
+     */
+    public static DomainFunctionTypeResolver widest(final String... typeNames) {
+        ArrayCacheKey<String> key = new ArrayCacheKey<>(typeNames);
+        DomainFunctionTypeResolver domainFunctionTypeResolver = WIDEST_TYPE_NAME_CACHE.get(key);
+        if (domainFunctionTypeResolver == null) {
+            domainFunctionTypeResolver = new WidestDomainFunctionTypeResolver(typeNames);
+            WIDEST_TYPE_NAME_CACHE.put(key, domainFunctionTypeResolver);
         }
         return domainFunctionTypeResolver;
     }
@@ -87,13 +108,15 @@ public final class StaticDomainFunctionTypeResolvers {
      *
      * @param javaTypes The domain java types from small to wide
      * @return the domain function type resolver
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #widest(String[])} instead
      */
+    @Deprecated
     public static DomainFunctionTypeResolver widest(final Class<?>... javaTypes) {
-        ClassArray key = new ClassArray(javaTypes);
-        DomainFunctionTypeResolver domainFunctionTypeResolver = WIDEST_CACHE.get(key);
+        ArrayCacheKey<Class<?>> key = new ArrayCacheKey<>(javaTypes);
+        DomainFunctionTypeResolver domainFunctionTypeResolver = WIDEST_JAVA_TYPE_CACHE.get(key);
         if (domainFunctionTypeResolver == null) {
-            domainFunctionTypeResolver = new WidestDomainFunctionTypeResolver(javaTypes);
-            WIDEST_CACHE.put(key, domainFunctionTypeResolver);
+            domainFunctionTypeResolver = new WidestDomainFunctionJavaTypeResolver(javaTypes);
+            WIDEST_JAVA_TYPE_CACHE.put(key, domainFunctionTypeResolver);
         }
         return domainFunctionTypeResolver;
     }
@@ -117,28 +140,62 @@ public final class StaticDomainFunctionTypeResolvers {
 
     /**
      * @author Christian Beikov
-     * @since 1.0.0
+     * @since 1.0.12
      */
-    private static class ClassArray {
+    private static class WidestDomainFunctionTypeResolver implements DomainFunctionTypeResolver, DomainSerializer<DomainFunctionTypeResolver>, Serializable {
 
-        private final Class<?>[] classes;
+        private final String[] typeNames;
 
-        public ClassArray(Class<?>[] classes) {
-            this.classes = classes;
+        public WidestDomainFunctionTypeResolver(String... typeNames) {
+            this.typeNames = typeNames;
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
+        public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes) {
+            int typeIndex = typeNames.length;
+            DomainType domainType = null;
+            for (Map.Entry<DomainFunctionArgument, DomainType> entry : argumentTypes.entrySet()) {
+                DomainType type = entry.getValue();
+                String typeName = type.getName();
+                for (int i = 0; i < typeIndex; i++) {
+                    if (typeName.equals(typeNames[i])) {
+                        typeIndex = i;
+                        domainType = type;
+                        break;
+                    }
+                }
+                if (typeIndex == 0) {
+                    break;
+                } else if (typeIndex == typeNames.length) {
+                    List<DomainType> preferredTypes = new ArrayList<>(typeNames.length);
+                    for (String name : typeNames) {
+                        preferredTypes.add(domainModel.getType(name));
+                    }
+
+                    throw new DomainTypeResolverException("Unsupported argument type '" + type + "' for argument '" + entry.getKey() + "' of function '" + function.getName() + "'! Expected one of the following types: " + preferredTypes);
+                }
             }
 
-            return Arrays.equals(classes, ((ClassArray) o).classes);
+            if (typeIndex == Integer.MAX_VALUE) {
+                return domainModel.getType(typeNames[0]);
+            } else {
+                return domainType;
+            }
         }
 
         @Override
-        public int hashCode() {
-            return Arrays.hashCode(classes);
+        public <T> T serialize(DomainModel domainModel, DomainFunctionTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"WidestDomainFunctionTypeResolver\":[[");
+            for (String typeName : typeNames) {
+                sb.append('"').append(typeName).append("\",");
+            }
+            sb.setCharAt(sb.length() - 1, ']');
+            sb.append(']').append('}');
+            return (T) sb.toString();
         }
     }
 
@@ -146,11 +203,11 @@ public final class StaticDomainFunctionTypeResolvers {
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class WidestDomainFunctionTypeResolver implements DomainFunctionTypeResolver, DomainSerializer<DomainFunctionTypeResolver>, Serializable {
+    private static class WidestDomainFunctionJavaTypeResolver implements DomainFunctionTypeResolver, DomainSerializer<DomainFunctionTypeResolver>, Serializable {
 
         private final Class<?>[] javaTypes;
 
-        public WidestDomainFunctionTypeResolver(Class<?>... javaTypes) {
+        public WidestDomainFunctionJavaTypeResolver(Class<?>... javaTypes) {
             this.javaTypes = javaTypes;
         }
 

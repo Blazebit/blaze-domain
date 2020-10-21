@@ -34,11 +34,11 @@ public interface EnumDomainTypeBuilder {
     public String getName();
 
     /**
-     * The enum Java type of the enum domain type, or <code>null</code> if none available.
+     * The Java type of the enum domain type, or <code>null</code> if none available.
      *
-     * @return the enum Java type or <code>null</code>
+     * @return the Java type or <code>null</code>
      */
-    public Class<? extends Enum<?>> getJavaType();
+    public Class<?> getJavaType();
 
     /**
      * The enum value of the enum domain type with the given name or <code>null</code>.

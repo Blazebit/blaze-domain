@@ -63,7 +63,9 @@ public final class StaticDomainPredicateTypeResolvers {
      *
      * @param javaType The static domain java type
      * @return the domain predicate type resolver
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #returning(String)} instead
      */
+    @Deprecated
     public static DomainPredicateTypeResolver returning(final Class<?> javaType) {
         DomainPredicateTypeResolver domainOperationTypeResolver = RETURNING_JAVA_TYPE_CACHE.get(javaType);
         if (domainOperationTypeResolver == null) {
@@ -81,6 +83,7 @@ public final class StaticDomainPredicateTypeResolvers {
      * @param returningTypeName The domain type name that a predicate produces
      * @param supportedTypeNames The domain type names that are supported for a predicate
      * @return the domain predicate type resolver
+     * @since 1.0.12
      */
     public static DomainPredicateTypeResolver returning(final String returningTypeName, final String... supportedTypeNames) {
         RestrictedCacheKey<String> key = new RestrictedCacheKey<>(returningTypeName, supportedTypeNames);
@@ -100,7 +103,9 @@ public final class StaticDomainPredicateTypeResolvers {
      * @param returningJavaType The domain java type that a predicate produces
      * @param supportedJavaTypes The domain java types that are supported for a predicate
      * @return the domain predicate type resolver
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #returning(String, String...)} instead
      */
+    @Deprecated
     public static DomainPredicateTypeResolver returning(final Class<?> returningJavaType, final Class<?>... supportedJavaTypes) {
         RestrictedCacheKey<Class<?>> key = new RestrictedCacheKey<>(returningJavaType, supportedJavaTypes);
         DomainPredicateTypeResolver domainPredicateTypeResolver = RESTRICTED_JAVA_TYPE_CACHE.get(key);
@@ -185,7 +190,7 @@ public final class StaticDomainPredicateTypeResolvers {
 
     /**
      * @author Christian Beikov
-     * @since 1.0.0
+     * @since 1.0.12
      */
     private static class RestrictedTypeDomainPredicateTypeResolver implements DomainPredicateTypeResolver, DomainSerializer<DomainPredicateTypeResolver>, Serializable {
 

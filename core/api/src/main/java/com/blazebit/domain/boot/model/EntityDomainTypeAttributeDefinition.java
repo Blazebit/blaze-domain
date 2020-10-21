@@ -56,6 +56,8 @@ public interface EntityDomainTypeAttributeDefinition extends MetadataDefinitionH
      * Returns the java type of this attribute.
      *
      * @return the java type of this attribute
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getTypeName()} instead
      */
+    @Deprecated
     public Class<?> getJavaType();
 }

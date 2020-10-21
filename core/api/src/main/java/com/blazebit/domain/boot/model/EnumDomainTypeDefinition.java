@@ -25,13 +25,6 @@ import java.util.Map;
 public interface EnumDomainTypeDefinition extends DomainTypeDefinition<EnumDomainTypeDefinition> {
 
     /**
-     * The enum Java type of the enum domain type, or <code>null</code> if none available.
-     *
-     * @return the enum Java type or <code>null</code>
-     */
-    public Class<? extends Enum<?>> getJavaType();
-
-    /**
      * The enum value of the enum domain type with the given name or <code>null</code>.
      *
      * @param name The name of the enum value

@@ -31,7 +31,7 @@ public class EnumDomainTypeBuilderImpl implements EnumDomainTypeBuilder {
     private final DomainBuilderImpl domainBuilder;
     private final EnumDomainTypeDefinitionImpl domainTypeDefinition;
 
-    public EnumDomainTypeBuilderImpl(DomainBuilderImpl domainBuilder, String name, Class<? extends Enum<?>> javaType) {
+    public EnumDomainTypeBuilderImpl(DomainBuilderImpl domainBuilder, String name, Class<?> javaType) {
         this.domainBuilder = domainBuilder;
         this.domainTypeDefinition = new EnumDomainTypeDefinitionImpl(name, javaType);
     }
@@ -42,7 +42,7 @@ public class EnumDomainTypeBuilderImpl implements EnumDomainTypeBuilder {
     }
 
     @Override
-    public Class<? extends Enum<?>> getJavaType() {
+    public Class<?> getJavaType() {
         return domainTypeDefinition.getJavaType();
     }
 

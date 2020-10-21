@@ -187,7 +187,9 @@ public interface DomainBuilder {
      * @param domainOperator The domain operator for which to register the operation type resolver
      * @param operationTypeResolver The operation type resolver to register
      * @return this for chaining
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withOperationTypeResolver(String, DomainOperator, DomainOperationTypeResolver)} instead
      */
+    @Deprecated
     public DomainBuilder withOperationTypeResolver(Class<?> javaType, DomainOperator domainOperator, DomainOperationTypeResolver operationTypeResolver);
 
     /**
@@ -207,8 +209,30 @@ public interface DomainBuilder {
      * @param domainPredicate The domain predicate for which to register the predicate type resolver
      * @param predicateTypeResolver The predicate type resolver to register
      * @return this for chaining
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withPredicateTypeResolver(String, DomainPredicate, DomainPredicateTypeResolver)} instead
      */
+    @Deprecated
     public DomainBuilder withPredicateTypeResolver(Class<?> javaType, DomainPredicate domainPredicate, DomainPredicateTypeResolver predicateTypeResolver);
+
+    /**
+     * Returns the domain operation type resolver for the given type name and domain operator.
+     *
+     * @param typeName The type name
+     * @param domainOperator The domain operator
+     * @return The operation type resolver
+     * @since 1.0.12
+     */
+    public DomainOperationTypeResolver getOperationTypeResolver(String typeName, DomainOperator domainOperator);
+
+    /**
+     * Returns the domain predicate type resolver for the given type name and domain predicate.
+     *
+     * @param typeName The type name
+     * @param domainPredicate The domain predicate
+     * @return The predicate type resolver
+     * @since 1.0.12
+     */
+    public DomainPredicateTypeResolver getPredicateTypeResolver(String typeName, DomainPredicate domainPredicate);
 
     /**
      * Adds the given domain model serializer.
@@ -367,7 +391,7 @@ public interface DomainBuilder {
      * @param javaType The Java type
      * @return the enum domain builder
      */
-    public EnumDomainTypeBuilder createEnumType(String name, Class<? extends Enum<?>> javaType);
+    public EnumDomainTypeBuilder createEnumType(String name, Class<?> javaType);
 
     /**
      * Sets whether function names are case sensitive.
@@ -390,7 +414,9 @@ public interface DomainBuilder {
      *
      * @param javaType The java type of the desired domain type definition
      * @return the domain type definition or <code>null</code>
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getType(String)} instead
      */
+    @Deprecated
     public DomainTypeDefinition<?> getType(Class<?> javaType);
 
     /**
@@ -406,7 +432,9 @@ public interface DomainBuilder {
      *
      * @param javaType The java type of the desired entity domain type definition
      * @return the entity domain type definition or <code>null</code>
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getEntityType(String)} instead
      */
+    @Deprecated
     public EntityDomainTypeDefinition getEntityType(Class<?> javaType);
 
     /**
@@ -422,7 +450,9 @@ public interface DomainBuilder {
      *
      * @param elementDomainJavaType The element java type of the desired collection domain type definition
      * @return the collection domain type definition or <code>null</code>
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getCollectionType(String)} instead
      */
+    @Deprecated
     public CollectionDomainTypeDefinition getCollectionType(Class<?> elementDomainJavaType);
 
     /**
@@ -436,7 +466,9 @@ public interface DomainBuilder {
      * Returns the type definitions of the domain builder as map indexed by their java type.
      *
      * @return the type definitions of the domain builder
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getTypes()} instead
      */
+    @Deprecated
     public Map<Class<?>, DomainTypeDefinition<?>> getTypesByJavaType();
 
     /**
@@ -450,7 +482,9 @@ public interface DomainBuilder {
      * Returns the collection type definitions of the domain builder as map indexed by their element java type.
      *
      * @return the collection type definitions of the domain builder
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getCollectionTypes()} instead
      */
+    @Deprecated
     public Map<Class<?>, CollectionDomainTypeDefinition> getCollectionTypesByJavaType();
 
     /**

@@ -43,6 +43,7 @@ import com.blazebit.domain.runtime.model.EntityLiteralResolver;
 import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.runtime.model.EnumLiteralResolver;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
+import com.blazebit.domain.runtime.model.ResolvedLiteral;
 import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
 import com.blazebit.domain.runtime.model.StaticDomainPredicateTypeResolvers;
 import com.blazebit.domain.runtime.model.StringLiteralResolver;
@@ -56,6 +57,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -327,6 +329,24 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
+    public DomainOperationTypeResolver getOperationTypeResolver(String typeName, DomainOperator domainOperator) {
+        Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = domainOperationTypeResolvers.get(typeName);
+        if (operationTypeResolverMap == null) {
+            return null;
+        }
+        return operationTypeResolverMap.get(domainOperator);
+    }
+
+    @Override
+    public DomainPredicateTypeResolver getPredicateTypeResolver(String typeName, DomainPredicate domainPredicate) {
+        Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(typeName);
+        if (predicateTypeResolverMap == null) {
+            return null;
+        }
+        return predicateTypeResolverMap.get(domainPredicate);
+    }
+
+    @Override
     public DomainBuilder withOperator(String typeName, DomainOperator operator) {
         return withElement(enabledOperators, typeName, operator);
     }
@@ -485,7 +505,7 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
-    public EnumDomainTypeBuilderImpl createEnumType(String name, Class<? extends Enum<?>> javaType) {
+    public EnumDomainTypeBuilderImpl createEnumType(String name, Class<?> javaType) {
         return new EnumDomainTypeBuilderImpl(this, name, javaType);
     }
 
@@ -767,6 +787,31 @@ public class DomainBuilderImpl implements DomainBuilder {
         }
 
         if (!context.hasErrors()) {
+            String booleanTypeName = null;
+            if (booleanLiteralResolver != null) {
+                DomainModelImpl temporaryDomainModel = new DomainModelImpl(
+                    properties,
+                    domainTypes,
+                    domainTypesByJavaType,
+                    collectionDomainTypes,
+                    domainFunctions,
+                    domainFunctionTypeResolvers,
+                    domainOperationTypeResolvers,
+                    domainOperationTypeResolversByJavaType,
+                    domainPredicateTypeResolvers,
+                    domainPredicateTypeResolversByJavaType,
+                    Collections.emptyList(),
+                    numericLiteralResolver,
+                    booleanLiteralResolver,
+                    stringLiteralResolver,
+                    temporalLiteralResolver,
+                    enumLiteralResolver,
+                    entityLiteralResolver,
+                    collectionLiteralResolver
+                );
+                ResolvedLiteral booleanLiteral = booleanLiteralResolver.resolveLiteral(temporaryDomainModel, true);
+                booleanTypeName = booleanLiteral == null ? null : booleanLiteral.getType().getName();
+            }
             for (DomainType domainType : domainTypes.values()) {
                 Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = domainOperationTypeResolvers.get(domainType.getName());
                 if (operationTypeResolverMap == null && !domainType.getEnabledOperators().isEmpty()) {
@@ -780,14 +825,16 @@ public class DomainBuilderImpl implements DomainBuilder {
                     }
                 }
 
-                Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(domainType.getName());
-                if (predicateTypeResolverMap == null && !domainType.getEnabledPredicates().isEmpty()) {
-                    predicateTypeResolverMap = new HashMap<>();
-                    domainPredicateTypeResolvers.put(domainType.getName(), predicateTypeResolverMap);
-                }
-                for (DomainPredicate enabledPredicate : domainType.getEnabledPredicates()) {
-                    if (!predicateTypeResolverMap.containsKey(enabledPredicate)) {
-                        predicateTypeResolverMap.put(enabledPredicate, StaticDomainPredicateTypeResolvers.returning(Boolean.class));
+                if (booleanTypeName != null) {
+                    Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(domainType.getName());
+                    if (predicateTypeResolverMap == null && !domainType.getEnabledPredicates().isEmpty()) {
+                        predicateTypeResolverMap = new HashMap<>();
+                        domainPredicateTypeResolvers.put(domainType.getName(), predicateTypeResolverMap);
+                    }
+                    for (DomainPredicate enabledPredicate : domainType.getEnabledPredicates()) {
+                        if (!predicateTypeResolverMap.containsKey(enabledPredicate)) {
+                            predicateTypeResolverMap.put(enabledPredicate, StaticDomainPredicateTypeResolvers.returning(booleanTypeName));
+                        }
                     }
                 }
             }
@@ -983,7 +1030,7 @@ public class DomainBuilderImpl implements DomainBuilder {
 
     /**
      * @author Christian Beikov
-     * @since 1.0.0
+     * @since 1.0.12
      */
     private static class WeakClassLoaderKey extends WeakReference<ClassLoader> {
 
@@ -1007,14 +1054,16 @@ public class DomainBuilderImpl implements DomainBuilder {
 
     /**
      * @author Christian Beikov
-     * @since 1.0.0
+     * @since 1.0.12
      */
     private static class Providers {
         private final Iterable<DomainContributor> domainContributors;
         private final Iterable<DomainSerializer<DomainModel>> domainSerializers;
 
         public Providers() {
-            domainContributors = load(DomainContributor.class);
+            domainContributors = StreamSupport.stream(ServiceLoader.load(DomainContributor.class).spliterator(), false)
+                .sorted(Comparator.comparing(DomainContributor::priority))
+                .collect(Collectors.toList());
             domainSerializers = load(DomainSerializer.class);
         }
 

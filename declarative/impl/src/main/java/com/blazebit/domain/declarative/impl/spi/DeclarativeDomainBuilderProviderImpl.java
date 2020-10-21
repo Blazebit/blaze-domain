@@ -116,7 +116,7 @@ public class DeclarativeDomainBuilderProviderImpl implements DeclarativeDomainBu
 
     /**
      * @author Christian Beikov
-     * @since 1.0.0
+     * @since 1.0.12
      */
     private static class WeakClassLoaderKey extends WeakReference<ClassLoader> {
 
@@ -140,7 +140,7 @@ public class DeclarativeDomainBuilderProviderImpl implements DeclarativeDomainBu
 
     /**
      * @author Christian Beikov
-     * @since 1.0.0
+     * @since 1.0.12
      */
     private static class Providers {
         private final Iterable<TypeResolver> typeResolvers;

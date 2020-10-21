@@ -42,7 +42,9 @@ public interface DomainModel {
      *
      * @param javaType The java type of the desired domain type
      * @return the domain type or <code>null</code>
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getType(String)} instead
      */
+    @Deprecated
     public DomainType getType(Class<?> javaType);
 
     /**
@@ -58,7 +60,9 @@ public interface DomainModel {
      *
      * @param javaType The java type of the desired domain type
      * @return the entity domain type or <code>null</code>
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getEntityType(String)} instead
      */
+    @Deprecated
     public EntityDomainType getEntityType(Class<?> javaType);
 
     /**
@@ -80,7 +84,9 @@ public interface DomainModel {
      * Returns the types of the domain model as map indexed by their java type.
      *
      * @return the types of the domain model
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getTypes()} instead
      */
+    @Deprecated
     public Map<Class<?>, DomainType> getTypesByJavaType();
 
     /**
@@ -135,7 +141,9 @@ public interface DomainModel {
      * @param javaType The java type for which to apply the domain operator
      * @param operator The operator to apply on the java type
      * @return the operation type resolver
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getOperationTypeResolver(String, DomainOperator)} instead
      */
+    @Deprecated
     public DomainOperationTypeResolver getOperationTypeResolver(Class<?> javaType, DomainOperator operator);
 
     /**
@@ -153,7 +161,9 @@ public interface DomainModel {
      * @param javaType The java type for which to apply the domain operator
      * @param predicateType The predicate to apply on the java type
      * @return the predicate type resolver
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getPredicateTypeResolver(String, DomainPredicate)} instead
      */
+    @Deprecated
     public DomainPredicateTypeResolver getPredicateTypeResolver(Class<?> javaType, DomainPredicate predicateType);
 
     /**
@@ -167,7 +177,9 @@ public interface DomainModel {
      * Returns the operation type resolvers of the domain model as map indexed by their java type.
      *
      * @return the operation type resolvers of the domain model
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getOperationTypeResolvers()} instead
      */
+    @Deprecated
     public Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> getOperationTypeResolversByJavaType();
 
     /**
@@ -181,7 +193,9 @@ public interface DomainModel {
      * Returns the predicate type resolvers of the domain model as map indexed by their java type.
      *
      * @return the predicate type resolvers of the domain model
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getPredicateTypeResolvers()} instead
      */
+    @Deprecated
     public Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> getPredicateTypeResolversByJavaType();
 
     /**

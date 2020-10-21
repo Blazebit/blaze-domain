@@ -88,7 +88,9 @@ public interface EntityDomainTypeBuilder {
      * @param attributeName The attribute name
      * @param javaType The java type
      * @return this for chaining
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #addAttribute(String, String)} instead
      */
+    @Deprecated
     public EntityDomainTypeBuilder addAttribute(String attributeName, Class<?> javaType);
 
     /**
@@ -98,7 +100,9 @@ public interface EntityDomainTypeBuilder {
      * @param javaType The java type
      * @param metadataDefinitions The metadata for the attribute
      * @return this for chaining
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #addAttribute(String, String, MetadataDefinition...)} instead
      */
+    @Deprecated
     public EntityDomainTypeBuilder addAttribute(String attributeName, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions);
 
     /**
@@ -135,7 +139,9 @@ public interface EntityDomainTypeBuilder {
      * @param attributeName The attribute name
      * @param elementJavaType The element java type
      * @return this for chaining
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #addCollectionAttribute(String, String)} instead
      */
+    @Deprecated
     public EntityDomainTypeBuilder addCollectionAttribute(String attributeName, Class<?> elementJavaType);
 
     /**
@@ -145,7 +151,9 @@ public interface EntityDomainTypeBuilder {
      * @param elementJavaType The element java type
      * @param metadataDefinitions The metadata for the attribute
      * @return this for chaining
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #addCollectionAttribute(String, String, MetadataDefinition...)} instead
      */
+    @Deprecated
     public EntityDomainTypeBuilder addCollectionAttribute(String attributeName, Class<?> elementJavaType, MetadataDefinition<?>... metadataDefinitions);
 
     /**

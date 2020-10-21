@@ -783,6 +783,12 @@ export class DomainModel {
                 return entityLiteral.entityType;
             }};
         });
+        registerIfAbsent("SimpleEnumLiteralResolver", function(): LiteralResolver {
+            return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
+                let enumLiteral = value as EnumLiteral;
+                return enumLiteral.enumType;
+            }};
+        });
         registerIfAbsent("FirstArgumentDomainFunctionTypeResolver", function(): DomainFunctionTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
                 validateArgumentTypes(domainFunction, argumentTypes);
@@ -924,8 +930,8 @@ export class DomainModel {
                 case 'N':
                     var vals: StringMap<EnumDomainTypeValue> = {};
                     type['vals'].forEach(function (val) {
-                        let valMeta = parseMeta(val);
-                        vals[val] = new EnumDomainTypeValue(val, doc(valMeta), valMeta);
+                        let valMeta = parseMeta(val['meta']);
+                        vals[val['name']] = new EnumDomainTypeValue(val['name'], doc(valMeta), valMeta);
                     });
                     domainTypes[name] = new EnumDomainType(name, ops, preds, vals, meta);
                     break;

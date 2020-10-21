@@ -23,7 +23,7 @@ import java.util.Arrays;
  *
  * @param <T> The array component type
  * @author Christian Beikov
- * @since 1.0.0
+ * @since 1.0.12
  */
 class RestrictedCacheKey<T> {
 

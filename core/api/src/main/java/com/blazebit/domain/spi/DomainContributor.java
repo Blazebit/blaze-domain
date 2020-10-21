@@ -31,6 +31,17 @@ public interface DomainContributor {
      *
      * @param domainBuilder The domain builder to contribute domain elements to
      */
-    public void contribute(DomainBuilder domainBuilder);
+    void contribute(DomainBuilder domainBuilder);
+
+    /**
+     * Returns a priority(lower means higher priority) of the contributor.
+     * The default priority is 1000.
+     *
+     * @return the priority
+     * @since 1.0.12
+     */
+    default int priority() {
+        return 1000;
+    }
 
 }

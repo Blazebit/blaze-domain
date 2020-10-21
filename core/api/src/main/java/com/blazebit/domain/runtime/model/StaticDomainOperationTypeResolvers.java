@@ -65,7 +65,9 @@ public final class StaticDomainOperationTypeResolvers {
      *
      * @param javaType The static domain java type
      * @return the domain operation type resolver
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #returning(String)} instead
      */
+    @Deprecated
     public static DomainOperationTypeResolver returning(final Class<?> javaType) {
         DomainOperationTypeResolver domainOperationTypeResolver = RETURNING_JAVA_TYPE_CACHE.get(javaType);
         if (domainOperationTypeResolver == null) {
@@ -83,6 +85,7 @@ public final class StaticDomainOperationTypeResolvers {
      * @param returningTypeName The domain type name that a operation produces
      * @param supportedTypeNames The domain type names that are supported for a operation
      * @return the domain operation type resolver
+     * @since 1.0.12
      */
     public static DomainOperationTypeResolver returning(final String returningTypeName, final String... supportedTypeNames) {
         RestrictedCacheKey<String> key = new RestrictedCacheKey<>(returningTypeName, supportedTypeNames);
@@ -102,7 +105,9 @@ public final class StaticDomainOperationTypeResolvers {
      * @param returningJavaType The domain java type that a operation produces
      * @param supportedJavaTypes The domain java types that are supported for a operation
      * @return the domain operation type resolver
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #returning(String, String...)} instead
      */
+    @Deprecated
     public static DomainOperationTypeResolver returning(final Class<?> returningJavaType, final Class<?>... supportedJavaTypes) {
         RestrictedCacheKey<Class<?>> key = new RestrictedCacheKey<>(returningJavaType, supportedJavaTypes);
         DomainOperationTypeResolver domainOperationTypeResolver = RESTRICTED_JAVA_TYPE_CACHE.get(key);
@@ -120,6 +125,7 @@ public final class StaticDomainOperationTypeResolvers {
      *
      * @param typeNames The domain type names from small to wide
      * @return the domain operation type resolver
+     * @since 1.0.12
      */
     public static DomainOperationTypeResolver widest(final String... typeNames) {
         ArrayCacheKey<String> key = new ArrayCacheKey<>(typeNames);
@@ -138,7 +144,9 @@ public final class StaticDomainOperationTypeResolvers {
      *
      * @param javaTypes The domain java types from small to wide
      * @return the domain operation type resolver
+     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #widest(String...)} instead
      */
+    @Deprecated
     public static DomainOperationTypeResolver widest(final Class<?>... javaTypes) {
         ArrayCacheKey<Class<?>> key = new ArrayCacheKey<>(javaTypes);
         DomainOperationTypeResolver domainOperationTypeResolver = WIDEST_JAVA_TYPE_CACHE.get(key);
@@ -274,7 +282,7 @@ public final class StaticDomainOperationTypeResolvers {
 
     /**
      * @author Christian Beikov
-     * @since 1.0.0
+     * @since 1.0.12
      */
     private static class RestrictedTypeDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
 
@@ -320,7 +328,7 @@ public final class StaticDomainOperationTypeResolvers {
 
     /**
      * @author Christian Beikov
-     * @since 1.0.0
+     * @since 1.0.12
      */
     private static class WidestTypeDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
 
