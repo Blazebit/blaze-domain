@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.blazebit</groupId>
         <artifactId>blaze-domain-parent</artifactId>
-        <version>1.0.12</version>
+        <version>1.0.13-SNAPSHOT</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
