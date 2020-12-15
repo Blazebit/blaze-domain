@@ -713,6 +713,23 @@ export class DomainModel {
                 return domainModel.types[returningType];
             }};
         });
+        registerIfAbsent("OperandRestrictedDomainPredicateTypeResolver", function(returningType: string, supportedTypesPerOperand: string[][]): DomainPredicateTypeResolver {
+            return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
+                for (var i = 0; i < domainTypes.length; i++) {
+                    let supportedTypes = supportedTypesPerOperand[i];
+                    let domainType = domainTypes[i];
+                    if (supportedTypes.indexOf(domainType.name) == -1) {
+                        let typesString = "[";
+                        for (let supportedType of supportedTypes) {
+                            typesString += supportedType + ", ";
+                        }
+                        typesString = typesString.substring(0, typesString.length - 2) + "]";
+                        throw new DomainTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType.name + "' is unsupported! Expected one of the following types: " + typesString);
+                    }
+                }
+                return domainModel.types[returningType];
+            }};
+        });
         registerIfAbsent("FixedDomainOperationTypeResolver", function(type: string): DomainOperationTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
                 return domainModel.types[type];
@@ -745,6 +762,24 @@ export class DomainModel {
         registerIfAbsent("RestrictedDomainOperationTypeResolver", function(returningType: string, supportedTypes: string[]): DomainOperationTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
                 for (var i = 0; i < domainTypes.length; i++) {
+                    let domainType = domainTypes[i];
+                    if (supportedTypes.indexOf(domainType.name) == -1) {
+                        let typesString = "[";
+                        for (let supportedType of supportedTypes) {
+                            typesString += supportedType + ", ";
+                        }
+                        typesString = typesString.substring(0, typesString.length - 2) + "]";
+                        throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + typesString);
+                    }
+                }
+
+                return domainModel.types[returningType];
+            }};
+        });
+        registerIfAbsent("OperandRestrictedDomainOperationTypeResolver", function(returningType: string, supportedTypesPerOperand: string[][]): DomainOperationTypeResolver {
+            return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
+                for (var i = 0; i < domainTypes.length; i++) {
+                    let supportedTypes = supportedTypesPerOperand[i];
                     let domainType = domainTypes[i];
                     if (supportedTypes.indexOf(domainType.name) == -1) {
                         let typesString = "[";

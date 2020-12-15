@@ -31,6 +31,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <version.checkstyle>8.7</version.checkstyle>
+        <version.surefire.plugin>3.0.0-M5</version.surefire.plugin>
         <maven.min.version>3.3.1</maven.min.version>
         <maven.build.timestamp.format>yyyy</maven.build.timestamp.format>
         <currentYearDynamic>${maven.build.timestamp}</currentYearDynamic>

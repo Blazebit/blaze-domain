@@ -182,7 +182,9 @@ public class TemporalInterval implements Comparable<TemporalInterval> {
         if (minutes != 0) {
             sb.append(minutes).append(" MINUTES ");
         }
-        sb.append(seconds).append(" SECONDS");
+        if (seconds != 0) {
+            sb.append(seconds).append(" SECONDS");
+        }
         return sb.toString();
     }
 
