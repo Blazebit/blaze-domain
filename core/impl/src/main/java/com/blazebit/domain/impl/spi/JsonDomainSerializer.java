@@ -55,7 +55,7 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel> {
         StringBuilder sb = new StringBuilder();
         sb.append('{');
 
-        sb.append("\"types\": [");
+        sb.append("\"types\":[");
         if (types.isEmpty() && collectionTypes.isEmpty()) {
             sb.append(']');
         } else {
@@ -81,7 +81,7 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel> {
 
         if (!model.getFunctions().isEmpty()) {
             sb.append(',');
-            sb.append("\"funcs\": [");
+            sb.append("\"funcs\":[");
             for (DomainFunction domainFunction : model.getFunctions().values()) {
                 serializeFunction(sb, domainFunction, model, properties);
                 sb.append(',');
@@ -99,7 +99,7 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel> {
 
         Map<String, Map<String, Set<DomainOperator>>> opResolvers = prepareResolvers(model, properties, DomainOperator.class, model.getOperationTypeResolvers());
         if (!opResolvers.isEmpty()) {
-            sb.append(",\"opResolvers\": [");
+            sb.append(",\"opResolvers\":[");
             for (Map.Entry<String, Map<String, Set<DomainOperator>>> entry : opResolvers.entrySet()) {
                 sb.append("{\"resolver\":");
                 sb.append(entry.getKey());
@@ -119,7 +119,7 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel> {
 
         Map<String, Map<String, Set<DomainPredicate>>> predResolvers = prepareResolvers(model, properties, DomainPredicate.class, model.getPredicateTypeResolvers());
         if (!predResolvers.isEmpty()) {
-            sb.append(",\"predResolvers\": [");
+            sb.append(",\"predResolvers\":[");
             for (Map.Entry<String, Map<String, Set<DomainPredicate>>> entry : predResolvers.entrySet()) {
                 sb.append("{\"resolver\":");
                 sb.append(entry.getKey());
@@ -190,12 +190,16 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel> {
         serializeDomainType(sb, entityDomainType, model, properties);
 
         sb.append(",\"attrs\":[");
-        for (EntityDomainTypeAttribute attribute : entityDomainType.getAttributes().values()) {
-            sb.append("{\"name\": \"").append(attribute.getName()).append("\",\"type\":\"").append(attribute.getType().getName()).append('"');
-            serializeMetadata(sb, attribute.getMetadata(), model, properties);
-            sb.append("},");
+        if (entityDomainType.getAttributes().isEmpty()) {
+            sb.append(']');
+        } else {
+            for (EntityDomainTypeAttribute attribute : entityDomainType.getAttributes().values()) {
+                sb.append("{\"name\":\"").append(attribute.getName()).append("\",\"type\":\"").append(attribute.getType().getName()).append('"');
+                serializeMetadata(sb, attribute.getMetadata(), model, properties);
+                sb.append("},");
+            }
+            sb.setCharAt(sb.length() - 1, ']');
         }
-        sb.setCharAt(sb.length() - 1, ']');
         sb.append('}');
     }
 
@@ -203,12 +207,16 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel> {
         serializeDomainType(sb, enumDomainType, model, properties);
 
         sb.append(",\"vals\":[");
-        for (EnumDomainTypeValue value : enumDomainType.getEnumValues().values()) {
-            sb.append("{\"name\": \"").append(value.getValue()).append('"');
-            serializeMetadata(sb, value.getMetadata(), model, properties);
-            sb.append("},");
+        if (enumDomainType.getEnumValues().isEmpty()) {
+            sb.append(']');
+        } else {
+            for (EnumDomainTypeValue value : enumDomainType.getEnumValues().values()) {
+                sb.append("{\"name\":\"").append(value.getValue()).append('"');
+                serializeMetadata(sb, value.getMetadata(), model, properties);
+                sb.append("},");
+            }
+            sb.setCharAt(sb.length() - 1, ']');
         }
-        sb.setCharAt(sb.length() - 1, ']');
 
         sb.append('}');
     }
@@ -256,64 +264,72 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel> {
 
     protected void serializeDomainOperators(StringBuilder sb, Set<DomainOperator> operators) {
         sb.append("[");
-        for (DomainOperator op : operators) {
-            sb.append('"');
-            switch (op) {
-                case UNARY_MINUS:
-                    sb.append('M');
-                    break;
-                case UNARY_PLUS:
-                    sb.append('P');
-                    break;
-                case DIVISION:
-                    sb.append('/');
-                    break;
-                case MINUS:
-                    sb.append('-');
-                    break;
-                case MODULO:
-                    sb.append('%');
-                    break;
-                case MULTIPLICATION:
-                    sb.append('*');
-                    break;
-                case NOT:
-                    sb.append('!');
-                    break;
-                case PLUS:
-                    sb.append('+');
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unsupported domain operator: " + op);
+        if (operators.isEmpty()) {
+            sb.append(']');
+        } else {
+            for (DomainOperator op : operators) {
+                sb.append('"');
+                switch (op) {
+                    case UNARY_MINUS:
+                        sb.append('M');
+                        break;
+                    case UNARY_PLUS:
+                        sb.append('P');
+                        break;
+                    case DIVISION:
+                        sb.append('/');
+                        break;
+                    case MINUS:
+                        sb.append('-');
+                        break;
+                    case MODULO:
+                        sb.append('%');
+                        break;
+                    case MULTIPLICATION:
+                        sb.append('*');
+                        break;
+                    case NOT:
+                        sb.append('!');
+                        break;
+                    case PLUS:
+                        sb.append('+');
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported domain operator: " + op);
+                }
+                sb.append("\",");
             }
-            sb.append("\",");
+            sb.setCharAt(sb.length() - 1, ']');
         }
-        sb.setCharAt(sb.length() - 1, ']');
     }
 
     protected void serializeDomainPredicates(StringBuilder sb, Set<DomainPredicate> predicates) {
         sb.append("[");
-        for (DomainPredicate pred : predicates) {
-            sb.append('"');
-            switch (pred) {
-                case COLLECTION:
-                    sb.append('C');
-                    break;
-                case EQUALITY:
-                    sb.append('E');
-                    break;
-                case NULLNESS:
-                    sb.append('N');
-                    break;
-                case RELATIONAL:
-                    sb.append('R');
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unsupported domain predicate: " + pred);
+        if (predicates.isEmpty()) {
+            sb.append(']');
+        } else {
+            for (DomainPredicate pred : predicates) {
+                sb.append('"');
+                switch (pred) {
+                    case COLLECTION:
+                        sb.append('C');
+                        break;
+                    case EQUALITY:
+                        sb.append('E');
+                        break;
+                    case NULLNESS:
+                        sb.append('N');
+                        break;
+                    case RELATIONAL:
+                        sb.append('R');
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported domain predicate: " + pred);
+                }
+                sb.append("\",");
             }
-            sb.append("\",");
+            sb.setCharAt(sb.length() - 1, ']');
         }
-        sb.setCharAt(sb.length() - 1, ']');
     }
 
     protected void serializeFunction(StringBuilder sb, DomainFunction domainFunction, DomainModel model, Map<String, Object> properties) {
@@ -331,7 +347,7 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel> {
             sb.append(']');
         } else {
             for (DomainFunctionArgument argument : domainFunction.getArguments()) {
-                sb.append("{\"name\": \"").append(argument.getName()).append('"');
+                sb.append("{\"name\":\"").append(argument.getName()).append('"');
                 if (argument.getType() != null) {
                     sb.append(",\"type\":\"").append(argument.getType().getName()).append('"');
                 }
