@@ -22,7 +22,7 @@ package com.blazebit.domain.boot.model;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface EntityDomainTypeAttributeDefinition extends MetadataDefinitionHolder<EntityDomainTypeAttributeDefinition> {
+public interface EntityDomainTypeAttributeDefinition extends MetadataDefinitionHolder {
 
     /**
      * The name of the entity type attribute.
@@ -51,13 +51,4 @@ public interface EntityDomainTypeAttributeDefinition extends MetadataDefinitionH
      * @return the type name of this attribute
      */
     public String getTypeName();
-
-    /**
-     * Returns the java type of this attribute.
-     *
-     * @return the java type of this attribute
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getTypeName()} instead
-     */
-    @Deprecated
-    public Class<?> getJavaType();
 }

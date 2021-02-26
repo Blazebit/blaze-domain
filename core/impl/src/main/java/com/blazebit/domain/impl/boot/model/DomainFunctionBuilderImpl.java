@@ -95,20 +95,8 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
     }
 
     @Override
-    public DomainFunctionBuilder withArgument(String name, Class<?> javaType) {
-        domainFunctionDefinition.addArgumentDefinition(name, null, javaType, false);
-        return this;
-    }
-
-    @Override
-    public DomainFunctionBuilder withCollectionArgument(String name, Class<?> javaType) {
-        domainFunctionDefinition.addArgumentDefinition(name, null, javaType, true);
-        return this;
-    }
-
-    @Override
     public DomainFunctionBuilder withArgument(String name, MetadataDefinition<?>... metadataDefinitions) {
-        return withArgument(name, (Class<?>) null, metadataDefinitions);
+        return withArgument(name, null, metadataDefinitions);
     }
 
     @Override
@@ -132,28 +120,8 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
     }
 
     @Override
-    public DomainFunctionBuilder withArgument(String name, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions) {
-        DomainFunctionArgumentDefinitionImpl argumentDefinition = domainFunctionDefinition.addArgumentDefinition(name, null, javaType, false);
-        for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
-            argumentDefinition.withMetadataDefinition(metadataDefinition);
-        }
-
-        return this;
-    }
-
-    @Override
     public DomainFunctionBuilder withCollectionArgument(String name, MetadataDefinition<?>... metadataDefinitions) {
-        return withCollectionArgument(name, (Class<?>) null, metadataDefinitions);
-    }
-
-    @Override
-    public DomainFunctionBuilder withCollectionArgument(String name, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions) {
-        DomainFunctionArgumentDefinitionImpl argumentDefinition = domainFunctionDefinition.addArgumentDefinition(name, null, javaType, true);
-        for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
-            argumentDefinition.withMetadataDefinition(metadataDefinition);
-        }
-
-        return this;
+        return withCollectionArgument(name, null, metadataDefinitions);
     }
 
     @Override
@@ -165,22 +133,8 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
     }
 
     @Override
-    public DomainFunctionBuilder withArgumentTypes(Class<?>... javaTypes) {
-        for (Class<?> javaType : javaTypes) {
-            domainFunctionDefinition.addArgumentDefinition(null, null, javaType, false);
-        }
-        return this;
-    }
-
-    @Override
     public DomainFunctionBuilder withResultType(String typeName) {
         domainFunctionDefinition.setResultTypeName(typeName);
-        return this;
-    }
-
-    @Override
-    public DomainFunctionBuilder withResultType(Class<?> javaType) {
-        domainFunctionDefinition.setResultJavaType(javaType);
         return this;
     }
 
@@ -193,13 +147,6 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
     @Override
     public DomainFunctionBuilder withCollectionResultType(String typeName) {
         domainFunctionDefinition.setResultTypeName(typeName);
-        domainFunctionDefinition.setCollection(true);
-        return this;
-    }
-
-    @Override
-    public DomainFunctionBuilder withCollectionResultType(Class<?> javaType) {
-        domainFunctionDefinition.setResultJavaType(javaType);
         domainFunctionDefinition.setCollection(true);
         return this;
     }

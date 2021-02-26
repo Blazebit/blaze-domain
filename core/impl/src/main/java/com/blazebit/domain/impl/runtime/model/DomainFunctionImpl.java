@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
+import com.blazebit.domain.boot.model.DomainFunctionDefinition;
+import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.boot.model.DomainFunctionArgumentDefinitionImpl;
 import com.blazebit.domain.impl.boot.model.DomainFunctionArgumentDefinitionImplementor;
 import com.blazebit.domain.impl.boot.model.DomainFunctionDefinitionImplementor;
@@ -24,21 +26,24 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class DomainFunctionImpl implements DomainFunction, Serializable {
+public class DomainFunctionImpl extends AbstractMetadataHolder implements DomainFunction, DomainFunctionDefinition {
 
     private final String name;
     private final int minArgumentCount;
     private final int argumentCount;
-    private final DomainType resultType;
-    private final List<DomainFunctionArgument> argumentList;
-    private final Map<String, DomainFunctionArgument> argumentMap;
+    private final DomainTypeImplementor resultType;
+    private final List<DomainFunctionArgumentImpl> argumentList;
+    private final Map<String, DomainFunctionArgumentImpl> argumentMap;
     private final Map<Class<?>, Object> metadata;
 
     @SuppressWarnings("unchecked")
@@ -50,11 +55,11 @@ public class DomainFunctionImpl implements DomainFunction, Serializable {
         List<DomainFunctionArgumentDefinitionImplementor> argumentTypeDefinitions = functionDefinition.getArguments();
         int size = Math.max(argumentTypeDefinitions.size(), argumentCount);
         int argumentDefinitionSize = argumentTypeDefinitions.size();
-        List<DomainFunctionArgument> domainFunctionArguments = new ArrayList<>(size);
-        Map<String, DomainFunctionArgument> domainFunctionArgumentMap = new LinkedHashMap<>(size);
+        List<DomainFunctionArgumentImpl> domainFunctionArguments = new ArrayList<>(size);
+        Map<String, DomainFunctionArgumentImpl> domainFunctionArgumentMap = new LinkedHashMap<>(size);
         for (int i = 0; i < size; i++) {
             if (i < argumentDefinitionSize) {
-                DomainFunctionArgument functionArgument = argumentTypeDefinitions.get(i).createFunctionArgument(this, context);
+                DomainFunctionArgumentImpl functionArgument = argumentTypeDefinitions.get(i).createFunctionArgument(this, context);
                 domainFunctionArguments.add(functionArgument);
                 if (functionArgument.getName() != null) {
                     domainFunctionArgumentMap.put(functionArgument.getName(), functionArgument);
@@ -85,7 +90,12 @@ public class DomainFunctionImpl implements DomainFunction, Serializable {
     }
 
     @Override
-    public List<DomainFunctionArgument> getArguments() {
+    public List<DomainFunctionArgumentImpl> getArguments() {
+        return argumentList;
+    }
+
+    @Override
+    public List<DomainFunctionArgumentImpl> getArgumentDefinitions() {
         return argumentList;
     }
 
@@ -112,6 +122,11 @@ public class DomainFunctionImpl implements DomainFunction, Serializable {
     @Override
     public Map<Class<?>, Object> getMetadata() {
         return metadata;
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return getMetadataDefinitions(metadata);
     }
 
     @Override

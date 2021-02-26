@@ -38,5 +38,5 @@ public interface MetadataDefinition<T> {
      * @param definitionHolder The holder of this metadata definition
      * @return The metadata object
      */
-    public T build(MetadataDefinitionHolder<?> definitionHolder);
+    public T build(MetadataDefinitionHolder definitionHolder);
 }

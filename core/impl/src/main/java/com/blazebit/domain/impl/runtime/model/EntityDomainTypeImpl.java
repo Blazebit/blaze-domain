@@ -16,12 +16,12 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
+import com.blazebit.domain.boot.model.EntityDomainTypeDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.boot.model.EntityDomainTypeAttributeDefinitionImpl;
 import com.blazebit.domain.impl.boot.model.EntityDomainTypeDefinitionImpl;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.EntityDomainType;
-import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,22 +32,22 @@ import java.util.TreeMap;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class EntityDomainTypeImpl extends AbstractDomainTypeImpl implements EntityDomainType {
+public class EntityDomainTypeImpl extends AbstractDomainType implements EntityDomainType, EntityDomainTypeDefinition {
 
-    private final Map<String, EntityDomainTypeAttribute> attributes;
+    private final Map<String, EntityDomainTypeAttributeImpl> attributes;
     private final Map<Class<?>, Object> metadata;
 
     @SuppressWarnings("unchecked")
     public EntityDomainTypeImpl(EntityDomainTypeDefinitionImpl typeDefinition, MetamodelBuildingContext context) {
         super(typeDefinition, context);
-        Map<String, EntityDomainTypeAttribute> attributes;
+        Map<String, EntityDomainTypeAttributeImpl> attributes;
         if (typeDefinition.isCaseSensitive()) {
             attributes = new HashMap<>(typeDefinition.getAttributes().size());
         } else {
             attributes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         }
         for (EntityDomainTypeAttributeDefinitionImpl attributeDefinition : (Collection<EntityDomainTypeAttributeDefinitionImpl>) (Collection<?>) typeDefinition.getAttributes().values()) {
-            EntityDomainTypeAttribute old;
+            EntityDomainTypeAttributeImpl old;
             if ((old = attributes.put(attributeDefinition.getName(), attributeDefinition.createAttribute(this, context))) != null) {
                 context.addError("Duplicate attribute definition due to case insensitivity: [" + old.getName() + ", " + attributeDefinition.getName() + "]");
             }
@@ -62,12 +62,12 @@ public class EntityDomainTypeImpl extends AbstractDomainTypeImpl implements Enti
     }
 
     @Override
-    public EntityDomainTypeAttribute getAttribute(String name) {
+    public EntityDomainTypeAttributeImpl getAttribute(String name) {
         return attributes.get(name);
     }
 
     @Override
-    public Map<String, EntityDomainTypeAttribute> getAttributes() {
+    public Map<String, EntityDomainTypeAttributeImpl> getAttributes() {
         return attributes;
     }
 

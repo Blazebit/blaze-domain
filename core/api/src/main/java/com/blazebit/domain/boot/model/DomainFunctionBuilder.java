@@ -108,29 +108,6 @@ public interface DomainFunctionBuilder {
     public DomainFunctionBuilder withArgument(String name, String typeName, MetadataDefinition<?>... metadataDefinitions);
 
     /**
-     * Adds the argument with the given argument name and argument java type as next function argument.
-     *
-     * @param name The argument name
-     * @param javaType The argument java type
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withArgument(String, String)} instead
-     */
-    @Deprecated
-    public DomainFunctionBuilder withArgument(String name, Class<?> javaType);
-
-    /**
-     * Adds the argument with the given argument name and argument java type as well as metadata as next function argument.
-     *
-     * @param name The argument name
-     * @param javaType The argument java type
-     * @param metadataDefinitions The metadata definitions for the argument
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withArgument(String, String, MetadataDefinition[])} instead
-     */
-    @Deprecated
-    public DomainFunctionBuilder withArgument(String name, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions);
-
-    /**
      * Adds the collection argument with the given argument name as next function argument.
      *
      * @param name The argument name
@@ -167,29 +144,6 @@ public interface DomainFunctionBuilder {
     public DomainFunctionBuilder withCollectionArgument(String name, String typeName, MetadataDefinition<?>... metadataDefinitions);
 
     /**
-     * Adds the collection argument with the given argument name and argument element java type as next function argument.
-     *
-     * @param name The argument name
-     * @param javaType The argument element java type
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withCollectionArgument(String, String)} instead
-     */
-    @Deprecated
-    public DomainFunctionBuilder withCollectionArgument(String name, Class<?> javaType);
-
-    /**
-     * Adds the collection argument with the given argument name and argument element java type as well as metadata as next function argument.
-     *
-     * @param name The argument name
-     * @param javaType The argument element java type
-     * @param metadataDefinitions The metadata definitions for the argument
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withCollectionArgument(String, String, MetadataDefinition...)} instead
-     */
-    @Deprecated
-    public DomainFunctionBuilder withCollectionArgument(String name, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions);
-
-    /**
      * Specifies that the function accepts the given type names as arguments in the given order.
      *
      * @param typeNames The ordered argument type names
@@ -198,32 +152,12 @@ public interface DomainFunctionBuilder {
     public DomainFunctionBuilder withArgumentTypes(String... typeNames);
 
     /**
-     * Specifies that the function accepts the given java types as arguments in the given order.
-     *
-     * @param typeNames The ordered argument java type
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withArgumentTypes(String...)} instead
-     */
-    @Deprecated
-    public DomainFunctionBuilder withArgumentTypes(Class<?>... typeNames);
-
-    /**
      * Specifies that the function returns a fixed type as defined by the given type name.
      *
      * @param typeName The type name of the result type
      * @return this for chaining
      */
     public DomainFunctionBuilder withResultType(String typeName);
-
-    /**
-     * Specifies that the function returns a fixed type as defined by the given java type.
-     *
-     * @param javaType The java type of the result type
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withResultType(String)} instead
-     */
-    @Deprecated
-    public DomainFunctionBuilder withResultType(Class<?> javaType);
 
     /**
      * Specifies that the function returns a collection type.
@@ -239,16 +173,6 @@ public interface DomainFunctionBuilder {
      * @return this for chaining
      */
     public DomainFunctionBuilder withCollectionResultType(String typeName);
-
-    /**
-     * Specifies that the function returns a fixed collection type with the element type as defined by the given java type.
-     *
-     * @param javaType The collection element java type of the result type
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withCollectionResultType(String)} instead
-     */
-    @Deprecated
-    public DomainFunctionBuilder withCollectionResultType(Class<?> javaType);
 
     /**
      * Adds the given metadata definition to the function.

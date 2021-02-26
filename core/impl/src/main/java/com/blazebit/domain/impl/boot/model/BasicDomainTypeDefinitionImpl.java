@@ -19,17 +19,16 @@ package com.blazebit.domain.impl.boot.model;
 import com.blazebit.domain.boot.model.BasicDomainTypeDefinition;
 import com.blazebit.domain.impl.runtime.model.BasicDomainTypeImpl;
 import com.blazebit.domain.runtime.model.BasicDomainType;
-import com.blazebit.domain.runtime.model.DomainType;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class BasicDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<BasicDomainTypeDefinition> implements BasicDomainTypeDefinition, DomainTypeDefinitionImplementor<BasicDomainTypeDefinition> {
+public class BasicDomainTypeDefinitionImpl extends AbstractMetadataDefinitionHolder implements BasicDomainTypeDefinition, DomainTypeDefinitionImplementor {
 
     private final String name;
     private final Class<?> javaType;
-    private BasicDomainType domainType;
+    private BasicDomainTypeImpl domainType;
 
     public BasicDomainTypeDefinitionImpl(String name, Class<?> javaType) {
         this.name = name;
@@ -57,7 +56,7 @@ public class BasicDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<
     }
 
     @Override
-    public DomainType getType(MetamodelBuildingContext context) {
+    public BasicDomainTypeImpl getType(MetamodelBuildingContext context) {
         if (domainType == null) {
             domainType = new BasicDomainTypeImpl(this, context);
         }

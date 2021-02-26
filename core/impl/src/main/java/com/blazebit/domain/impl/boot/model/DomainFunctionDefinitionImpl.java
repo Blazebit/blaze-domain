@@ -18,7 +18,6 @@ package com.blazebit.domain.impl.boot.model;
 
 import com.blazebit.domain.boot.model.CollectionDomainTypeDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
-import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.impl.runtime.model.DomainFunctionImpl;
 import com.blazebit.domain.runtime.model.CollectionDomainType;
@@ -33,17 +32,16 @@ import java.util.List;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class DomainFunctionDefinitionImpl extends MetadataDefinitionHolderImpl<DomainFunctionDefinition> implements DomainFunctionDefinitionImplementor {
+public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHolder implements DomainFunctionDefinitionImplementor {
 
     private final String name;
     private int minArgumentCount = -1;
     private int argumentCount = -1;
     private String resultTypeName;
-    private Class<?> resultJavaType;
     private boolean collection;
     private Boolean positional;
     private List<DomainFunctionArgumentDefinitionImpl> argumentDefinitions = new ArrayList<>();
-    private DomainTypeDefinition<?> resultTypeDefinition;
+    private DomainTypeDefinition resultTypeDefinition;
     private DomainFunction function;
 
     public DomainFunctionDefinitionImpl(String name) {
@@ -59,11 +57,9 @@ public class DomainFunctionDefinitionImpl extends MetadataDefinitionHolderImpl<D
             if (domainFunction.getResultType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
                 CollectionDomainType resultType = (CollectionDomainType) domainFunction.getResultType();
                 this.resultTypeName = resultType.getElementType().getName();
-                this.resultJavaType = resultType.getElementType().getJavaType();
                 this.collection = true;
             } else {
                 this.resultTypeName = domainFunction.getResultType().getName();
-                this.resultJavaType = domainFunction.getResultType().getJavaType();
                 this.collection = false;
             }
         }
@@ -109,14 +105,6 @@ public class DomainFunctionDefinitionImpl extends MetadataDefinitionHolderImpl<D
         this.resultTypeName = resultTypeName;
     }
 
-    public Class<?> getResultJavaType() {
-        return resultJavaType;
-    }
-
-    public void setResultJavaType(Class<?> resultJavaType) {
-        this.resultJavaType = resultJavaType;
-    }
-
     public boolean isCollection() {
         return collection;
     }
@@ -154,21 +142,18 @@ public class DomainFunctionDefinitionImpl extends MetadataDefinitionHolderImpl<D
     }
 
     @Override
-    public DomainTypeDefinition<?> getResultTypeDefinition() {
+    public DomainTypeDefinition getResultTypeDefinition() {
         return resultTypeDefinition;
     }
 
     public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context) {
         this.function = null;
-        if (resultTypeName == null && resultJavaType == null) {
+        if (resultTypeName == null) {
             resultTypeDefinition = null;
         } else {
-            resultTypeDefinition = resultTypeName == null ? null : domainBuilder.getDomainTypeDefinition(resultTypeName);
+            resultTypeDefinition = domainBuilder.getDomainTypeDefinition(resultTypeName);
             if (resultTypeDefinition == null) {
-                resultTypeDefinition = domainBuilder.getDomainTypeDefinition(resultJavaType);
-                if (resultTypeDefinition == null) {
-                    context.addError("The result type '" + (resultTypeName == null ? resultJavaType.getName() : resultTypeName) + "' defined for the function " + name + " is unknown!");
-                }
+                context.addError("The result type '" + resultTypeName + "' defined for the function " + name + " is unknown!");
             }
             if (collection) {
                 resultTypeDefinition = domainBuilder.getCollectionDomainTypeDefinition(resultTypeDefinition);

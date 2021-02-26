@@ -22,7 +22,7 @@ package com.blazebit.domain.boot.model;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface EnumDomainTypeValueDefinition extends MetadataDefinitionHolder<EnumDomainTypeValueDefinition> {
+public interface EnumDomainTypeValueDefinition extends MetadataDefinitionHolder {
 
     /**
      * The enum value.

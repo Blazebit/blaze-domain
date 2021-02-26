@@ -83,29 +83,6 @@ public interface EntityDomainTypeBuilder {
     public EntityDomainTypeBuilder addAttribute(String attributeName, String typeName, MetadataDefinition<?>... metadataDefinitions);
 
     /**
-     * Adds an attribute with the given name and java type.
-     *
-     * @param attributeName The attribute name
-     * @param javaType The java type
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #addAttribute(String, String)} instead
-     */
-    @Deprecated
-    public EntityDomainTypeBuilder addAttribute(String attributeName, Class<?> javaType);
-
-    /**
-     * Adds an attribute with the given name and java type as well as metadata definitions.
-     *
-     * @param attributeName The attribute name
-     * @param javaType The java type
-     * @param metadataDefinitions The metadata for the attribute
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #addAttribute(String, String, MetadataDefinition...)} instead
-     */
-    @Deprecated
-    public EntityDomainTypeBuilder addAttribute(String attributeName, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions);
-
-    /**
      * Adds a collection attribute with the given name and a generic element type as well as metadata definitions.
      *
      * @param attributeName The attribute name
@@ -132,29 +109,6 @@ public interface EntityDomainTypeBuilder {
      * @return this for chaining
      */
     public EntityDomainTypeBuilder addCollectionAttribute(String attributeName, String elementTypeName, MetadataDefinition<?>... metadataDefinitions);
-
-    /**
-     * Adds a collection attribute with the given name and element java type.
-     *
-     * @param attributeName The attribute name
-     * @param elementJavaType The element java type
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #addCollectionAttribute(String, String)} instead
-     */
-    @Deprecated
-    public EntityDomainTypeBuilder addCollectionAttribute(String attributeName, Class<?> elementJavaType);
-
-    /**
-     * Adds a collection attribute with the given name and element java type as well as metadata definitions.
-     *
-     * @param attributeName The attribute name
-     * @param elementJavaType The element java type
-     * @param metadataDefinitions The metadata for the attribute
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #addCollectionAttribute(String, String, MetadataDefinition...)} instead
-     */
-    @Deprecated
-    public EntityDomainTypeBuilder addCollectionAttribute(String attributeName, Class<?> elementJavaType, MetadataDefinition<?>... metadataDefinitions);
 
     /**
      * Adds the given metadata definition to the entity type.

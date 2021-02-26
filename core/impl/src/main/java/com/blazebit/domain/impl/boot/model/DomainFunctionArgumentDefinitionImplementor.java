@@ -18,6 +18,7 @@ package com.blazebit.domain.impl.boot.model;
 
 import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
+import com.blazebit.domain.impl.runtime.model.DomainFunctionArgumentImpl;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 
@@ -27,9 +28,9 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
  */
 public interface DomainFunctionArgumentDefinitionImplementor extends DomainFunctionArgumentDefinition {
 
-    public DomainTypeDefinition<?> getTypeDefinition();
+    public DomainTypeDefinition getTypeDefinition();
 
     public DomainFunctionArgument getDomainFunctionArgument();
 
-    public DomainFunctionArgument createFunctionArgument(DomainFunction function, MetamodelBuildingContext context);
+    public DomainFunctionArgumentImpl createFunctionArgument(DomainFunction function, MetamodelBuildingContext context);
 }

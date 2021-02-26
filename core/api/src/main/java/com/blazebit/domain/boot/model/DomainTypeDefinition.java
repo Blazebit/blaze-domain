@@ -19,11 +19,10 @@ package com.blazebit.domain.boot.model;
 /**
  * A type in the domain.
  *
- * @param <X> The self type for chaining
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface DomainTypeDefinition<X extends DomainTypeDefinition<X>> extends MetadataDefinitionHolder<X> {
+public interface DomainTypeDefinition extends MetadataDefinitionHolder {
 
     /**
      * The name of the domain type.

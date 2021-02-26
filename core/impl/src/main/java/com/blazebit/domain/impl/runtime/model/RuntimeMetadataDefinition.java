@@ -41,7 +41,7 @@ public class RuntimeMetadataDefinition implements MetadataDefinition<Object>, Se
     }
 
     @Override
-    public Object build(MetadataDefinitionHolder<?> definitionHolder) {
+    public Object build(MetadataDefinitionHolder definitionHolder) {
         return object;
     }
 }

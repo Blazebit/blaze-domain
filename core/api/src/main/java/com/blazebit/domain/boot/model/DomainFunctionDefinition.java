@@ -24,7 +24,7 @@ import java.util.List;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface DomainFunctionDefinition extends MetadataDefinitionHolder<DomainFunctionDefinition> {
+public interface DomainFunctionDefinition extends MetadataDefinitionHolder {
 
     /**
      * The name of the domain function.
@@ -52,6 +52,6 @@ public interface DomainFunctionDefinition extends MetadataDefinitionHolder<Domai
      *
      * @return the argument definitions
      */
-    public List<DomainFunctionArgumentDefinition> getArgumentDefinitions();
+    public List<? extends DomainFunctionArgumentDefinition> getArgumentDefinitions();
 
 }

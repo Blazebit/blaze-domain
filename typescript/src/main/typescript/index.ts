@@ -265,116 +265,6 @@ export interface DomainFunctionTypeResolver {
 }
 
 /**
- * An entity literal.
- *
- * @author Christian Beikov
- * @since 1.0.0
- */
-export interface EntityLiteral {
-    /**
-     * The entity type.
-     */
-    entityType: EntityDomainType;
-    /**
-     * The entity attribute values.
-     */
-    attributeValues: StringMap<any>;
-}
-
-/**
- * An enum literal.
- *
- * @author Christian Beikov
- * @since 1.0.0
- */
-export interface EnumLiteral {
-    /**
-     * The enum type.
-     */
-    enumType: EnumDomainType;
-    /**
-     * The enum value.
-     */
-    value: EnumDomainTypeValue;
-}
-
-/**
- * A collection literal.
- *
- * @author Christian Beikov
- * @since 1.0.0
- */
-export interface CollectionLiteral {
-    /**
-     * The collection type.
-     */
-    type: CollectionDomainType;
-    /**
-     * The collection values.
-     */
-    values: any[];
-}
-
-/**
- * The literal kind.
- *
- * @author Christian Beikov
- * @since 1.0.0
- */
-export enum LiteralKind {
-    /**
-     * Boolean literal.
-     */
-    BOOLEAN,
-    /**
-     * Numeric literal.
-     */
-    NUMERIC,
-    /**
-     * String literal.
-     */
-    STRING,
-    /**
-     * Timestamp literal.
-     */
-    TIMESTAMP,
-    /**
-     * Interval literal.
-     */
-    INTERVAL,
-    /**
-     * Entity literal.
-     */
-    ENTITY,
-    /**
-     * Enum literal.
-     */
-    ENUM,
-    /**
-     * Collection literal.
-     */
-    COLLECTION
-}
-
-/**
- * A resolver for literal values.
- *
- * @author Christian Beikov
- * @since 1.0.0
- */
-export interface LiteralResolver {
-    /**
-     * Resolves the domain type of the given literal value.
-     *
-     * @param domainModel The domain model
-     * @param kind The kind of literal
-     * @param value The boolean value
-     * @return the resolved literal
-     */
-    resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType;
-}
-
-/**
  * A function in the domain.
  *
  * @author Christian Beikov
@@ -631,42 +521,21 @@ export class DomainModel {
      * Returns the predicate type resolvers of the domain model as map indexed by their type name.
      */
     predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>>;
-    /**
-     * Returns the resolver for boolean literals.
-     */
-    booleanLiteralResolver: LiteralResolver;
-    /**
-     * Returns the resolver for numeric literals.
-     */
-    numericLiteralResolver: LiteralResolver;
-    /**
-     * Returns the resolver for string literals.
-     */
-    stringLiteralResolver: LiteralResolver;
-    /**
-     * Returns the resolver for temporal literals.
-     */
-    temporalLiteralResolver: LiteralResolver;
-    /**
-     * Returns the resolver for entity literals.
-     */
-    entityLiteralResolver: LiteralResolver;
-    /**
-     * Returns the resolver for enum literals.
-     */
-    enumLiteralResolver: LiteralResolver;
-    /**
-     * Returns the resolver for collection literals.
-     */
-    collectionLiteralResolver: LiteralResolver;
 
     /**
      * Parses the given JSON string to a domain model.
      *
-     * @param input The JSON string
-     * @param extensions The extension functions like resolver constructors
+     * @param input The JSON string or object
+     * @param baseModel The optional base model
+     * @param extensions The optional extension functions like resolver constructors
      */
-    static parse(input: string, extensions: StringMap<Function>): DomainModel {
+    static parse(input: object | string, baseModel?: DomainModel, extensions?: StringMap<Function>): DomainModel {
+        let json;
+        if (typeof input === "string") {
+            json = JSON.parse(input);
+        } else {
+            json = input;
+        }
         if (typeof extensions === "undefined") {
             extensions = {};
         }
@@ -794,36 +663,6 @@ export class DomainModel {
                 return domainModel.types[returningType];
             }};
         });
-        registerIfAbsent("DelegatingEntityLiteralResolver", function(main: any, delegate: any): LiteralResolver {
-            let mainResolver: LiteralResolver = resolver(main);
-            let delegateResolver: LiteralResolver = null;
-            if (delegate != null) {
-                delegateResolver = resolver(delegate);
-            }
-            return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
-                let result = mainResolver.resolveLiteral(domainModel, kind, value);
-                if (result == null) {
-                    return delegateResolver == null ? null : delegateResolver.resolveLiteral(domainModel, kind, value);
-                }
-                return result;
-            }};
-        });
-        registerIfAbsent("FixedEntityLiteralResolver", function(supportedEntityTypeIds: StringMap<string>): LiteralResolver {
-            return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
-                let entityLiteral = value as EntityLiteral;
-                let idName = supportedEntityTypeIds[entityLiteral.entityType.name]
-                if (idName == null || entityLiteral.attributeValues[idName] == null) {
-                    return null;
-                }
-                return entityLiteral.entityType;
-            }};
-        });
-        registerIfAbsent("SimpleEnumLiteralResolver", function(): LiteralResolver {
-            return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
-                let enumLiteral = value as EnumLiteral;
-                return enumLiteral.enumType;
-            }};
-        });
         registerIfAbsent("FirstArgumentDomainFunctionTypeResolver", function(): DomainFunctionTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
                 validateArgumentTypes(domainFunction, argumentTypes);
@@ -928,8 +767,37 @@ export class DomainModel {
             }
             return null;
         };
-        let json = JSON.parse(input), types = json['types'], functions = json['funcs'], opResolvers = json['opResolvers'], predResolvers = json['predResolvers'];
+        let types = json['types'], functions = json['funcs'], opResolvers = json['opResolvers'], predResolvers = json['predResolvers'];
         var domainTypes: StringMap<DomainType> = {};
+        var funcs: StringMap<DomainFunction> = {};
+        let operationTypeResolvers: StringMap<StringMap<DomainOperationTypeResolver>> = {};
+        let predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>> = {};
+        if (baseModel instanceof DomainModel) {
+            let t = baseModel.types;
+            for (let name in t) {
+                domainTypes[name] = t[name];
+            }
+            let f = baseModel.functions;
+            for (let name in f) {
+                funcs[name] = f[name];
+            }
+            let o = baseModel.operationTypeResolvers;
+            for (let name in o) {
+                let r = operationTypeResolvers[name] = {};
+                let m = o[name];
+                for (let op in m) {
+                    r[op] = m[op];
+                }
+            }
+            let p = baseModel.predicateTypeResolvers;
+            for (let name in p) {
+                let r = predicateTypeResolvers[name] = {};
+                let m = p[name];
+                for (let op in m) {
+                    r[op] = m[op];
+                }
+            }
+        }
         types.forEach(function (type) {
             let name = type['name'];
             let ops: DomainOperator[] = [];
@@ -990,7 +858,6 @@ export class DomainModel {
                 }
             }
         });
-        var funcs: StringMap<DomainFunction> = {};
         if (Array.isArray(functions)) {
             functions.forEach(function (func) {
                 var params: DomainFunctionArgument[] = [];
@@ -1017,7 +884,6 @@ export class DomainModel {
                 funcs[func['name']] = new DomainFunction(func['name'], func['minArgCount'], func['argCount'], resultType, resultTypeResolver, doc(meta), params, meta);
             });
         }
-        let operationTypeResolvers: StringMap<StringMap<DomainOperationTypeResolver>> = {};
         if (Array.isArray(opResolvers)) {
             opResolvers.forEach(function (op) {
                 let typeOps = op['typeOps'];
@@ -1042,7 +908,6 @@ export class DomainModel {
                 }
             });
         }
-        let predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>> = {};
         if (Array.isArray(predResolvers)) {
             predResolvers.forEach(function (pred) {
                 let typePreds = pred['typePreds'];
@@ -1084,14 +949,7 @@ export class DomainModel {
             types:                      domainTypes,
             functions:                  funcs,
             operationTypeResolvers:     operationTypeResolvers,
-            predicateTypeResolvers:     predicateTypeResolvers,
-            booleanLiteralResolver:     resolver(json['booleanLiteralResolver']),
-            numericLiteralResolver:     resolver(json['numericLiteralResolver']),
-            stringLiteralResolver:      resolver(json['stringLiteralResolver']),
-            temporalLiteralResolver:    resolver(json['temporalLiteralResolver']),
-            entityLiteralResolver:      resolver(json['entityLiteralResolver']),
-            enumLiteralResolver:        resolver(json['enumLiteralResolver']),
-            collectionLiteralResolver:  resolver(json['collectionLiteralResolver'])
+            predicateTypeResolvers:     predicateTypeResolvers
         };
     }
 }

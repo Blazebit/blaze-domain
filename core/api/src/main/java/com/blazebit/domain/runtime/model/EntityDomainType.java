@@ -39,6 +39,6 @@ public interface EntityDomainType extends DomainType {
      *
      * @return the attributes
      */
-    public Map<String, EntityDomainTypeAttribute> getAttributes();
+    public Map<String, ? extends EntityDomainTypeAttribute> getAttributes();
 
 }

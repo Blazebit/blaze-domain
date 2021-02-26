@@ -19,7 +19,6 @@ package com.blazebit.domain.impl.boot.model;
 import com.blazebit.domain.impl.runtime.model.EnumDomainTypeImpl;
 import com.blazebit.domain.boot.model.EnumDomainTypeDefinition;
 import com.blazebit.domain.boot.model.EnumDomainTypeValueDefinition;
-import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
 
@@ -30,13 +29,13 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class EnumDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<EnumDomainTypeDefinition> implements EnumDomainTypeDefinition, DomainTypeDefinitionImplementor<EnumDomainTypeDefinition> {
+public class EnumDomainTypeDefinitionImpl extends AbstractMetadataDefinitionHolder implements EnumDomainTypeDefinition, DomainTypeDefinitionImplementor {
 
     private final String name;
     private final Class<?> javaType;
     private final Map<String, EnumDomainTypeValueDefinitionImpl> enumValues = new HashMap<>();
     private boolean caseSensitive = true;
-    private EnumDomainType domainType;
+    private EnumDomainTypeImpl domainType;
 
     public EnumDomainTypeDefinitionImpl(String name, Class<?> javaType) {
         this.name = name;
@@ -47,7 +46,7 @@ public class EnumDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<E
         super(enumDomainType);
         this.name = enumDomainType.getName();
         this.javaType = enumDomainType.getJavaType();
-        for (Map.Entry<String, EnumDomainTypeValue> entry : enumDomainType.getEnumValues().entrySet()) {
+        for (Map.Entry<String, ? extends EnumDomainTypeValue> entry : enumDomainType.getEnumValues().entrySet()) {
             enumValues.put(entry.getKey(), new EnumDomainTypeValueDefinitionImpl(this, entry.getValue()));
         }
     }
@@ -91,7 +90,7 @@ public class EnumDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<E
     }
 
     @Override
-    public DomainType getType(MetamodelBuildingContext context) {
+    public EnumDomainTypeImpl getType(MetamodelBuildingContext context) {
         if (domainType == null) {
             domainType = new EnumDomainTypeImpl(this, context);
         }

@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.blazebit.domain.runtime.model;
+
+package com.blazebit.domain.impl.runtime.model;
+
+import com.blazebit.domain.impl.boot.model.DomainTypeDefinitionImplementor;
+import com.blazebit.domain.runtime.model.DomainType;
 
 /**
- * A literal resolver for enum values.
- *
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface EnumLiteralResolver {
+public interface DomainTypeImplementor extends DomainType, DomainTypeDefinitionImplementor {
 
-    /**
-     * Resolves the given enum value to a resolved domain literal.
-     *
-     * @param domainModel The domain model
-     * @param value The enum value
-     * @return the resolved literal
-     */
-    ResolvedLiteral resolveLiteral(DomainModel domainModel, EnumDomainTypeValue value);
 }

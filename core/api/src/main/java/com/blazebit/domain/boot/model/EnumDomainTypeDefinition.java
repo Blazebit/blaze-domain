@@ -22,7 +22,7 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface EnumDomainTypeDefinition extends DomainTypeDefinition<EnumDomainTypeDefinition> {
+public interface EnumDomainTypeDefinition extends DomainTypeDefinition {
 
     /**
      * The enum value of the enum domain type with the given name or <code>null</code>.
@@ -37,6 +37,6 @@ public interface EnumDomainTypeDefinition extends DomainTypeDefinition<EnumDomai
      *
      * @return the enum values of the enum domain type
      */
-    public Map<String, EnumDomainTypeValueDefinition> getEnumValues();
+    public Map<String, ? extends EnumDomainTypeValueDefinition> getEnumValues();
 
 }

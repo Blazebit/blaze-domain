@@ -21,11 +21,13 @@ import com.blazebit.domain.impl.boot.model.DomainBuilderImpl;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.spi.DomainBuilderProvider;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class DomainBuilderProviderImpl implements DomainBuilderProvider {
+public class DomainBuilderProviderImpl implements DomainBuilderProvider, Serializable {
 
     @Override
     public DomainBuilder createEmptyBuilder() {

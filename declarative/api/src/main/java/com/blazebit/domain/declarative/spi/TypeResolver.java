@@ -29,12 +29,7 @@ public interface TypeResolver {
     /**
      * A type resolver that always returns null i.e. doesn't resolve a type.
      */
-    public static final TypeResolver NOOP = new TypeResolver() {
-        @Override
-        public Object resolve(Class<?> contextClass, Type type) {
-            return null;
-        }
-    };
+    public static final TypeResolver NOOP = new NoopTypeResolver();
 
     /**
      * Resolves the given type to a type name string, java type class or parameterized type.

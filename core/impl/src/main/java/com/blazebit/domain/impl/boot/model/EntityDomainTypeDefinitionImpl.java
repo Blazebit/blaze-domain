@@ -19,7 +19,6 @@ package com.blazebit.domain.impl.boot.model;
 import com.blazebit.domain.boot.model.EntityDomainTypeAttributeDefinition;
 import com.blazebit.domain.boot.model.EntityDomainTypeDefinition;
 import com.blazebit.domain.impl.runtime.model.EntityDomainTypeImpl;
-import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 
@@ -30,13 +29,13 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class EntityDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<EntityDomainTypeDefinition> implements EntityDomainTypeDefinition, DomainTypeDefinitionImplementor<EntityDomainTypeDefinition> {
+public class EntityDomainTypeDefinitionImpl extends AbstractMetadataDefinitionHolder implements EntityDomainTypeDefinition, DomainTypeDefinitionImplementor {
 
     private final String name;
     private final Class<?> javaType;
     private final Map<String, EntityDomainTypeAttributeDefinitionImpl> attributes;
     private boolean caseSensitive = true;
-    private EntityDomainType domainType;
+    private EntityDomainTypeImpl domainType;
 
     public EntityDomainTypeDefinitionImpl(String name, Class<?> javaType) {
         this.name = name;
@@ -49,7 +48,7 @@ public class EntityDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl
         this.name = entityDomainType.getName();
         this.javaType = entityDomainType.getJavaType();
         this.attributes = new HashMap<>(entityDomainType.getAttributes().size());
-        for (Map.Entry<String, EntityDomainTypeAttribute> entry : entityDomainType.getAttributes().entrySet()) {
+        for (Map.Entry<String, ? extends EntityDomainTypeAttribute> entry : entityDomainType.getAttributes().entrySet()) {
             attributes.put(entry.getKey(), new EntityDomainTypeAttributeDefinitionImpl(this, entry.getValue()));
         }
     }
@@ -95,7 +94,7 @@ public class EntityDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl
     }
 
     @Override
-    public DomainType getType(MetamodelBuildingContext context) {
+    public EntityDomainTypeImpl getType(MetamodelBuildingContext context) {
         if (domainType == null) {
             domainType = new EntityDomainTypeImpl(this, context);
         }

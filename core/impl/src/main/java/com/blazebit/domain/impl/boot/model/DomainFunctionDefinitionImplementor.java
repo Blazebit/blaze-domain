@@ -29,5 +29,5 @@ public interface DomainFunctionDefinitionImplementor extends DomainFunctionDefin
 
     public List<DomainFunctionArgumentDefinitionImplementor> getArguments();
 
-    public DomainTypeDefinition<?> getResultTypeDefinition();
+    public DomainTypeDefinition getResultTypeDefinition();
 }

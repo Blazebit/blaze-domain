@@ -16,20 +16,14 @@
 
 package com.blazebit.domain.boot.model;
 
-import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
-import com.blazebit.domain.runtime.model.CollectionLiteralResolver;
 import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperationTypeResolver;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
-import com.blazebit.domain.runtime.model.EntityLiteralResolver;
-import com.blazebit.domain.runtime.model.EnumLiteralResolver;
-import com.blazebit.domain.runtime.model.NumericLiteralResolver;
-import com.blazebit.domain.runtime.model.StringLiteralResolver;
-import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.domain.spi.DomainSerializer;
+import com.blazebit.domain.spi.ServiceProvider;
 
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +34,7 @@ import java.util.Set;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface DomainBuilder {
+public interface DomainBuilder extends ServiceProvider {
 
     /**
      * Loads the default settings in this domain builder.
@@ -50,116 +44,12 @@ public interface DomainBuilder {
     public DomainBuilder withDefaults();
 
     /**
-     * Adds the given boolean literal resolver.
+     * Sets the given type name as default type to use for predicate results.
      *
-     * @param literalResolver The boolean literal resolver to add
+     * @param typeName The type name to use
      * @return this for chaining
      */
-    public DomainBuilder withBooleanLiteralResolver(BooleanLiteralResolver literalResolver);
-
-    /**
-     * Adds the given numeric literal resolver.
-     *
-     * @param literalResolver The numeric literal resolver to add
-     * @return this for chaining
-     */
-    public DomainBuilder withNumericLiteralResolver(NumericLiteralResolver literalResolver);
-
-    /**
-     * Adds the given string literal resolver.
-     *
-     * @param literalResolver The string literal resolver to add
-     * @return this for chaining
-     */
-    public DomainBuilder withStringLiteralResolver(StringLiteralResolver literalResolver);
-
-    /**
-     * Adds the given temporal literal resolver.
-     *
-     * @param literalResolver The temporal literal resolver to add
-     * @return this for chaining
-     */
-    public DomainBuilder withTemporalLiteralResolver(TemporalLiteralResolver literalResolver);
-
-    /**
-     * Adds the given enum literal resolver.
-     *
-     * @param literalResolver The enum literal resolver to add
-     * @return this for chaining
-     */
-    public DomainBuilder withEnumLiteralResolver(EnumLiteralResolver literalResolver);
-
-    /**
-     * Adds the given entity literal resolver.
-     *
-     * @param literalResolver The entity literal resolver to add
-     * @return this for chaining
-     */
-    public DomainBuilder withEntityLiteralResolver(EntityLiteralResolver literalResolver);
-
-    /**
-     * Adds the given collection literal resolver.
-     *
-     * @param literalResolver The collection literal resolver to add
-     * @return this for chaining
-     */
-    public DomainBuilder withCollectionLiteralResolver(CollectionLiteralResolver literalResolver);
-
-    /**
-     * Returns the boolean literal resolver.
-     *
-     * @return The boolean literal resolver
-     * @since 1.0.6
-     */
-    public BooleanLiteralResolver getBooleanLiteralResolver();
-
-    /**
-     * Returns the numeric literal resolver.
-     *
-     * @return the numeric literal resolver
-     * @since 1.0.6
-     */
-    public NumericLiteralResolver getNumericLiteralResolver();
-
-    /**
-     * Returns the string literal resolver.
-     *
-     * @return the string literal resolver
-     * @since 1.0.6
-     */
-    public StringLiteralResolver getStringLiteralResolver();
-
-    /**
-     * Returns the temporal literal resolver.
-     *
-     * @return the temporal literal resolver
-     * @since 1.0.6
-     */
-    public TemporalLiteralResolver getTemporalLiteralResolver();
-
-    /**
-     * Returns the enum literal resolver.
-     *
-     * @return the enum literal resolver
-     * @since 1.0.6
-     */
-    public EnumLiteralResolver getEnumLiteralResolver();
-
-    /**
-     * Returns the entity literal resolver.
-     *
-     * @return the entity literal resolver
-     * @since 1.0.6
-     */
-    public EntityLiteralResolver getEntityLiteralResolver();
-
-    /**
-     * Returns the collection literal resolver.
-     *
-     * @return the collection literal resolver
-     * @since 1.0.6
-     */
-    public CollectionLiteralResolver getCollectionLiteralResolver();
+    public DomainBuilder withDefaultPredicateResultType(String typeName);
 
     /**
      * Adds the given function type resolver for the given function name.
@@ -181,18 +71,6 @@ public interface DomainBuilder {
     public DomainBuilder withOperationTypeResolver(String typeName, DomainOperator domainOperator, DomainOperationTypeResolver operationTypeResolver);
 
     /**
-     * Adds the given operation type resolver for the given java type and domain operator.
-     *
-     * @param javaType The java type of a domain type for which to register the operation type resolver
-     * @param domainOperator The domain operator for which to register the operation type resolver
-     * @param operationTypeResolver The operation type resolver to register
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withOperationTypeResolver(String, DomainOperator, DomainOperationTypeResolver)} instead
-     */
-    @Deprecated
-    public DomainBuilder withOperationTypeResolver(Class<?> javaType, DomainOperator domainOperator, DomainOperationTypeResolver operationTypeResolver);
-
-    /**
      * Adds the given predicate type resolver for the given type name and domain predicate type.
      *
      * @param typeName The type name of a domain type for which to register the predicate type resolver
@@ -201,18 +79,6 @@ public interface DomainBuilder {
      * @return this for chaining
      */
     public DomainBuilder withPredicateTypeResolver(String typeName, DomainPredicate domainPredicate, DomainPredicateTypeResolver predicateTypeResolver);
-
-    /**
-     * Adds the given predicate type resolver for the given java type and domain predicate type.
-     *
-     * @param javaType The java type of a domain type for which to register the predicate type resolver
-     * @param domainPredicate The domain predicate for which to register the predicate type resolver
-     * @param predicateTypeResolver The predicate type resolver to register
-     * @return this for chaining
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #withPredicateTypeResolver(String, DomainPredicate, DomainPredicateTypeResolver)} instead
-     */
-    @Deprecated
-    public DomainBuilder withPredicateTypeResolver(Class<?> javaType, DomainPredicate domainPredicate, DomainPredicateTypeResolver predicateTypeResolver);
 
     /**
      * Returns the domain operation type resolver for the given type name and domain operator.
@@ -240,7 +106,7 @@ public interface DomainBuilder {
      * @param serializer The domain model serializer
      * @return this for chaining
      */
-    public DomainBuilder withSerializer(DomainSerializer<DomainModel> serializer);
+    public DomainBuilder withSerializer(DomainSerializer<?> serializer);
 
     /**
      * Enables the given domain operator for the given type name.
@@ -394,6 +260,27 @@ public interface DomainBuilder {
     public EnumDomainTypeBuilder createEnumType(String name, Class<?> javaType);
 
     /**
+     * Creates an enum domain type with the given type name that extends the enum type with the given type name.
+     *
+     * @param name The type name
+     * @param baseEnumType The base enum domain type definition
+     * @return the enum domain builder
+     * @since 2.0.0
+     */
+    public EnumDomainTypeBuilder extendEnumType(String name, EnumDomainTypeDefinition baseEnumType);
+
+    /**
+     * Creates an enum domain type with the given type name and Java type.
+     *
+     * @param name The type name
+     * @param javaType The Java type
+     * @param baseEnumType The base enum domain type definition
+     * @return the enum domain builder
+     * @since 2.0.0
+     */
+    public EnumDomainTypeBuilder extendEnumType(String name, Class<?> javaType, EnumDomainTypeDefinition baseEnumType);
+
+    /**
      * Sets whether function names are case sensitive.
      *
      * @param caseSensitive Whether function names are case sensitive
@@ -407,17 +294,7 @@ public interface DomainBuilder {
      * @param name The type name of the desired domain type definition
      * @return the domain type definition or <code>null</code>
      */
-    public DomainTypeDefinition<?> getType(String name);
-
-    /**
-     * Returns the domain type definition with the given java type or <code>null</code>.
-     *
-     * @param javaType The java type of the desired domain type definition
-     * @return the domain type definition or <code>null</code>
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getType(String)} instead
-     */
-    @Deprecated
-    public DomainTypeDefinition<?> getType(Class<?> javaType);
+    public DomainTypeDefinition getType(String name);
 
     /**
      * Returns the entity domain type definition with the given type name or <code>null</code>.
@@ -428,16 +305,6 @@ public interface DomainBuilder {
     public EntityDomainTypeDefinition getEntityType(String name);
 
     /**
-     * Returns the entity domain type definition with the given java type or <code>null</code>.
-     *
-     * @param javaType The java type of the desired entity domain type definition
-     * @return the entity domain type definition or <code>null</code>
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getEntityType(String)} instead
-     */
-    @Deprecated
-    public EntityDomainTypeDefinition getEntityType(Class<?> javaType);
-
-    /**
      * Returns the collection domain type definition with the given element domain type name or <code>null</code>.
      *
      * @param elementDomainTypeName The element domain type name of the desired collection domain type definition
@@ -446,30 +313,11 @@ public interface DomainBuilder {
     public CollectionDomainTypeDefinition getCollectionType(String elementDomainTypeName);
 
     /**
-     * Returns the collection domain type definition with the given element java type or <code>null</code>.
-     *
-     * @param elementDomainJavaType The element java type of the desired collection domain type definition
-     * @return the collection domain type definition or <code>null</code>
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getCollectionType(String)} instead
-     */
-    @Deprecated
-    public CollectionDomainTypeDefinition getCollectionType(Class<?> elementDomainJavaType);
-
-    /**
      * Returns the type definitions of the domain builder as map indexed by their type name.
      *
      * @return the type definitions of the domain builder
      */
-    public Map<String, DomainTypeDefinition<?>> getTypes();
-
-    /**
-     * Returns the type definitions of the domain builder as map indexed by their java type.
-     *
-     * @return the type definitions of the domain builder
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getTypes()} instead
-     */
-    @Deprecated
-    public Map<Class<?>, DomainTypeDefinition<?>> getTypesByJavaType();
+    public Map<String, DomainTypeDefinition> getTypes();
 
     /**
      * Returns the collection type definitions of the domain builder as map indexed by their element domain type name.
@@ -477,15 +325,6 @@ public interface DomainBuilder {
      * @return the collection type definitions of the domain builder
      */
     public Map<String, CollectionDomainTypeDefinition> getCollectionTypes();
-
-    /**
-     * Returns the collection type definitions of the domain builder as map indexed by their element java type.
-     *
-     * @return the collection type definitions of the domain builder
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getCollectionTypes()} instead
-     */
-    @Deprecated
-    public Map<Class<?>, CollectionDomainTypeDefinition> getCollectionTypesByJavaType();
 
     /**
      * Returns the domain function definition with the given name or <code>null</code>.
@@ -518,6 +357,53 @@ public interface DomainBuilder {
      * @since 1.0.6
      */
     public Object getProperty(String propertyName);
+
+    /**
+     * Sets a property value by name.
+     *
+     * @param propertyName The name of the property
+     * @param propertyValue the property value
+     * @since 2.0.0
+     */
+    public void setProperty(String propertyName, Object propertyValue);
+
+    /**
+     * Returns the registered services.
+     *
+     * @return the registered services
+     * @since 2.0.0
+     */
+    Map<Class<?>, Object> getRegisteredServices();
+
+    /**
+     * Returns the registered service for the given type.
+     *
+     * @param serviceClass The service class
+     * @param <T> The service type
+     * @return the registered service
+     * @since 2.0.0
+     */
+    <T> T getRegisteredService(Class<T> serviceClass);
+
+    /**
+     * Registers the given service for the given type.
+     *
+     * @param serviceClass The service class
+     * @param service The service
+     * @param <T> The service type
+     * @return this for chaining
+     * @since 2.0.0
+     */
+    <T> DomainBuilder withService(Class<T> serviceClass, T service);
+
+    /**
+     * Registers the given service provider.
+     *
+     * @param serviceProvider A custom service provider that is queried if a service was not explicitly registered
+     * @return this for chaining
+     * @since 2.0.0
+     */
+    DomainBuilder withServiceProvider(ServiceProvider serviceProvider);
 
     /**
      * Builds and validates the domain model as defined via this builder.

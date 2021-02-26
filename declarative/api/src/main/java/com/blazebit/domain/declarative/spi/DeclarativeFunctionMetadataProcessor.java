@@ -17,6 +17,7 @@
 package com.blazebit.domain.declarative.spi;
 
 import com.blazebit.domain.boot.model.MetadataDefinition;
+import com.blazebit.domain.spi.ServiceProvider;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -46,6 +47,6 @@ public interface DeclarativeFunctionMetadataProcessor<T extends Annotation> {
      * @param serviceProvider The service provider
      * @return A metadata definition or <code>null</code>
      */
-    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, T annotation, ServiceProvider<?> serviceProvider);
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, T annotation, ServiceProvider serviceProvider);
 
 }

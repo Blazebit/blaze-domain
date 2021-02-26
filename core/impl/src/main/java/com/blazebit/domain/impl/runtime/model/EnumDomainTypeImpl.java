@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
+import com.blazebit.domain.boot.model.EnumDomainTypeDefinition;
+import com.blazebit.domain.boot.model.EnumDomainTypeValueDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.boot.model.EnumDomainTypeDefinitionImpl;
 import com.blazebit.domain.impl.boot.model.EnumDomainTypeValueDefinitionImpl;
@@ -32,15 +34,15 @@ import java.util.TreeMap;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class EnumDomainTypeImpl extends AbstractDomainTypeImpl implements EnumDomainType {
+public class EnumDomainTypeImpl extends AbstractDomainType implements EnumDomainType, EnumDomainTypeDefinition {
 
-    private final Map<String, EnumDomainTypeValue> enumValues;
+    private final Map<String, EnumDomainTypeValueImpl> enumValues;
     private final Map<Class<?>, Object> metadata;
 
     @SuppressWarnings("unchecked")
     public EnumDomainTypeImpl(EnumDomainTypeDefinitionImpl typeDefinition, MetamodelBuildingContext context) {
         super(typeDefinition, context);
-        Map<String, EnumDomainTypeValue> enumValues;
+        Map<String, EnumDomainTypeValueImpl> enumValues;
         if (typeDefinition.isCaseSensitive()) {
             enumValues = new HashMap<>(typeDefinition.getEnumValues().size());
         } else {
@@ -64,8 +66,13 @@ public class EnumDomainTypeImpl extends AbstractDomainTypeImpl implements EnumDo
     }
 
     @Override
-    public Map<String, EnumDomainTypeValue> getEnumValues() {
+    public Map<String, EnumDomainTypeValueImpl> getEnumValues() {
         return enumValues;
+    }
+
+    @Override
+    public EnumDomainTypeValueDefinition getEnumValue(String name) {
+        return enumValues.get(name);
     }
 
     @Override

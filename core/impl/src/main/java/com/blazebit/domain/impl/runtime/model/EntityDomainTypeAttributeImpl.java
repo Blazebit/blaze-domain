@@ -16,27 +16,27 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
+import com.blazebit.domain.boot.model.EntityDomainTypeAttributeDefinition;
+import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.boot.model.EntityDomainTypeAttributeDefinitionImpl;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 
-import java.io.Serializable;
 import java.util.Map;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class EntityDomainTypeAttributeImpl implements EntityDomainTypeAttribute, Serializable {
+public class EntityDomainTypeAttributeImpl extends AbstractMetadataHolder implements EntityDomainTypeAttribute, EntityDomainTypeAttributeDefinition {
 
-    private final EntityDomainType owner;
+    private final EntityDomainTypeImpl owner;
     private final String name;
     private final DomainType type;
     private final Map<Class<?>, Object> metadata;
 
-    public EntityDomainTypeAttributeImpl(EntityDomainType owner, EntityDomainTypeAttributeDefinitionImpl attributeDefinition, MetamodelBuildingContext context) {
+    public EntityDomainTypeAttributeImpl(EntityDomainTypeImpl owner, EntityDomainTypeAttributeDefinitionImpl attributeDefinition, MetamodelBuildingContext context) {
         this.owner = owner;
         this.name = attributeDefinition.getName();
         this.type = context.getType(attributeDefinition.getTypeDefinition());
@@ -49,7 +49,7 @@ public class EntityDomainTypeAttributeImpl implements EntityDomainTypeAttribute,
     }
 
     @Override
-    public EntityDomainType getOwner() {
+    public EntityDomainTypeImpl getOwner() {
         return owner;
     }
 
@@ -66,6 +66,21 @@ public class EntityDomainTypeAttributeImpl implements EntityDomainTypeAttribute,
     @Override
     public Map<Class<?>, Object> getMetadata() {
         return metadata;
+    }
+
+    @Override
+    public boolean isCollection() {
+        return type.getKind() == DomainType.DomainTypeKind.COLLECTION;
+    }
+
+    @Override
+    public String getTypeName() {
+        return type.getName();
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return getMetadataDefinitions(metadata);
     }
 
     @Override

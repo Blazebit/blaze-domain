@@ -64,19 +64,13 @@ public class EntityDomainTypeBuilderImpl implements EntityDomainTypeBuilder {
 
     @Override
     public EntityDomainTypeBuilderImpl addAttribute(String attributeName, String typeName) {
-        domainTypeDefinition.addAttribute(new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, typeName, null, false));
-        return this;
-    }
-
-    @Override
-    public EntityDomainTypeBuilderImpl addAttribute(String attributeName, Class<?> javaType) {
-        domainTypeDefinition.addAttribute(new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, null, javaType, false));
+        domainTypeDefinition.addAttribute(new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, typeName, false));
         return this;
     }
 
     @Override
     public EntityDomainTypeBuilder addCollectionAttribute(String attributeName, MetadataDefinition<?>... metadataDefinitions) {
-        EntityDomainTypeAttributeDefinitionImpl attributeDefinition = new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, null, null, true);
+        EntityDomainTypeAttributeDefinitionImpl attributeDefinition = new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, null, true);
         for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
             attributeDefinition.withMetadataDefinition(metadataDefinition);
         }
@@ -87,30 +81,13 @@ public class EntityDomainTypeBuilderImpl implements EntityDomainTypeBuilder {
 
     @Override
     public EntityDomainTypeBuilderImpl addCollectionAttribute(String attributeName, String typeName) {
-        domainTypeDefinition.addAttribute(new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, typeName, null, true));
-        return this;
-    }
-
-    @Override
-    public EntityDomainTypeBuilderImpl addCollectionAttribute(String attributeName, Class<?> elementJavaType) {
-        domainTypeDefinition.addAttribute(new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, null, elementJavaType, true));
+        domainTypeDefinition.addAttribute(new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, typeName, true));
         return this;
     }
 
     @Override
     public EntityDomainTypeBuilder addAttribute(String attributeName, String elementTypeName, MetadataDefinition<?>... metadataDefinitions) {
-        EntityDomainTypeAttributeDefinitionImpl attributeDefinition = new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, elementTypeName, null, false);
-        for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
-            attributeDefinition.withMetadataDefinition(metadataDefinition);
-        }
-
-        domainTypeDefinition.addAttribute(attributeDefinition);
-        return this;
-    }
-
-    @Override
-    public EntityDomainTypeBuilder addAttribute(String attributeName, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions) {
-        EntityDomainTypeAttributeDefinitionImpl attributeDefinition = new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, null, javaType, false);
+        EntityDomainTypeAttributeDefinitionImpl attributeDefinition = new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, elementTypeName, false);
         for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
             attributeDefinition.withMetadataDefinition(metadataDefinition);
         }
@@ -121,18 +98,7 @@ public class EntityDomainTypeBuilderImpl implements EntityDomainTypeBuilder {
 
     @Override
     public EntityDomainTypeBuilder addCollectionAttribute(String attributeName, String elementTypeName, MetadataDefinition<?>... metadataDefinitions) {
-        EntityDomainTypeAttributeDefinitionImpl attributeDefinition = new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, elementTypeName, null, true);
-        for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
-            attributeDefinition.withMetadataDefinition(metadataDefinition);
-        }
-
-        domainTypeDefinition.addAttribute(attributeDefinition);
-        return this;
-    }
-
-    @Override
-    public EntityDomainTypeBuilder addCollectionAttribute(String attributeName, Class<?> elementJavaType, MetadataDefinition<?>... metadataDefinitions) {
-        EntityDomainTypeAttributeDefinitionImpl attributeDefinition = new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, null, elementJavaType, true);
+        EntityDomainTypeAttributeDefinitionImpl attributeDefinition = new EntityDomainTypeAttributeDefinitionImpl(domainTypeDefinition, attributeName, elementTypeName, true);
         for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
             attributeDefinition.withMetadataDefinition(metadataDefinition);
         }

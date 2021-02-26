@@ -22,13 +22,13 @@ package com.blazebit.domain.boot.model;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface CollectionDomainTypeDefinition extends DomainTypeDefinition<CollectionDomainTypeDefinition> {
+public interface CollectionDomainTypeDefinition extends DomainTypeDefinition {
 
     /**
      * The element type of the collection.
      *
      * @return the element type
      */
-    public DomainTypeDefinition<?> getElementType();
+    public DomainTypeDefinition getElementType();
 
 }

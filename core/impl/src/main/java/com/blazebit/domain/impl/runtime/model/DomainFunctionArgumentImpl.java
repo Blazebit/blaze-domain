@@ -16,25 +16,25 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
+import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
+import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.boot.model.DomainFunctionArgumentDefinitionImplementor;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
-import com.blazebit.domain.runtime.model.DomainType;
 
-import java.io.Serializable;
 import java.util.Map;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class DomainFunctionArgumentImpl implements DomainFunctionArgument, Serializable {
+public class DomainFunctionArgumentImpl extends AbstractMetadataHolder implements DomainFunctionArgument, DomainFunctionArgumentDefinition {
 
     private final DomainFunction owner;
     private final String name;
     private final int index;
-    private final DomainType type;
+    private final DomainTypeImplementor type;
     private final Map<Class<?>, Object> metadata;
 
     public DomainFunctionArgumentImpl(DomainFunction function, DomainFunctionArgumentDefinitionImplementor argumentDefinition, MetamodelBuildingContext context) {
@@ -61,8 +61,18 @@ public class DomainFunctionArgumentImpl implements DomainFunctionArgument, Seria
     }
 
     @Override
-    public DomainType getType() {
+    public int getIndex() {
+        return index;
+    }
+
+    @Override
+    public DomainTypeImplementor getType() {
         return type;
+    }
+
+    @Override
+    public String getTypeName() {
+        return type.getName();
     }
 
     @Override
@@ -73,6 +83,11 @@ public class DomainFunctionArgumentImpl implements DomainFunctionArgument, Seria
     @Override
     public Map<Class<?>, Object> getMetadata() {
         return metadata;
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return getMetadataDefinitions(metadata);
     }
 
     @Override

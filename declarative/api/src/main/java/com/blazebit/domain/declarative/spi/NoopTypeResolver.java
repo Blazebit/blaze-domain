@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.blazebit.domain.runtime.model;
 
-import java.util.Map;
+package com.blazebit.domain.declarative.spi;
+
+import java.io.Serializable;
+import java.lang.reflect.Type;
 
 /**
- * A literal resolver for entity values.
+ * A type resolver that always returns null i.e. doesn't resolve a type.
  *
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface EntityLiteralResolver {
+final class NoopTypeResolver implements TypeResolver, Serializable {
 
-    /**
-     * Resolves the given attribute values to a resolved domain literal.
-     *
-     * @param domainModel The domain model
-     * @param entityDomainType The entity domain type
-     * @param attributeValues The attribute values
-     * @return the resolved literal
-     */
-    ResolvedLiteral resolveLiteral(DomainModel domainModel, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, ? extends Object> attributeValues);
+    @Override
+    public Object resolve(Class<?> contextClass, Type type) {
+        return null;
+    }
+
 }

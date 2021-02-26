@@ -17,6 +17,7 @@
 package com.blazebit.domain.runtime.model;
 
 import com.blazebit.domain.spi.DomainSerializer;
+import com.blazebit.domain.spi.ServiceProvider;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,15 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface DomainModel {
+public interface DomainModel extends ServiceProvider {
+
+    /**
+     * Return the parent domain model or <code>null</code>.
+     *
+     * @return the parent domain model or <code>null</code>
+     * @since 2.0.0
+     */
+    public DomainModel getParentDomainModel();
 
     /**
      * Returns the domain type with the given type name or <code>null</code>.
@@ -38,32 +47,12 @@ public interface DomainModel {
     public DomainType getType(String name);
 
     /**
-     * Returns the domain type with the given java type or <code>null</code>.
-     *
-     * @param javaType The java type of the desired domain type
-     * @return the domain type or <code>null</code>
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getType(String)} instead
-     */
-    @Deprecated
-    public DomainType getType(Class<?> javaType);
-
-    /**
      * Returns the entity domain type with the given type name or <code>null</code>.
      *
      * @param name The type name of the desired domain type
      * @return the entity domain type or <code>null</code>
      */
     public EntityDomainType getEntityType(String name);
-
-    /**
-     * Returns the entity domain type with the given java type or <code>null</code>.
-     *
-     * @param javaType The java type of the desired domain type
-     * @return the entity domain type or <code>null</code>
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getEntityType(String)} instead
-     */
-    @Deprecated
-    public EntityDomainType getEntityType(Class<?> javaType);
 
     /**
      * Returns the collection domain type with the given element domain type or <code>null</code>.
@@ -79,15 +68,6 @@ public interface DomainModel {
      * @return the types of the domain model
      */
     public Map<String, DomainType> getTypes();
-
-    /**
-     * Returns the types of the domain model as map indexed by their java type.
-     *
-     * @return the types of the domain model
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getTypes()} instead
-     */
-    @Deprecated
-    public Map<Class<?>, DomainType> getTypesByJavaType();
 
     /**
      * Returns the collection types of the domain model as map indexed by their element domain type.
@@ -136,17 +116,6 @@ public interface DomainModel {
     public DomainOperationTypeResolver getOperationTypeResolver(String typeName, DomainOperator operator);
 
     /**
-     * Returns the operation type resolver for resolving the type of the domain operator applied to the given java type.
-     *
-     * @param javaType The java type for which to apply the domain operator
-     * @param operator The operator to apply on the java type
-     * @return the operation type resolver
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getOperationTypeResolver(String, DomainOperator)} instead
-     */
-    @Deprecated
-    public DomainOperationTypeResolver getOperationTypeResolver(Class<?> javaType, DomainOperator operator);
-
-    /**
      * Returns the predicate type resolver for resolving the type of the domain predicate applied to the given type name.
      *
      * @param typeName The type name for which to apply the domain operator
@@ -156,31 +125,11 @@ public interface DomainModel {
     public DomainPredicateTypeResolver getPredicateTypeResolver(String typeName, DomainPredicate predicateType);
 
     /**
-     * Returns the predicate type resolver for resolving the type of the domain predicate applied to the given java type.
-     *
-     * @param javaType The java type for which to apply the domain operator
-     * @param predicateType The predicate to apply on the java type
-     * @return the predicate type resolver
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getPredicateTypeResolver(String, DomainPredicate)} instead
-     */
-    @Deprecated
-    public DomainPredicateTypeResolver getPredicateTypeResolver(Class<?> javaType, DomainPredicate predicateType);
-
-    /**
      * Returns the operation type resolvers of the domain model as map indexed by their type name.
      *
      * @return the operation type resolvers of the domain model
      */
     public Map<String, Map<DomainOperator, DomainOperationTypeResolver>> getOperationTypeResolvers();
-
-    /**
-     * Returns the operation type resolvers of the domain model as map indexed by their java type.
-     *
-     * @return the operation type resolvers of the domain model
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getOperationTypeResolvers()} instead
-     */
-    @Deprecated
-    public Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> getOperationTypeResolversByJavaType();
 
     /**
      * Returns the predicate type resolvers of the domain model as map indexed by their type name.
@@ -190,69 +139,19 @@ public interface DomainModel {
     public Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> getPredicateTypeResolvers();
 
     /**
-     * Returns the predicate type resolvers of the domain model as map indexed by their java type.
+     * The default result type for predicates.
      *
-     * @return the predicate type resolvers of the domain model
-     * @deprecated The domain type index by java type is deprecated and will be removed in 2.0. Use {@link #getPredicateTypeResolvers()} instead
+     * @return The default result type
+     * @since 2.0.0
      */
-    @Deprecated
-    public Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> getPredicateTypeResolversByJavaType();
-
-    /**
-     * Returns the numeric literal resolver.
-     *
-     * @return the numeric literal resolver
-     */
-    public NumericLiteralResolver getNumericLiteralResolver();
-
-    /**
-     * Returns the boolean literal resolver.
-     *
-     * @return the boolean literal resolver
-     */
-    public BooleanLiteralResolver getBooleanLiteralResolver();
-
-    /**
-     * Returns the string literal resolver.
-     *
-     * @return the string literal resolver
-     */
-    public StringLiteralResolver getStringLiteralResolver();
-
-    /**
-     * Returns the temporal literal resolver.
-     *
-     * @return the temporal literal resolver
-     */
-    public TemporalLiteralResolver getTemporalLiteralResolver();
-
-    /**
-     * Returns the enum literal resolver.
-     *
-     * @return the enum literal resolver
-     */
-    public EnumLiteralResolver getEnumLiteralResolver();
-
-    /**
-     * Returns the entity literal resolver.
-     *
-     * @return the entity literal resolver
-     */
-    public EntityLiteralResolver getEntityLiteralResolver();
-
-    /**
-     * Returns the collection literal resolver.
-     *
-     * @return the collection literal resolver
-     */
-    public CollectionLiteralResolver getCollectionLiteralResolver();
+    public DomainType getPredicateDefaultResultType();
 
     /**
      * Returns the domain serializers.
      *
      * @return the domain serializers
      */
-    public List<DomainSerializer<DomainModel>> getDomainSerializers();
+    public List<DomainSerializer<?>> getDomainSerializers();
 
     /**
      * Returns all properties.
@@ -280,5 +179,21 @@ public interface DomainModel {
      * @param <T> The target type
      * @return The serialized form
      */
-    public <T> T serialize(Class<T> targetType, String format, Map<String, Object> properties);
+    default <T> T serialize(Class<T> targetType, String format, Map<String, Object> properties) {
+        return serialize(null, targetType, format, properties);
+    }
+
+    /**
+     * Serializes the domain model to the given target type with the given format.
+     * It only serializes elements that do not belong to the given base model already or are overridden.
+     *
+     * @param baseModel The base domain model
+     * @param targetType The target type
+     * @param format The serialization format
+     * @param properties Serialization properties
+     * @param <T> The target type
+     * @return The serialized form
+     * @since 2.0.0
+     */
+    public <T> T serialize(DomainModel baseModel, Class<T> targetType, String format, Map<String, Object> properties);
 }

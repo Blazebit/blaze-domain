@@ -31,5 +31,5 @@ public interface EnumDomainType extends DomainType {
      *
      * @return the enum domain type values
      */
-    public Map<String, EnumDomainTypeValue> getEnumValues();
+    public Map<String, ? extends EnumDomainTypeValue> getEnumValues();
 }

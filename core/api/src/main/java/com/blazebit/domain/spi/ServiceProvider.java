@@ -14,25 +14,22 @@
  * limitations under the License.
  */
 
-package com.blazebit.domain.runtime.model;
-
-import java.util.Collection;
+package com.blazebit.domain.spi;
 
 /**
- * A literal resolver for collection values.
+ * A provider for access to services.
  *
  * @author Christian Beikov
- * @since 1.0.0
+ * @since 2.0.0
  */
-public interface CollectionLiteralResolver {
+public interface ServiceProvider {
 
     /**
-     * Resolves the given collection value to a resolved domain literal.
+     * Returns the resolved service for the given type.
      *
-     * @param domainModel The domain model
-     * @param collectionDomainType The collection domain type
-     * @param values The collection value
-     * @return the resolved literal
+     * @param serviceClass The service class
+     * @param <T> The service type
+     * @return the resolved service
      */
-    ResolvedLiteral resolveLiteral(DomainModel domainModel, CollectionDomainType collectionDomainType, Collection<? extends Object> values);
+    <T> T getService(Class<T> serviceClass);
 }

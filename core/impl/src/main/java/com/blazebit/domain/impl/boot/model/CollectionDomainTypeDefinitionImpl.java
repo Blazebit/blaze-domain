@@ -25,27 +25,18 @@ import com.blazebit.domain.runtime.model.CollectionDomainType;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CollectionDomainTypeDefinitionImpl extends MetadataDefinitionHolderImpl<CollectionDomainTypeDefinition> implements CollectionDomainTypeDefinition, DomainTypeDefinitionImplementor<CollectionDomainTypeDefinition> {
+public class CollectionDomainTypeDefinitionImpl extends AbstractMetadataDefinitionHolder implements CollectionDomainTypeDefinition, DomainTypeDefinitionImplementor {
 
     private final String name;
     private final Class<?> javaType;
     private final String elementTypeName;
-    private final Class<?> elementTypeClass;
-    private DomainTypeDefinition<?> elementTypeDefinition;
-    private CollectionDomainType domainType;
+    private DomainTypeDefinition elementTypeDefinition;
+    private CollectionDomainTypeImpl domainType;
 
-    public CollectionDomainTypeDefinitionImpl(String name, Class<?> javaType, String elementTypeName, Class<?> elementTypeClass) {
-        this.name = name;
-        this.javaType = javaType;
-        this.elementTypeName = elementTypeName;
-        this.elementTypeClass = elementTypeClass;
-    }
-
-    public CollectionDomainTypeDefinitionImpl(String name, Class<?> javaType, DomainTypeDefinition<?> elementTypeDefinition) {
+    public CollectionDomainTypeDefinitionImpl(String name, Class<?> javaType, DomainTypeDefinition elementTypeDefinition) {
         this.name = name;
         this.javaType = javaType;
         this.elementTypeName = elementTypeDefinition == null ? null : elementTypeDefinition.getName();
-        this.elementTypeClass = elementTypeDefinition == null ? null : elementTypeDefinition.getJavaType();
         this.elementTypeDefinition = elementTypeDefinition;
     }
 
@@ -54,7 +45,6 @@ public class CollectionDomainTypeDefinitionImpl extends MetadataDefinitionHolder
         this.name = collectionDomainType.getName();
         this.javaType = collectionDomainType.getJavaType();
         this.elementTypeName = collectionDomainType.getElementType() == null ? null : collectionDomainType.getElementType().getName();
-        this.elementTypeClass = collectionDomainType.getElementType() == null ? null : collectionDomainType.getElementType().getJavaType();
     }
 
     @Override
@@ -68,7 +58,7 @@ public class CollectionDomainTypeDefinitionImpl extends MetadataDefinitionHolder
     }
 
     @Override
-    public DomainTypeDefinition<?> getElementType() {
+    public DomainTypeDefinition getElementType() {
         return elementTypeDefinition;
     }
 
@@ -77,22 +67,17 @@ public class CollectionDomainTypeDefinitionImpl extends MetadataDefinitionHolder
         this.domainType = null;
         if (elementTypeName == null) {
             elementTypeDefinition = null;
-            if (elementTypeClass == null) {
-                return;
-            }
+            return;
         } else {
             elementTypeDefinition = domainBuilder.getDomainTypeDefinition(elementTypeName);
         }
         if (elementTypeDefinition == null) {
-            elementTypeDefinition = domainBuilder.getDomainTypeDefinition(elementTypeClass);
-            if (elementTypeDefinition == null) {
-                context.addError("The element type '" + (elementTypeName == null ? elementTypeClass.getName() : elementTypeName) + "' defined for the collection type " + name + " is unknown!");
-            }
+            context.addError("The element type '" + elementTypeName + "' defined for the collection type " + name + " is unknown!");
         }
     }
 
     @Override
-    public CollectionDomainType getType(MetamodelBuildingContext context) {
+    public CollectionDomainTypeImpl getType(MetamodelBuildingContext context) {
         if (domainType == null) {
             domainType = new CollectionDomainTypeImpl(this, context);
         }

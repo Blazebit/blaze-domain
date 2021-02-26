@@ -25,11 +25,11 @@ import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class EnumDomainTypeValueDefinitionImpl extends MetadataDefinitionHolderImpl<EnumDomainTypeValueDefinition> implements EnumDomainTypeValueDefinition {
+public class EnumDomainTypeValueDefinitionImpl extends AbstractMetadataDefinitionHolder implements EnumDomainTypeValueDefinition {
 
     private final EnumDomainTypeDefinitionImpl owner;
     private final String value;
-    private EnumDomainTypeValue domainValue;
+    private EnumDomainTypeValueImpl domainValue;
 
     public EnumDomainTypeValueDefinitionImpl(EnumDomainTypeDefinitionImpl owner, String value) {
         this.owner = owner;
@@ -52,7 +52,7 @@ public class EnumDomainTypeValueDefinitionImpl extends MetadataDefinitionHolderI
         return owner;
     }
 
-    public EnumDomainTypeValue createValue(EnumDomainTypeImpl enumDomainType, MetamodelBuildingContext context) {
+    public EnumDomainTypeValueImpl createValue(EnumDomainTypeImpl enumDomainType, MetamodelBuildingContext context) {
         if (domainValue == null) {
             domainValue = new EnumDomainTypeValueImpl(enumDomainType, this, context);
         }

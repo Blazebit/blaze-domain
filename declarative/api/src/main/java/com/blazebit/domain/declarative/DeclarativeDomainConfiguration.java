@@ -21,7 +21,7 @@ import com.blazebit.domain.declarative.spi.DeclarativeAttributeMetadataProcessor
 import com.blazebit.domain.declarative.spi.DeclarativeFunctionMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeFunctionParameterMetadataProcessor;
 import com.blazebit.domain.declarative.spi.DeclarativeMetadataProcessor;
-import com.blazebit.domain.declarative.spi.ServiceProvider;
+import com.blazebit.domain.spi.ServiceProvider;
 import com.blazebit.domain.declarative.spi.TypeResolver;
 import com.blazebit.domain.declarative.spi.TypeResolverDecorator;
 import com.blazebit.domain.runtime.model.DomainModel;
@@ -34,7 +34,7 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface DeclarativeDomainConfiguration extends ServiceProvider<DeclarativeDomainConfiguration> {
+public interface DeclarativeDomainConfiguration extends ServiceProvider {
 
     /**
      * Adds the given domain type java class for later analysis to add it as domain type to the domain builder.
@@ -156,6 +156,34 @@ public interface DeclarativeDomainConfiguration extends ServiceProvider<Declarat
      * @since 1.0.6
      */
     Object getProperty(String propertyName);
+
+    /**
+     * Returns the registered services.
+     *
+     * @return the registered services
+     * @since 2.0.0
+     */
+    Map<Class<?>, Object> getServices();
+
+    /**
+     * Registers the given service for the given type.
+     *
+     * @param serviceClass The service class
+     * @param service The service
+     * @param <T> The service type
+     * @return this for chaining
+     * @since 2.0.0
+     */
+    <T> DeclarativeDomainConfiguration withService(Class<T> serviceClass, T service);
+
+    /**
+     * Registers the given service provider.
+     *
+     * @param serviceProvider A custom service provider that is queried if a service was not explicitly registered
+     * @return this for chaining
+     * @since 2.0.0
+     */
+    DeclarativeDomainConfiguration withServiceProvider(ServiceProvider serviceProvider);
 
     /**
      * Builds and validates the domain model as defined via this builder.

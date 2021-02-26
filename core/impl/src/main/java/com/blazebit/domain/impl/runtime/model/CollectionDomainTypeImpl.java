@@ -22,7 +22,6 @@ import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicate;
-import com.blazebit.domain.runtime.model.DomainType;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -32,11 +31,11 @@ import java.util.Set;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CollectionDomainTypeImpl extends AbstractDomainTypeImpl implements CollectionDomainType {
+public class CollectionDomainTypeImpl extends AbstractDomainType implements CollectionDomainType, CollectionDomainTypeDefinition {
 
     private static final Set<DomainOperator> ENABLED_OPERATORS = EnumSet.noneOf(DomainOperator.class);
     private static final Set<DomainPredicate> ENABLED_PREDICATES = EnumSet.of(DomainPredicate.COLLECTION);
-    private final DomainType elementType;
+    private final DomainTypeImplementor elementType;
     private final Map<Class<?>, Object> metadata;
 
     public CollectionDomainTypeImpl(CollectionDomainTypeDefinition typeDefinition, MetamodelBuildingContext context) {
@@ -61,7 +60,7 @@ public class CollectionDomainTypeImpl extends AbstractDomainTypeImpl implements 
     }
 
     @Override
-    public DomainType getElementType() {
+    public DomainTypeImplementor getElementType() {
         return elementType;
     }
 

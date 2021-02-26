@@ -17,16 +17,16 @@
 package com.blazebit.domain.impl.boot.model;
 
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
-import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.impl.runtime.model.DomainTypeImplementor;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface DomainTypeDefinitionImplementor<X extends DomainTypeDefinition<X>> extends DomainTypeDefinition<X> {
+public interface DomainTypeDefinitionImplementor extends DomainTypeDefinition {
 
     public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context);
 
-    public DomainType getType(MetamodelBuildingContext context);
+    public DomainTypeImplementor getType(MetamodelBuildingContext context);
 
 }

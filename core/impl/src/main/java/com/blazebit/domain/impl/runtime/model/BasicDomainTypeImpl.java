@@ -16,6 +16,7 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
+import com.blazebit.domain.boot.model.BasicDomainTypeDefinition;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
@@ -27,11 +28,11 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class BasicDomainTypeImpl extends AbstractDomainTypeImpl implements BasicDomainType {
+public class BasicDomainTypeImpl extends AbstractDomainType implements BasicDomainType, BasicDomainTypeDefinition {
 
     private final Map<Class<?>, Object> metadata;
 
-    public BasicDomainTypeImpl(DomainTypeDefinition<?> typeDefinition, MetamodelBuildingContext context) {
+    public BasicDomainTypeImpl(DomainTypeDefinition typeDefinition, MetamodelBuildingContext context) {
         super(typeDefinition, context);
         this.metadata = context.createMetadata(typeDefinition);
     }

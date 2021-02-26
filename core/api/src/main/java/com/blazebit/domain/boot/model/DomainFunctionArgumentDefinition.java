@@ -22,7 +22,7 @@ package com.blazebit.domain.boot.model;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface DomainFunctionArgumentDefinition extends MetadataDefinitionHolder<DomainFunctionArgumentDefinition> {
+public interface DomainFunctionArgumentDefinition extends MetadataDefinitionHolder {
 
     /**
      * The name of the function argument or <code>null</code>.

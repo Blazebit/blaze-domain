@@ -21,6 +21,8 @@ import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.impl.runtime.model.RuntimeMetadataDefinition;
 import com.blazebit.domain.runtime.model.MetadataHolder;
 
+import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,26 +30,31 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class MetadataDefinitionHolderImpl<X extends MetadataDefinitionHolder<X>> implements MetadataDefinitionHolder<X> {
+public abstract class AbstractMetadataDefinitionHolder implements MetadataDefinitionHolder, Serializable {
 
-    private final Map<Class<?>, MetadataDefinition<?>> metadataDefinitions = new HashMap<>();
+    private Map<Class<?>, MetadataDefinition<?>> metadataDefinitions;
 
-    public MetadataDefinitionHolderImpl() {
+    public AbstractMetadataDefinitionHolder() {
     }
 
-    public MetadataDefinitionHolderImpl(MetadataHolder metadataHolder) {
-        for (Map.Entry<Class<?>, Object> entry : metadataHolder.getMetadata().entrySet()) {
-            metadataDefinitions.put(entry.getKey(), new RuntimeMetadataDefinition(entry.getKey(), entry.getValue()));
+    public AbstractMetadataDefinitionHolder(MetadataHolder metadataHolder) {
+        if (!metadataHolder.getMetadata().isEmpty()) {
+            metadataDefinitions = new HashMap<>();
+            for (Map.Entry<Class<?>, Object> entry : metadataHolder.getMetadata().entrySet()) {
+                metadataDefinitions.put(entry.getKey(), new RuntimeMetadataDefinition(entry.getKey(), entry.getValue()));
+            }
         }
     }
 
-    @Override
-    public X withMetadataDefinition(MetadataDefinition<?> metadataDefinition) {
+    public void withMetadataDefinition(MetadataDefinition<?> metadataDefinition) {
+        if (metadataDefinitions == null) {
+            metadataDefinitions = new HashMap<>();
+        }
         metadataDefinitions.put(metadataDefinition.getJavaType(), metadataDefinition);
-        return (X) this;
     }
 
+    @Override
     public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
-        return metadataDefinitions;
+        return metadataDefinitions == null ? Collections.emptyMap() : Collections.unmodifiableMap(metadataDefinitions);
     }
 }

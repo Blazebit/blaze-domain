@@ -35,21 +35,50 @@ public class DomainBuilderTest {
 
     @Test
     public void testBuildSimpleModel() {
-        // Given
+        // Given 1
         DomainBuilder domainBuilder = createDefaultDomainBuilder();
         domainBuilder.createEntityType("Test")
                 .addAttribute("name", "String", MetadataSample.INSTANCE)
                 .withMetadata(MetadataSample.INSTANCE)
         .build();
+        domainBuilder.createEntityType("TestContainer")
+            .addAttribute("test", "Test", MetadataSample.INSTANCE)
+            .withMetadata(MetadataSample.INSTANCE)
+            .build();
+        domainBuilder.createEntityType("Test2")
+            .addAttribute("name", "String", MetadataSample.INSTANCE)
+            .withMetadata(MetadataSample.INSTANCE)
+            .build();
+        domainBuilder.createEntityType("TestContainer2")
+            .addAttribute("test", "Test2", MetadataSample.INSTANCE)
+            .withMetadata(MetadataSample.INSTANCE)
+            .build();
 
-        // When
+        // When 1
         DomainModel domainModel = domainBuilder.build();
 
-        // Then
+        // Then 1
         EntityDomainType entityDomainType = (EntityDomainType) domainModel.getType("Test");
         Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType.getMetadata(MetadataSample.class));
         Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType.getAttribute("name").getMetadata(MetadataSample.class));
         Assert.assertEquals("String", entityDomainType.getAttribute("name").getType().getName());
+
+        // Given 2
+        domainBuilder = Domain.getDefaultProvider().createBuilder(domainModel);
+        domainBuilder.extendEntityType("Test", domainBuilder.getEntityType("Test"))
+            .addAttribute("name", "String", MetadataSample.INSTANCE)
+            .addAttribute("name2", "String", MetadataSample.INSTANCE)
+            .build();
+
+        // When 2
+        DomainModel domainModel2 = domainBuilder.build();
+
+        // Then 2
+        EntityDomainType entityDomainType2 = (EntityDomainType) domainModel2.getType("Test");
+        Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType2.getMetadata(MetadataSample.class));
+        Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType2.getAttribute("name2").getMetadata(MetadataSample.class));
+        Assert.assertSame(domainModel.getType("String"), entityDomainType2.getAttribute("name").getType());
+        Assert.assertNotSame(domainModel.getType("TestContainer"), domainModel2.getType("TestContainer"));
     }
 
     @Test
@@ -116,7 +145,7 @@ public class DomainBuilderTest {
         }
 
         @Override
-        public MetadataSample build(MetadataDefinitionHolder<?> definitionHolder) {
+        public MetadataSample build(MetadataDefinitionHolder definitionHolder) {
             return this;
         }
     }

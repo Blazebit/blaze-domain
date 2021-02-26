@@ -24,7 +24,7 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface EntityDomainTypeDefinition extends DomainTypeDefinition<EntityDomainTypeDefinition> {
+public interface EntityDomainTypeDefinition extends DomainTypeDefinition {
 
     /**
      * The attribute of the entity domain type with the given name or <code>null</code>.
@@ -39,6 +39,6 @@ public interface EntityDomainTypeDefinition extends DomainTypeDefinition<EntityD
      *
      * @return the attributes of the entity domain type
      */
-    public Map<String, EntityDomainTypeAttributeDefinition> getAttributes();
+    public Map<String, ? extends EntityDomainTypeAttributeDefinition> getAttributes();
 
 }

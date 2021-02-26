@@ -16,7 +16,6 @@
 
 package com.blazebit.domain.impl.boot.model;
 
-import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.impl.runtime.model.DomainFunctionArgumentImpl;
@@ -29,7 +28,7 @@ import com.blazebit.domain.runtime.model.DomainType;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class DomainFunctionArgumentDefinitionImpl extends MetadataDefinitionHolderImpl<DomainFunctionArgumentDefinition> implements DomainFunctionArgumentDefinitionImplementor {
+public class DomainFunctionArgumentDefinitionImpl extends AbstractMetadataDefinitionHolder implements DomainFunctionArgumentDefinitionImplementor {
 
     private final DomainFunctionDefinition owner;
     private final String name;
@@ -37,8 +36,8 @@ public class DomainFunctionArgumentDefinitionImpl extends MetadataDefinitionHold
     private final String typeName;
     private final Class<?> javaType;
     private final boolean collection;
-    private DomainTypeDefinition<?> typeDefinition;
-    private DomainFunctionArgument domainFunctionArgument;
+    private DomainTypeDefinition typeDefinition;
+    private DomainFunctionArgumentImpl domainFunctionArgument;
 
     public DomainFunctionArgumentDefinitionImpl(DomainFunctionDefinition owner, String name, int index, String typeName, Class<?> javaType, boolean collection) {
         this.owner = owner;
@@ -73,11 +72,8 @@ public class DomainFunctionArgumentDefinitionImpl extends MetadataDefinitionHold
         } else {
             typeDefinition = typeName == null ? null : domainBuilder.getDomainTypeDefinition(typeName);
             if (typeDefinition == null) {
-                typeDefinition = domainBuilder.getDomainTypeDefinition(javaType);
-                if (typeDefinition == null) {
-                    String name = this.name == null || this.name.isEmpty() ? "" : "(" + this.name + ")";
-                    context.addError("The argument type '" + (typeName == null ? javaType.getName() : typeName) + "' defined for the function argument index " + index + name + " of function " + owner.getName() + " is unknown!");
-                }
+                String name = this.name == null || this.name.isEmpty() ? "" : "(" + this.name + ")";
+                context.addError("The argument type '" + (typeName == null ? javaType.getName() : typeName) + "' defined for the function argument index " + index + name + " of function " + owner.getName() + " is unknown!");
             }
             if (collection) {
                 typeDefinition = domainBuilder.getCollectionDomainTypeDefinition(typeDefinition);
@@ -101,7 +97,7 @@ public class DomainFunctionArgumentDefinitionImpl extends MetadataDefinitionHold
     }
 
     @Override
-    public DomainTypeDefinition<?> getTypeDefinition() {
+    public DomainTypeDefinition getTypeDefinition() {
         return typeDefinition;
     }
 
@@ -111,7 +107,7 @@ public class DomainFunctionArgumentDefinitionImpl extends MetadataDefinitionHold
     }
 
     @Override
-    public DomainFunctionArgument createFunctionArgument(DomainFunction function, MetamodelBuildingContext context) {
+    public DomainFunctionArgumentImpl createFunctionArgument(DomainFunction function, MetamodelBuildingContext context) {
         if (domainFunctionArgument == null) {
             domainFunctionArgument = new DomainFunctionArgumentImpl(function, this, context);
         }

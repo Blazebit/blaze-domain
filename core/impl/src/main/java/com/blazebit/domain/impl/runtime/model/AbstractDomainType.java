@@ -17,30 +17,25 @@
 package com.blazebit.domain.impl.runtime.model;
 
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
-import com.blazebit.domain.boot.model.MetadataDefinition;
-import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
+import com.blazebit.domain.impl.boot.model.DomainBuilderImpl;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicate;
-import com.blazebit.domain.runtime.model.DomainType;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public abstract class AbstractDomainTypeImpl implements DomainType, DomainTypeDefinition, Serializable {
+public abstract class AbstractDomainType extends AbstractMetadataHolder implements DomainTypeImplementor {
 
     private final String name;
     private final Class<?> javaType;
     private final Set<DomainOperator> enabledOperators;
     private final Set<DomainPredicate> enabledPredicates;
 
-    public AbstractDomainTypeImpl(DomainTypeDefinition<?> typeDefinition, MetamodelBuildingContext context) {
+    public AbstractDomainType(DomainTypeDefinition typeDefinition, MetamodelBuildingContext context) {
         context.addType(typeDefinition, this);
         this.name = typeDefinition.getName();
         this.javaType = typeDefinition.getJavaType();
@@ -69,19 +64,12 @@ public abstract class AbstractDomainTypeImpl implements DomainType, DomainTypeDe
     }
 
     @Override
-    public MetadataDefinitionHolder withMetadataDefinition(MetadataDefinition metadataDefinition) {
-        throw new UnsupportedOperationException();
+    public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context) {
     }
 
-    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions(Map<Class<?>, Object> metadata) {
-        if (metadata == null || metadata.isEmpty()) {
-            return (Map<Class<?>, MetadataDefinition<?>>) (Map<?, ?>) metadata;
-        }
-        Map<Class<?>, MetadataDefinition<?>> map = new HashMap<>(metadata.size());
-        for (Map.Entry<Class<?>, Object> entry : metadata.entrySet()) {
-            map.put(entry.getKey(), new RuntimeMetadataDefinition(javaType, entry.getValue()));
-        }
-        return map;
+    @Override
+    public DomainTypeImplementor getType(MetamodelBuildingContext context) {
+        return this;
     }
 
     @Override

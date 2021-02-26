@@ -45,7 +45,7 @@ public class DeclarativeDomainTest {
         defaultConfiguration.addDomainFunctions(TestFunctions.class);
         DomainModel domainModel = defaultConfiguration.createDomainModel(builder);
         Assert.assertEquals(6, domainModel.getFunctions().size());
-        Assert.assertEquals(domainModel.getType(Integer.class), ((CollectionDomainType) domainModel.getFunction("sub3").getResultType()).getElementType());
-        Assert.assertEquals(domainModel.getType(Integer.class), ((CollectionDomainType) domainModel.getFunction("sub3").getArgument(0).getType()).getElementType());
+        Assert.assertEquals(domainModel.getType("Integer"), ((CollectionDomainType) domainModel.getFunction("sub3").getResultType()).getElementType());
+        Assert.assertEquals(domainModel.getType("Integer"), ((CollectionDomainType) domainModel.getFunction("sub3").getArgument(0).getType()).getElementType());
     }
 }

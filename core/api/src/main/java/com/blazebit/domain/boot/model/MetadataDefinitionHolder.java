@@ -21,19 +21,10 @@ import java.util.Map;
 /**
  * A domain element that can hold metadata definitions.
  *
- * @param <X> The self type for chaining
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface MetadataDefinitionHolder<X extends MetadataDefinitionHolder<X>> {
-
-    /**
-     * Adds the given metadata definition and returns <code>this</code> for chaining.
-     *
-     * @param metadataDefinition The metadata definition to add
-     * @return this for chaining
-     */
-    public X withMetadataDefinition(MetadataDefinition<?> metadataDefinition);
+public interface MetadataDefinitionHolder {
 
     /**
      * Returns the metadata definitions of this domain element.

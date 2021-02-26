@@ -19,12 +19,16 @@ package com.blazebit.domain.impl.boot.model;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
-import com.blazebit.domain.runtime.model.DomainModel;
+import com.blazebit.domain.impl.runtime.model.DomainTypeImplementor;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Christian Beikov
@@ -33,17 +37,11 @@ import java.util.*;
 public class MetamodelBuildingContext {
 
     private final DomainBuilderImpl domainBuilder;
-    private final Map<DomainTypeDefinition<?>, DomainType> buildingTypes = new HashMap<>();
-    private List<String> errors = new ArrayList<>();
+    private final Map<DomainTypeDefinition, DomainTypeImplementor> buildingTypes = new HashMap<>();
+    private final List<String> errors = new ArrayList<>();
 
     public MetamodelBuildingContext(DomainBuilderImpl domainBuilder) {
         this.domainBuilder = domainBuilder;
-        DomainModel baseModel = domainBuilder.getBaseModel();
-        if (baseModel != null) {
-            for (DomainType domainType : baseModel.getTypes().values()) {
-                buildingTypes.put((DomainTypeDefinition<?>) domainType, domainType);
-            }
-        }
     }
 
     public void addError(String error) {
@@ -58,25 +56,34 @@ public class MetamodelBuildingContext {
         return errors;
     }
 
-    public void addType(DomainTypeDefinition<?> typeDefinition, DomainType domainType) {
+    public void addType(DomainTypeDefinition typeDefinition, DomainTypeImplementor domainType) {
         buildingTypes.put(typeDefinition, domainType);
     }
 
-    public DomainType getType(DomainTypeDefinition<?> typeDefinition) {
-        DomainType domainType = buildingTypes.get(typeDefinition);
-        if (domainType == null && typeDefinition != null) {
-            domainType = ((DomainTypeDefinitionImplementor<?>) typeDefinition).getType(this);
+    public DomainTypeImplementor getType(DomainTypeDefinition typeDefinition) {
+        if (typeDefinition == null) {
+            return null;
+        }
+        DomainTypeImplementor domainType = buildingTypes.get(typeDefinition);
+        if (domainType == null && domainBuilder.getBaseModel() != null) {
+            DomainType type = domainBuilder.getBaseModel().getType(typeDefinition.getName());
+            if (type == typeDefinition) {
+                return (DomainTypeImplementor) type;
+            }
+        }
+        if (domainType == null) {
+            domainType = ((DomainTypeDefinitionImplementor) typeDefinition).getType(this);
         }
 
         return domainType;
     }
 
-    public Set<DomainOperator> getOperators(DomainTypeDefinition<?> typeDefinition) {
-        return domainBuilder.getOperators(typeDefinition);
+    public Set<DomainOperator> getOperators(DomainTypeDefinition typeDefinition) {
+        return domainBuilder.getEnabledOperators(typeDefinition.getName());
     }
 
-    public Set<DomainPredicate> getPredicates(DomainTypeDefinition<?> typeDefinition) {
-        return domainBuilder.getPredicates(typeDefinition);
+    public Set<DomainPredicate> getPredicates(DomainTypeDefinition typeDefinition) {
+        return domainBuilder.getEnabledPredicates(typeDefinition.getName());
     }
 
     public Map<Class<?>, Object> createMetadata(MetadataDefinitionHolder definitionHolder) {

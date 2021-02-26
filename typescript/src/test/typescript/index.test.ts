@@ -207,7 +207,7 @@ describe('Test parse ', function() {
                 { resolver: { "FixedDomainOperationTypeResolver": ["Boolean"] }, typeOps: { "Boolean": ["!"] } }
             ],
             predResolvers: []
-        }), {});
+        }));
         expect(domainModel.types['Integer'].name).to.equal("Integer");
         expect((domainModel.types['Collection'] as domain.CollectionDomainType).elementType).to.equal(null);
         let func = domainModel.functions['SIZE'];
@@ -679,10 +679,6 @@ describe('Test parse ', function() {
                     meta: [{doc: "Returns the arc tangent of a value."}]
                 }
             ],
-            booleanLiteralResolver: "BooleanLiteralResolver",
-            numericLiteralResolver: "NumericLiteralResolver",
-            stringLiteralResolver: "StringLiteralResolver",
-            temporalLiteralResolver: "TemporalLiteralResolver",
             opResolvers: [
                 {resolver: {"FixedDomainOperationTypeResolver": ["Boolean"]}, typeOps: {"Boolean": ["!"]}},
                 {resolver: {"FixedDomainOperationTypeResolver": ["Time"]}, typeOps: {"Time": ["+", "-"]}},
@@ -706,7 +702,7 @@ describe('Test parse ', function() {
                     resolver: {"FixedDomainPredicateTypeResolver": ["Boolean"]}
                 }
             ]
-        }), {});
+        }));
         expect(domainModel.types['Integer'].name).to.equal("Integer");
         expect(domainModel.operationTypeResolvers['Integer'][domain.DomainOperator[domain.DomainOperator.PLUS]].resolveType(domainModel, [domainModel.types['Integer'], domainModel.types['Integer']]).name).to.equal("Integer");
     });

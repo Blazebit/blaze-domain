@@ -22,6 +22,6 @@ package com.blazebit.domain.boot.model;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface BasicDomainTypeDefinition extends DomainTypeDefinition<BasicDomainTypeDefinition> {
+public interface BasicDomainTypeDefinition extends DomainTypeDefinition {
 
 }

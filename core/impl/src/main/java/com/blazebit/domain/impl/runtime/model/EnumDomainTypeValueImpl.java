@@ -16,25 +16,25 @@
 
 package com.blazebit.domain.impl.runtime.model;
 
+import com.blazebit.domain.boot.model.EnumDomainTypeValueDefinition;
+import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.impl.boot.model.EnumDomainTypeValueDefinitionImpl;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
-import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
 
-import java.io.Serializable;
 import java.util.Map;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class EnumDomainTypeValueImpl implements EnumDomainTypeValue, Serializable {
+public class EnumDomainTypeValueImpl extends AbstractMetadataHolder implements EnumDomainTypeValue, EnumDomainTypeValueDefinition {
 
-    private final EnumDomainType owner;
+    private final EnumDomainTypeImpl owner;
     private final String value;
     private final Map<Class<?>, Object> metadata;
 
-    public EnumDomainTypeValueImpl(EnumDomainType owner, EnumDomainTypeValueDefinitionImpl enumValueDefinition, MetamodelBuildingContext context) {
+    public EnumDomainTypeValueImpl(EnumDomainTypeImpl owner, EnumDomainTypeValueDefinitionImpl enumValueDefinition, MetamodelBuildingContext context) {
         this.owner = owner;
         this.value = enumValueDefinition.getValue();
         this.metadata = context.createMetadata(enumValueDefinition);
@@ -46,7 +46,7 @@ public class EnumDomainTypeValueImpl implements EnumDomainTypeValue, Serializabl
     }
 
     @Override
-    public EnumDomainType getOwner() {
+    public EnumDomainTypeImpl getOwner() {
         return owner;
     }
 
@@ -58,6 +58,11 @@ public class EnumDomainTypeValueImpl implements EnumDomainTypeValue, Serializabl
     @Override
     public Map<Class<?>, Object> getMetadata() {
         return metadata;
+    }
+
+    @Override
+    public Map<Class<?>, MetadataDefinition<?>> getMetadataDefinitions() {
+        return getMetadataDefinitions(metadata);
     }
 
     @Override

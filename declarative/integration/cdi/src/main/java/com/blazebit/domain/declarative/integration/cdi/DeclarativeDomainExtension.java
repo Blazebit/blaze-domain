@@ -20,7 +20,7 @@ import com.blazebit.domain.declarative.DeclarativeDomain;
 import com.blazebit.domain.declarative.DeclarativeDomainConfiguration;
 import com.blazebit.domain.declarative.DomainFunctions;
 import com.blazebit.domain.declarative.DomainType;
-import com.blazebit.domain.declarative.spi.ServiceProvider;
+import com.blazebit.domain.spi.ServiceProvider;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.context.spi.CreationalContext;
@@ -33,7 +33,6 @@ import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -74,13 +73,13 @@ public class DeclarativeDomainExtension implements Extension {
         Class<?>[] types = new Class[] { DeclarativeDomainConfiguration.class, Object.class };
         Annotation[] qualifiers = new Annotation[] { new DefaultLiteral()};
         Class<? extends Annotation> scope = Dependent.class;
-        Bean<DeclarativeDomainConfiguration> bean = new CustomBean<DeclarativeDomainConfiguration>(beanClass, types, qualifiers, scope, configuration);
+        Bean<DeclarativeDomainConfiguration> bean = new CustomBean<>(beanClass, types, qualifiers, scope, configuration);
 
-        configuration.getProperties().put(ServiceProvider.USER_SERVICE_PROVIDER, new BeanManagerServiceProvider(bm));
+        configuration.withServiceProvider(new BeanManagerServiceProvider(bm));
         abd.addBean(bean);
     }
 
-    private static class BeanManagerServiceProvider implements ServiceProvider<BeanManagerServiceProvider> {
+    private static class BeanManagerServiceProvider implements ServiceProvider {
 
         private final BeanManager beanManager;
 
@@ -97,16 +96,6 @@ public class DeclarativeDomainExtension implements Extension {
             Bean<?> bean = beanManager.resolve(beans);
             CreationalContext<?> creationalContext = beanManager.createCreationalContext(bean);
             return (T) beanManager.getReference(bean, serviceClass, creationalContext);
-        }
-
-        @Override
-        public Map<Class<?>, Object> getServices() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public <T> BeanManagerServiceProvider withService(Class<T> serviceClass, T service) {
-            throw new UnsupportedOperationException();
         }
     }
 }

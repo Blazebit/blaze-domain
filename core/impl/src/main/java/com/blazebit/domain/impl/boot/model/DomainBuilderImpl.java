@@ -24,13 +24,15 @@ import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.boot.model.EntityDomainTypeAttributeDefinition;
 import com.blazebit.domain.boot.model.EntityDomainTypeBuilder;
 import com.blazebit.domain.boot.model.EntityDomainTypeDefinition;
+import com.blazebit.domain.boot.model.EnumDomainTypeDefinition;
+import com.blazebit.domain.boot.model.EnumDomainTypeValueDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
-import com.blazebit.domain.impl.runtime.model.DomainModelImpl;
+import com.blazebit.domain.impl.runtime.model.RootDomainModel;
+import com.blazebit.domain.impl.runtime.model.SubDomainModel;
 import com.blazebit.domain.runtime.model.BasicDomainType;
-import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
 import com.blazebit.domain.runtime.model.CollectionDomainType;
-import com.blazebit.domain.runtime.model.CollectionLiteralResolver;
 import com.blazebit.domain.runtime.model.DomainFunction;
+import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperationTypeResolver;
@@ -39,18 +41,15 @@ import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
-import com.blazebit.domain.runtime.model.EntityLiteralResolver;
+import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainType;
-import com.blazebit.domain.runtime.model.EnumLiteralResolver;
-import com.blazebit.domain.runtime.model.NumericLiteralResolver;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
 import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
 import com.blazebit.domain.runtime.model.StaticDomainPredicateTypeResolvers;
-import com.blazebit.domain.runtime.model.StringLiteralResolver;
-import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.domain.spi.DomainContributor;
 import com.blazebit.domain.spi.DomainSerializer;
+import com.blazebit.domain.spi.ServiceProvider;
 
+import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -60,7 +59,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -74,34 +75,27 @@ import java.util.stream.StreamSupport;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class DomainBuilderImpl implements DomainBuilder {
+public class DomainBuilderImpl implements DomainBuilder, Serializable {
 
     private static final ReferenceQueue<ClassLoader> REFERENCE_QUEUE = new ReferenceQueue<>();
     private static final ConcurrentMap<WeakClassLoaderKey, Providers> PROVIDERS = new ConcurrentHashMap<>();
 
     private final DomainModel baseModel;
-    private final Map<String, Object> properties = new HashMap<>();
-    private Map<String, DomainFunctionDefinitionImpl> domainFunctionDefinitions = new HashMap<>();
-    private Map<String, Set<DomainOperator>> enabledOperators = new HashMap<>();
-    private Map<String, Set<DomainPredicate>> enabledPredicates = new HashMap<>();
-    private Map<String, DomainTypeDefinitionImplementor<?>> domainTypeDefinitions = new HashMap<>();
-    private Map<Class<?>, DomainTypeDefinitionImplementor<?>> domainTypeDefinitionsByJavaType = new HashMap<>();
-    private Map<String, CollectionDomainTypeDefinitionImpl> collectionDomainTypeDefinitions = new HashMap<>();
-    private Map<Class<?>, CollectionDomainTypeDefinitionImpl> collectionDomainTypeDefinitionsByJavaType = new HashMap<>();
-    private Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers = new HashMap<>();
-    private Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers = new HashMap<>();
-    private Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType = new HashMap<>();
-    private Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers = new HashMap<>();
-    private Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType = new HashMap<>();
-    private Set<DomainSerializer<DomainModel>> domainSerializers = new LinkedHashSet<>();
-    private NumericLiteralResolver numericLiteralResolver;
-    private BooleanLiteralResolver booleanLiteralResolver;
-    private StringLiteralResolver stringLiteralResolver;
-    private TemporalLiteralResolver temporalLiteralResolver;
-    private EnumLiteralResolver enumLiteralResolver;
-    private EntityLiteralResolver entityLiteralResolver;
-    private CollectionLiteralResolver collectionLiteralResolver;
+    private Map<String, Object> properties;
+    private Map<Class<?>, Object> services;
+    private List<ServiceProvider> serviceProviders;
+    private Set<DomainSerializer<?>> domainSerializers;
+    private final Map<String, DomainFunctionDefinitionImpl> domainFunctionDefinitions = new HashMap<>();
+    private final Map<String, EnumSet<DomainOperator>> enabledOperators = new HashMap<>();
+    private final Map<String, EnumSet<DomainPredicate>> enabledPredicates = new HashMap<>();
+    private final Map<String, DomainTypeDefinitionImplementor> domainTypeDefinitions = new HashMap<>();
+    private final Map<String, CollectionDomainTypeDefinitionImpl> collectionDomainTypeDefinitions = new HashMap<>();
+    private final Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers = new HashMap<>();
+    private final Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers = new HashMap<>();
+    private final Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers = new HashMap<>();
     private boolean functionsCaseSensitive = true;
+    private String predicateDefaultResultType;
+    private Set<DomainType> changedDomainTypes;
 
     public DomainBuilderImpl() {
         this.baseModel = null;
@@ -109,25 +103,19 @@ public class DomainBuilderImpl implements DomainBuilder {
 
     public DomainBuilderImpl(DomainModel domainModel) {
         this.baseModel = domainModel;
-        this.properties.putAll(domainModel.getProperties());
-        this.domainSerializers.addAll(domainModel.getDomainSerializers());
-        this.numericLiteralResolver = domainModel.getNumericLiteralResolver();
-        this.booleanLiteralResolver = domainModel.getBooleanLiteralResolver();
-        this.stringLiteralResolver = domainModel.getStringLiteralResolver();
-        this.temporalLiteralResolver = domainModel.getTemporalLiteralResolver();
-        this.enumLiteralResolver = domainModel.getEnumLiteralResolver();
-        this.entityLiteralResolver = domainModel.getEntityLiteralResolver();
-        this.collectionLiteralResolver = domainModel.getCollectionLiteralResolver();
+        DomainType type = baseModel.getPredicateDefaultResultType();
+        this.predicateDefaultResultType = type == null ? null : type.getName();
     }
 
     DomainModel getBaseModel() {
         return baseModel;
     }
 
-    DomainBuilderImpl withDomainTypeDefinition(DomainTypeDefinitionImplementor<?> domainTypeDefinition) {
+    DomainBuilderImpl withDomainTypeDefinition(DomainTypeDefinitionImplementor domainTypeDefinition) {
         domainTypeDefinitions.put(domainTypeDefinition.getName(), domainTypeDefinition);
-        if (domainTypeDefinition.getJavaType() != null) {
-            domainTypeDefinitionsByJavaType.put(domainTypeDefinition.getJavaType(), domainTypeDefinition);
+        DomainType baseDomainType;
+        if (baseModel != null && (baseDomainType = baseModel.getType(domainTypeDefinition.getName())) != null) {
+            addChangeDomainType(baseDomainType);
         }
         return this;
     }
@@ -137,52 +125,41 @@ public class DomainBuilderImpl implements DomainBuilder {
         return this;
     }
 
-    public DomainTypeDefinition<?> getDomainTypeDefinition(String typeName) {
+    private void addChangeDomainType(DomainType baseDomainType) {
+        if (changedDomainTypes == null) {
+            changedDomainTypes = new HashSet<>();
+        }
+        changedDomainTypes.add(baseDomainType);
+    }
+
+    public DomainTypeDefinition getDomainTypeDefinition(String typeName) {
         if (typeName == null) {
             throw new IllegalArgumentException("Null type name!");
         }
-        DomainTypeDefinition<?> typeDefinition = domainTypeDefinitions.get(typeName);
+        DomainTypeDefinition typeDefinition = domainTypeDefinitions.get(typeName);
         if (typeDefinition == null && typeName.startsWith("Collection[")) {
             typeDefinition = collectionDomainTypeDefinitions.get(typeName.substring("Collection[".length(), typeName.length() - 1));
         }
         if (typeDefinition == null && baseModel != null) {
-            typeDefinition = (DomainTypeDefinition<?>) baseModel.getType(typeName);
+            typeDefinition = (DomainTypeDefinition) baseModel.getType(typeName);
         }
         return typeDefinition;
     }
 
-    public DomainTypeDefinition<?> getDomainTypeDefinition(Class<?> javaType) {
-        if (javaType == null) {
-            throw new IllegalArgumentException("Null java type!");
-        }
-        DomainTypeDefinition<?> typeDefinition = domainTypeDefinitionsByJavaType.get(javaType);
-        if (typeDefinition == null && baseModel != null) {
-            typeDefinition = (DomainTypeDefinition<?>) baseModel.getType(javaType);
-        }
-        return typeDefinition;
-    }
-
-    public CollectionDomainTypeDefinitionImpl getCollectionDomainTypeDefinition(DomainTypeDefinition<?> typeDefinition) {
+    public CollectionDomainTypeDefinitionImpl getCollectionDomainTypeDefinition(DomainTypeDefinition typeDefinition) {
         CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition;
         if (typeDefinition == null) {
             collectionDomainTypeDefinition = collectionDomainTypeDefinitions.get(null);
             if (collectionDomainTypeDefinition == null) {
                 collectionDomainTypeDefinition = new CollectionDomainTypeDefinitionImpl("Collection", Collection.class, null);
                 collectionDomainTypeDefinitions.put(null, collectionDomainTypeDefinition);
-                collectionDomainTypeDefinitionsByJavaType.put(null, collectionDomainTypeDefinition);
                 withPredicate(collectionDomainTypeDefinition.getName(), DomainPredicate.COLLECTION);
             }
         } else {
             collectionDomainTypeDefinition = collectionDomainTypeDefinitions.get(typeDefinition.getName());
-            if (collectionDomainTypeDefinition == null && typeDefinition.getJavaType() != null) {
-                collectionDomainTypeDefinition = collectionDomainTypeDefinitionsByJavaType.get(typeDefinition.getJavaType());
-            }
             if (collectionDomainTypeDefinition == null) {
                 collectionDomainTypeDefinition = new CollectionDomainTypeDefinitionImpl("Collection[" + typeDefinition.getName() + "]", Collection.class, typeDefinition);
                 collectionDomainTypeDefinitions.put(typeDefinition.getName(), collectionDomainTypeDefinition);
-                if (typeDefinition.getJavaType() != null) {
-                    collectionDomainTypeDefinitionsByJavaType.put(typeDefinition.getJavaType(), collectionDomainTypeDefinition);
-                }
                 withPredicate(collectionDomainTypeDefinition.getName(), DomainPredicate.COLLECTION);
             }
         }
@@ -202,80 +179,9 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
-    public DomainBuilder withBooleanLiteralResolver(BooleanLiteralResolver literalResolver) {
-        this.booleanLiteralResolver = literalResolver;
+    public DomainBuilder withDefaultPredicateResultType(String typeName) {
+        this.predicateDefaultResultType = typeName;
         return this;
-    }
-
-    @Override
-    public DomainBuilder withNumericLiteralResolver(NumericLiteralResolver literalResolver) {
-        this.numericLiteralResolver = literalResolver;
-        return this;
-    }
-
-    @Override
-    public DomainBuilder withStringLiteralResolver(StringLiteralResolver literalResolver) {
-        this.stringLiteralResolver = literalResolver;
-        return this;
-    }
-
-    @Override
-    public DomainBuilder withTemporalLiteralResolver(TemporalLiteralResolver literalResolver) {
-        this.temporalLiteralResolver = literalResolver;
-        return this;
-    }
-
-    @Override
-    public DomainBuilder withEnumLiteralResolver(EnumLiteralResolver literalResolver) {
-        this.enumLiteralResolver = literalResolver;
-        return this;
-    }
-
-    @Override
-    public DomainBuilder withEntityLiteralResolver(EntityLiteralResolver literalResolver) {
-        this.entityLiteralResolver = literalResolver;
-        return this;
-    }
-
-    @Override
-    public DomainBuilder withCollectionLiteralResolver(CollectionLiteralResolver literalResolver) {
-        this.collectionLiteralResolver = literalResolver;
-        return this;
-    }
-
-    @Override
-    public NumericLiteralResolver getNumericLiteralResolver() {
-        return numericLiteralResolver;
-    }
-
-    @Override
-    public BooleanLiteralResolver getBooleanLiteralResolver() {
-        return booleanLiteralResolver;
-    }
-
-    @Override
-    public StringLiteralResolver getStringLiteralResolver() {
-        return stringLiteralResolver;
-    }
-
-    @Override
-    public TemporalLiteralResolver getTemporalLiteralResolver() {
-        return temporalLiteralResolver;
-    }
-
-    @Override
-    public EnumLiteralResolver getEnumLiteralResolver() {
-        return enumLiteralResolver;
-    }
-
-    @Override
-    public EntityLiteralResolver getEntityLiteralResolver() {
-        return entityLiteralResolver;
-    }
-
-    @Override
-    public CollectionLiteralResolver getCollectionLiteralResolver() {
-        return collectionLiteralResolver;
     }
 
     @Override
@@ -286,45 +192,13 @@ public class DomainBuilderImpl implements DomainBuilder {
 
     @Override
     public DomainBuilder withOperationTypeResolver(String typeName, DomainOperator domainOperator, DomainOperationTypeResolver operationTypeResolver) {
-        Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = domainOperationTypeResolvers.get(typeName);
-        if (operationTypeResolverMap == null) {
-            operationTypeResolverMap = new HashMap<>();
-            domainOperationTypeResolvers.put(typeName, operationTypeResolverMap);
-        }
-        operationTypeResolverMap.put(domainOperator, operationTypeResolver);
-        return this;
-    }
-
-    @Override
-    public DomainBuilder withOperationTypeResolver(Class<?> javaType, DomainOperator domainOperator, DomainOperationTypeResolver operationTypeResolver) {
-        Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = domainOperationTypeResolversByJavaType.get(javaType);
-        if (operationTypeResolverMap == null) {
-            operationTypeResolverMap = new HashMap<>();
-            domainOperationTypeResolversByJavaType.put(javaType, operationTypeResolverMap);
-        }
-        operationTypeResolverMap.put(domainOperator, operationTypeResolver);
+        domainOperationTypeResolvers.computeIfAbsent(typeName, k -> new HashMap<>()).put(domainOperator, operationTypeResolver);
         return this;
     }
 
     @Override
     public DomainBuilder withPredicateTypeResolver(String typeName, DomainPredicate domainPredicate, DomainPredicateTypeResolver predicateTypeResolver) {
-        Map<DomainPredicate, DomainPredicateTypeResolver> operationTypeResolverMap = domainPredicateTypeResolvers.get(typeName);
-        if (operationTypeResolverMap == null) {
-            operationTypeResolverMap = new HashMap<>();
-            domainPredicateTypeResolvers.put(typeName, operationTypeResolverMap);
-        }
-        operationTypeResolverMap.put(domainPredicate, predicateTypeResolver);
-        return this;
-    }
-
-    @Override
-    public DomainBuilder withPredicateTypeResolver(Class<?> javaType, DomainPredicate domainPredicate, DomainPredicateTypeResolver predicateTypeResolver) {
-        Map<DomainPredicate, DomainPredicateTypeResolver> operationTypeResolverMap = domainPredicateTypeResolversByJavaType.get(javaType);
-        if (operationTypeResolverMap == null) {
-            operationTypeResolverMap = new HashMap<>();
-            domainPredicateTypeResolversByJavaType.put(javaType, operationTypeResolverMap);
-        }
-        operationTypeResolverMap.put(domainPredicate, predicateTypeResolver);
+        domainPredicateTypeResolvers.computeIfAbsent(typeName, k -> new HashMap<>()).put(domainPredicate, predicateTypeResolver);
         return this;
     }
 
@@ -332,7 +206,9 @@ public class DomainBuilderImpl implements DomainBuilder {
     public DomainOperationTypeResolver getOperationTypeResolver(String typeName, DomainOperator domainOperator) {
         Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = domainOperationTypeResolvers.get(typeName);
         if (operationTypeResolverMap == null) {
-            return null;
+            if (baseModel == null || (operationTypeResolverMap = baseModel.getOperationTypeResolvers().get(typeName)) == null) {
+                return null;
+            }
         }
         return operationTypeResolverMap.get(domainOperator);
     }
@@ -341,72 +217,146 @@ public class DomainBuilderImpl implements DomainBuilder {
     public DomainPredicateTypeResolver getPredicateTypeResolver(String typeName, DomainPredicate domainPredicate) {
         Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(typeName);
         if (predicateTypeResolverMap == null) {
-            return null;
+            if (baseModel == null || (predicateTypeResolverMap = baseModel.getPredicateTypeResolvers().get(typeName)) == null) {
+                return null;
+            }
         }
         return predicateTypeResolverMap.get(domainPredicate);
     }
 
     @Override
     public DomainBuilder withOperator(String typeName, DomainOperator operator) {
-        return withElement(enabledOperators, typeName, operator);
-    }
-
-    @Override
-    public DomainBuilder withPredicate(String typeName, DomainPredicate predicate) {
-        return withElement(enabledPredicates, typeName, predicate);
-    }
-
-    @Override
-    public DomainBuilder withOperator(String typeName, DomainOperator... operators) {
-        return withElements(enabledOperators, typeName, operators);
-    }
-
-    @Override
-    public DomainBuilder withPredicate(String typeName, DomainPredicate... predicates) {
-        return withElements(enabledPredicates, typeName, predicates);
-    }
-
-    @Override
-    public Set<DomainOperator> getEnabledOperators(String typeName) {
-        Set<DomainOperator> domainOperators = enabledOperators.get(typeName);
-        if (domainOperators == null) {
-            return Collections.emptySet();
+        Set<DomainOperator> baseModelOperators = Collections.emptySet();
+        DomainType baseModelDomainType = null;
+        if (baseModel != null) {
+            baseModelDomainType = baseModel.getType(typeName);
+            if (baseModelDomainType != null) {
+                baseModelOperators = baseModelDomainType.getEnabledOperators();
+            }
         }
-        return Collections.unmodifiableSet(domainOperators);
-    }
-
-    @Override
-    public Set<DomainPredicate> getEnabledPredicates(String typeName) {
-        Set<DomainPredicate> domainPredicates = enabledPredicates.get(typeName);
-        if (domainPredicates == null) {
-            return Collections.emptySet();
-        }
-        return Collections.unmodifiableSet(domainPredicates);
-    }
-
-    public Set<DomainOperator> getOperators(DomainTypeDefinition<?> typeDefinition) {
-        return getElements(enabledOperators, typeDefinition.getName());
-    }
-
-    public Set<DomainPredicate> getPredicates(DomainTypeDefinition<?> typeDefinition) {
-        return getElements(enabledPredicates, typeDefinition.getName());
-    }
-
-    private <T extends Enum<T>> DomainBuilder withElement(Map<String, Set<T>> map, String typeName, T element) {
-        Set<T> set = map.get(typeName);
-        if (set == null) {
-            set = EnumSet.of(element);
-            map.put(typeName, set);
-        } else {
-            set.add(element);
+        if (withElement(enabledOperators, baseModelOperators, typeName, operator) && baseModel != null) {
+            addChangeDomainType(baseModelDomainType);
         }
         return this;
     }
 
-    private <T extends Enum<T>> DomainBuilder withElements(Map<String, Set<T>> map, String typeName, T... elements) {
-        Set<T> set = map.get(typeName);
+    @Override
+    public DomainBuilder withPredicate(String typeName, DomainPredicate predicate) {
+        Set<DomainPredicate> baseModelPredicates = Collections.emptySet();
+        DomainType baseModelDomainType = null;
+        if (baseModel != null) {
+            baseModelDomainType = baseModel.getType(typeName);
+            if (baseModelDomainType != null) {
+                baseModelPredicates = baseModelDomainType.getEnabledPredicates();
+            }
+        }
+        if (withElement(enabledPredicates, baseModelPredicates, typeName, predicate) && baseModel != null) {
+            addChangeDomainType(baseModelDomainType);
+        }
+        return this;
+    }
+
+    @Override
+    public DomainBuilder withOperator(String typeName, DomainOperator... operators) {
+        Set<DomainOperator> baseModelOperators = Collections.emptySet();
+        DomainType baseModelDomainType = null;
+        if (baseModel != null) {
+            baseModelDomainType = baseModel.getType(typeName);
+            if (baseModelDomainType != null) {
+                baseModelOperators = baseModelDomainType.getEnabledOperators();
+            }
+        }
+        if (withElements(enabledOperators, baseModelOperators, typeName, operators) && baseModel != null) {
+            addChangeDomainType(baseModelDomainType);
+        }
+        return this;
+    }
+
+    @Override
+    public DomainBuilder withPredicate(String typeName, DomainPredicate... predicates) {
+        Set<DomainPredicate> baseModelPredicates = Collections.emptySet();
+        DomainType baseModelDomainType = null;
+        if (baseModel != null) {
+            baseModelDomainType = baseModel.getType(typeName);
+            if (baseModelDomainType != null) {
+                baseModelPredicates = baseModelDomainType.getEnabledPredicates();
+            }
+        }
+        if (withElements(enabledPredicates, baseModelPredicates, typeName, predicates) && baseModel != null) {
+            addChangeDomainType(baseModelDomainType);
+        }
+        return this;
+    }
+
+    @Override
+    public Set<DomainOperator> getEnabledOperators(String typeName) {
+        EnumSet<DomainOperator> domainOperators = enabledOperators.get(typeName);
+        if (domainOperators == null) {
+            DomainType baseType;
+            if (baseModel == null || (baseType = baseModel.getType(typeName)) == null) {
+                return Collections.emptySet();
+            }
+            return baseType.getEnabledOperators();
+        }
+        DomainType baseType;
+        if (baseModel == null || (baseType = baseModel.getType(typeName)) == null) {
+            return Collections.unmodifiableSet(domainOperators);
+        }
+        EnumSet<DomainOperator> set = EnumSet.copyOf(domainOperators);
+        set.addAll(baseType.getEnabledOperators());
+        return Collections.unmodifiableSet(set);
+    }
+
+    @Override
+    public Set<DomainPredicate> getEnabledPredicates(String typeName) {
+        EnumSet<DomainPredicate> domainPredicates = enabledPredicates.get(typeName);
+        if (domainPredicates == null) {
+            DomainType baseType;
+            if (baseModel == null || (baseType = baseModel.getType(typeName)) == null) {
+                return Collections.emptySet();
+            }
+            return baseType.getEnabledPredicates();
+        }
+        DomainType baseType;
+        if (baseModel == null || (baseType = baseModel.getType(typeName)) == null) {
+            return Collections.unmodifiableSet(domainPredicates);
+        }
+        EnumSet<DomainPredicate> set = EnumSet.copyOf(domainPredicates);
+        set.addAll(baseType.getEnabledPredicates());
+        return Collections.unmodifiableSet(set);
+    }
+
+    private <T extends Enum<T>> boolean withElement(Map<String, EnumSet<T>> map, Set<T> baseModelElements, String typeName, T element) {
+        if (!baseModelElements.contains(element)) {
+            EnumSet<T> set = map.get(typeName);
+            if (set == null) {
+                set = EnumSet.of(element);
+                map.put(typeName, set);
+            } else {
+                set.add(element);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private <T extends Enum<T>> boolean withElements(Map<String, EnumSet<T>> map, Set<T> baseModelElements, String typeName, T... elements) {
+        EnumSet<T> set = map.get(typeName);
         if (set == null) {
             set = EnumSet.noneOf((Class<T>) elements[0].getClass());
+            if (!baseModelElements.isEmpty()) {
+                for (int i = 0; i < elements.length; i++) {
+                    T element = elements[i];
+                    if (!baseModelElements.contains(element)) {
+                        set.add(element);
+                    }
+                }
+                if (set.isEmpty()) {
+                    return false;
+                }
+                map.put(typeName, set);
+                return true;
+            }
             map.put(typeName, set);
         }
 
@@ -415,15 +365,7 @@ public class DomainBuilderImpl implements DomainBuilder {
             set.add(element);
         }
 
-        return this;
-    }
-
-    private <T> Set<T> getElements(Map<String, Set<T>> map, String typeName) {
-        Set<T> set = map.get(typeName);
-        if (set == null) {
-            return Collections.emptySet();
-        }
-        return set;
+        return true;
     }
 
     @Override
@@ -510,8 +452,36 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
-    public DomainTypeDefinition<?> getType(String name) {
-        DomainTypeDefinitionImplementor<?> typeDefinition = domainTypeDefinitions.get(name);
+    public EnumDomainTypeBuilderImpl extendEnumType(String name, EnumDomainTypeDefinition baseEnumType) {
+        EnumDomainTypeBuilderImpl builder = createEnumType(name);
+        for (MetadataDefinition<?> metadataDefinition : baseEnumType.getMetadataDefinitions().values()) {
+            builder.withMetadata(metadataDefinition);
+        }
+
+        for (EnumDomainTypeValueDefinition enumValue : baseEnumType.getEnumValues().values()) {
+            builder.withValue(enumValue.getValue(), enumValue.getMetadataDefinitions().values().toArray(new MetadataDefinition[0]));
+        }
+
+        return builder;
+    }
+
+    @Override
+    public EnumDomainTypeBuilderImpl extendEnumType(String name, Class<?> javaType, EnumDomainTypeDefinition baseEnumType) {
+        EnumDomainTypeBuilderImpl builder = createEnumType(name, javaType);
+        for (MetadataDefinition<?> metadataDefinition : baseEnumType.getMetadataDefinitions().values()) {
+            builder.withMetadata(metadataDefinition);
+        }
+
+        for (EnumDomainTypeValueDefinition enumValue : baseEnumType.getEnumValues().values()) {
+            builder.withValue(enumValue.getValue(), enumValue.getMetadataDefinitions().values().toArray(new MetadataDefinition[0]));
+        }
+
+        return builder;
+    }
+
+    @Override
+    public DomainTypeDefinition getType(String name) {
+        DomainTypeDefinitionImplementor typeDefinition = domainTypeDefinitions.get(name);
         if (typeDefinition == null && baseModel != null) {
             typeDefinition = getType(baseModel.getType(name));
         }
@@ -519,28 +489,10 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
-    public DomainTypeDefinition<?> getType(Class<?> javaType) {
-        DomainTypeDefinitionImplementor<?> typeDefinition = domainTypeDefinitionsByJavaType.get(javaType);
-        if (typeDefinition == null && baseModel != null) {
-            typeDefinition = getType(baseModel.getType(javaType));
-        }
-        return typeDefinition;
-    }
-
-    @Override
     public EntityDomainTypeDefinition getEntityType(String name) {
-        EntityDomainTypeDefinition typeDefinition = (EntityDomainTypeDefinition) (DomainTypeDefinition<?>) domainTypeDefinitions.get(name);
+        EntityDomainTypeDefinition typeDefinition = (EntityDomainTypeDefinition) domainTypeDefinitions.get(name);
         if (typeDefinition == null && baseModel != null) {
             typeDefinition = getEntityType(baseModel.getEntityType(name));
-        }
-        return typeDefinition;
-    }
-
-    @Override
-    public EntityDomainTypeDefinition getEntityType(Class<?> javaType) {
-        EntityDomainTypeDefinition typeDefinition = (EntityDomainTypeDefinition) (DomainTypeDefinition<?>) domainTypeDefinitionsByJavaType.get(javaType);
-        if (typeDefinition == null && baseModel != null) {
-            typeDefinition = getEntityType(baseModel.getEntityType(javaType));
         }
         return typeDefinition;
     }
@@ -555,40 +507,16 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
-    public CollectionDomainTypeDefinition getCollectionType(Class<?> elementDomainJavaType) {
-        CollectionDomainTypeDefinition typeDefinition = collectionDomainTypeDefinitionsByJavaType.get(elementDomainJavaType);
-        if (typeDefinition == null && baseModel != null) {
-            typeDefinition = getCollectionType(baseModel.getCollectionType(baseModel.getType(elementDomainJavaType)));
-        }
-        return typeDefinition;
-    }
-
-    @Override
-    public Map<String, DomainTypeDefinition<?>> getTypes() {
+    public Map<String, DomainTypeDefinition> getTypes() {
         if (baseModel == null) {
-            return (Map<String, DomainTypeDefinition<?>>) (Map<?, ?>) domainTypeDefinitions;
+            return (Map<String, DomainTypeDefinition>) (Map<?, ?>) domainTypeDefinitions;
         } else {
             Map<String, DomainType> types = baseModel.getTypes();
-            Map<String, DomainTypeDefinition<?>> map = new HashMap<>(types.size() + domainTypeDefinitions.size());
+            Map<String, DomainTypeDefinition> map = new HashMap<>(types.size() + domainTypeDefinitions.size());
             for (Map.Entry<String, DomainType> entry : types.entrySet()) {
                 map.put(entry.getKey(), getType(entry.getValue()));
             }
             map.putAll(domainTypeDefinitions);
-            return map;
-        }
-    }
-
-    @Override
-    public Map<Class<?>, DomainTypeDefinition<?>> getTypesByJavaType() {
-        if (baseModel == null) {
-            return (Map<Class<?>, DomainTypeDefinition<?>>) (Map<?, ?>) domainTypeDefinitionsByJavaType;
-        } else {
-            Map<Class<?>, DomainType> types = baseModel.getTypesByJavaType();
-            Map<Class<?>, DomainTypeDefinition<?>> map = new HashMap<>(types.size() + domainTypeDefinitionsByJavaType.size());
-            for (Map.Entry<Class<?>, DomainType> entry : types.entrySet()) {
-                map.put(entry.getKey(), getType(entry.getValue()));
-            }
-            map.putAll(domainTypeDefinitionsByJavaType);
             return map;
         }
     }
@@ -604,23 +532,6 @@ public class DomainBuilderImpl implements DomainBuilder {
                 map.put(entry.getKey().getName(), getCollectionType(entry.getValue()));
             }
             map.putAll(collectionDomainTypeDefinitions);
-            return map;
-        }
-    }
-
-    @Override
-    public Map<Class<?>, CollectionDomainTypeDefinition> getCollectionTypesByJavaType() {
-        if (baseModel == null) {
-            return (Map<Class<?>, CollectionDomainTypeDefinition>) (Map<?, ?>) collectionDomainTypeDefinitionsByJavaType;
-        } else {
-            Map<DomainType, CollectionDomainType> collectionTypes = baseModel.getCollectionTypes();
-            Map<Class<?>, CollectionDomainTypeDefinition> map = new HashMap<>(collectionTypes.size() + collectionDomainTypeDefinitionsByJavaType.size());
-            for (Map.Entry<DomainType, CollectionDomainType> entry : collectionTypes.entrySet()) {
-                if (entry.getKey().getJavaType() != null) {
-                    map.put(entry.getKey().getJavaType(), getCollectionType(entry.getValue()));
-                }
-            }
-            map.putAll(collectionDomainTypeDefinitionsByJavaType);
             return map;
         }
     }
@@ -656,55 +567,291 @@ public class DomainBuilderImpl implements DomainBuilder {
     }
 
     @Override
-    public DomainBuilder withSerializer(DomainSerializer<DomainModel> serializer) {
+    public DomainBuilder withSerializer(DomainSerializer<?> serializer) {
+        if (domainSerializers == null) {
+            if (baseModel == null) {
+                domainSerializers = new LinkedHashSet<>();
+            } else {
+                domainSerializers = new LinkedHashSet<>(baseModel.getDomainSerializers());
+            }
+        }
         domainSerializers.add(serializer);
         return this;
     }
 
+    private List<DomainSerializer<?>> getImmutableDomainSerializers() {
+        if (domainSerializers != null && !domainSerializers.isEmpty()) {
+            return Collections.unmodifiableList(new ArrayList<>(domainSerializers));
+        } else if (baseModel != null) {
+            return baseModel.getDomainSerializers();
+        }
+        return Collections.emptyList();
+    }
+
     @Override
     public Map<String, Object> getProperties() {
+        if (properties == null) {
+            if (baseModel != null) {
+                this.properties = new HashMap<>(baseModel.getProperties());
+            } else {
+                this.properties = new HashMap<>();
+            }
+        }
         return properties;
     }
 
     @Override
     public Object getProperty(String propertyName) {
-        return properties.get(propertyName);
+        if (properties != null) {
+            return properties.get(propertyName);
+        } else if (baseModel != null) {
+            return baseModel.getProperty(propertyName);
+        }
+        return null;
     }
 
-    private DomainTypeDefinitionImplementor<?> getType(DomainType type) {
-        if (type instanceof EnumDomainType) {
-            return getEnumType((EnumDomainType) type);
+    @Override
+    public void setProperty(String propertyName, Object propertyValue) {
+        if (properties == null) {
+            if (baseModel != null) {
+                if (baseModel.getProperty(propertyName) == propertyValue) {
+                    return;
+                }
+                properties = new HashMap<>(baseModel.getProperties());
+            } else {
+                properties = new HashMap<>();
+            }
+        }
+        properties.put(propertyName, propertyValue);
+    }
+
+    private Map<String, Object> getImmutableProperties() {
+        if (properties != null && !properties.isEmpty()) {
+            return Collections.unmodifiableMap(properties);
+        } else if (baseModel != null) {
+            return baseModel.getProperties();
+        }
+        return Collections.emptyMap();
+    }
+
+    @Override
+    public Map<Class<?>, Object> getRegisteredServices() {
+        if (services == null) {
+            return Collections.emptyMap();
+        }
+        return services;
+    }
+
+    @Override
+    public <T> DomainBuilder withService(Class<T> serviceClass, T service) {
+        if (baseModel != null && baseModel.getService(serviceClass) == service && (services == null || !services.containsKey(serviceClass))) {
+            return this;
+        }
+        if (services == null) {
+            services = new HashMap<>();
+        }
+        services.put(serviceClass, service);
+        return this;
+    }
+
+    @Override
+    public <T> T getRegisteredService(Class<T> serviceClass) {
+        if (services == null) {
+            return null;
+        }
+        //noinspection unchecked
+        return (T) services.get(serviceClass);
+    }
+
+    @Override
+    public <T> T getService(Class<T> serviceClass) {
+        if (services != null) {
+            Object object = services.get(serviceClass);
+            if (object != null) {
+                return serviceClass.cast(object);
+            }
+        }
+        if (serviceProviders != null) {
+            for (ServiceProvider serviceProvider : serviceProviders) {
+                T service = serviceProvider.getService(serviceClass);
+                if (service != null) {
+                    return service;
+                }
+            }
+        }
+        if (baseModel != null) {
+            return baseModel.getService(serviceClass);
+        }
+        return null;
+    }
+
+    private Map<Class<?>, Object> getImmutableServices() {
+        if (services == null || services.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return Collections.unmodifiableMap(new HashMap<>(services));
+    }
+
+    @Override
+    public DomainBuilder withServiceProvider(ServiceProvider serviceProvider) {
+        if (serviceProviders == null) {
+            serviceProviders = new ArrayList<>();
+        }
+        serviceProviders.add(serviceProvider);
+        return this;
+    }
+
+    private List<ServiceProvider> getImmutableServiceProviders() {
+        if (serviceProviders == null || serviceProviders.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Collections.unmodifiableList(new ArrayList<>(serviceProviders));
+    }
+
+    private DomainTypeDefinitionImplementor getType(DomainType type) {
+        if (type instanceof DomainTypeDefinitionImplementor) {
+            return (DomainTypeDefinitionImplementor) type;
+        } else if (type instanceof EnumDomainType) {
+            return new EnumDomainTypeDefinitionImpl((EnumDomainType) type);
         } else if (type instanceof EntityDomainType) {
-            return getEntityType((EntityDomainType) type);
+            return new EntityDomainTypeDefinitionImpl((EntityDomainType) type);
         } else {
-            return getBasicType((BasicDomainType) type);
+            return new BasicDomainTypeDefinitionImpl((BasicDomainType) type);
         }
     }
 
-    private EnumDomainTypeDefinitionImpl getEnumType(EnumDomainType enumDomainType) {
-        return new EnumDomainTypeDefinitionImpl(enumDomainType);
+    private EntityDomainTypeDefinition getEntityType(EntityDomainType entityDomainType) {
+        if (entityDomainType instanceof EntityDomainTypeDefinition) {
+            return (EntityDomainTypeDefinition) entityDomainType;
+        } else {
+            return new EntityDomainTypeDefinitionImpl(entityDomainType);
+        }
     }
 
-    private BasicDomainTypeDefinitionImpl getBasicType(BasicDomainType basicDomainType) {
-        return new BasicDomainTypeDefinitionImpl(basicDomainType);
+    private CollectionDomainTypeDefinition getCollectionType(CollectionDomainType collectionDomainType) {
+        if (collectionDomainType instanceof CollectionDomainTypeDefinition) {
+            return (CollectionDomainTypeDefinition) collectionDomainType;
+        } else {
+            return new CollectionDomainTypeDefinitionImpl(collectionDomainType);
+        }
     }
 
-    private EntityDomainTypeDefinitionImpl getEntityType(EntityDomainType entityDomainType) {
-        return new EntityDomainTypeDefinitionImpl(entityDomainType);
+    private DomainFunctionDefinition getDomainFunction(DomainFunction domainFunction) {
+        if (domainFunction instanceof DomainFunctionDefinition) {
+            return (DomainFunctionDefinition) domainFunction;
+        } else {
+            return new DomainFunctionDefinitionImpl(domainFunction);
+        }
     }
 
-    private CollectionDomainTypeDefinitionImpl getCollectionType(CollectionDomainType collectionDomainType) {
-        return new CollectionDomainTypeDefinitionImpl(collectionDomainType);
+    private EntityDomainType[] getBaseModelEntityTypes(Set<DomainType> dependencies) {
+        Collection<DomainType> domainTypes = baseModel.getTypes().values();
+        List<EntityDomainType> entityDomainTypes = new ArrayList<>(domainTypes.size());
+        for (DomainType domainType : domainTypes) {
+            if (domainType instanceof EntityDomainType) {
+                EntityDomainType entityDomainType = (EntityDomainType) domainType;
+                if (!dependencies.contains(entityDomainType) && collectAttributeDependencies(entityDomainType, dependencies)) {
+                    entityDomainTypes.add(entityDomainType);
+                }
+            }
+        }
+        return entityDomainTypes.toArray(entityDomainTypes.toArray(new EntityDomainType[0]));
     }
 
-    private DomainFunctionDefinitionImpl getDomainFunction(DomainFunction domainFunction) {
-        return new DomainFunctionDefinitionImpl(domainFunction);
+    private boolean collectAttributeDependencies(EntityDomainType entityDomainType, Set<DomainType> dependencies) {
+        boolean hasEntityTypedAttributes = false;
+        for (EntityDomainTypeAttribute attribute : entityDomainType.getAttributes().values()) {
+            DomainType type = attribute.getType();
+            if (type.getKind() == DomainType.DomainTypeKind.ENTITY) {
+                hasEntityTypedAttributes = true;
+            }
+            if (dependencies.contains(type)) {
+                dependencies.add(entityDomainType);
+                CollectionDomainType collectionType = baseModel.getCollectionType(entityDomainType);
+                if (collectionType != null) {
+                    dependencies.add(collectionType);
+                }
+                // No need to check this type again as it is already in the dependencies
+                return false;
+            }
+        }
+        return hasEntityTypedAttributes;
+    }
+
+    private boolean dependsOn(DomainFunction domainFunction, Set<DomainType> dependencies) {
+        if (dependencies.contains(domainFunction.getResultType())) {
+            return true;
+        }
+        for (DomainFunctionArgument argument : domainFunction.getArguments()) {
+            if (dependencies.contains(argument.getType())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void handleChangedDomainTypes() {
+        if (changedDomainTypes != null) {
+            Set<DomainType> dependencies = new HashSet<>(changedDomainTypes);
+            for (DomainType dependency : dependencies) {
+                CollectionDomainType collectionType = baseModel.getCollectionType(dependency);
+                if (collectionType != null) {
+                    dependencies.add(collectionType);
+                }
+            }
+
+            EntityDomainType[] entityDomainTypes = getBaseModelEntityTypes(dependencies);
+            int lastSize = dependencies.size();
+            do {
+                int entityDomainTypesSize = entityDomainTypes.length;
+                for (int i = 0; i < entityDomainTypesSize; i++) {
+                    EntityDomainType entityDomainType = entityDomainTypes[i];
+                    if (dependencies.contains(entityDomainType) || !collectAttributeDependencies(entityDomainType, dependencies)) {
+                        // Remove this dependency by swapping last element in and decrementing size
+                        entityDomainTypesSize--;
+                        if (entityDomainTypesSize != 0) {
+                            entityDomainTypes[i] = entityDomainTypes[entityDomainTypesSize];
+                            i--;
+                        }
+                    }
+                }
+                if (dependencies.size() == lastSize) {
+                    break;
+                }
+                lastSize = dependencies.size();
+            } while (true);
+
+            for (DomainType dependency : dependencies) {
+                if (!domainTypeDefinitions.containsKey(dependency.getName())) {
+                    DomainTypeDefinitionImplementor domainTypeDefinition;
+                    if (dependency instanceof BasicDomainType) {
+                        domainTypeDefinition = new BasicDomainTypeDefinitionImpl((BasicDomainType) dependency);
+                    } else if (dependency instanceof EnumDomainType) {
+                        domainTypeDefinition = new EnumDomainTypeDefinitionImpl((EnumDomainType) dependency);
+                    } else if (dependency instanceof EntityDomainType) {
+                        domainTypeDefinition = new EntityDomainTypeDefinitionImpl((EntityDomainType) dependency);
+                    } else {
+                        domainTypeDefinition = null;
+                    }
+                    if (domainTypeDefinition != null) {
+                        domainTypeDefinitions.put(dependency.getName(), domainTypeDefinition);
+                    }
+                }
+            }
+            for (DomainFunction domainFunction : baseModel.getFunctions().values()) {
+                if (!domainFunctionDefinitions.containsKey(domainFunction.getName()) && dependsOn(domainFunction, dependencies)) {
+                    domainFunctionDefinitions.put(domainFunction.getName(), new DomainFunctionDefinitionImpl(domainFunction));
+                }
+            }
+        }
     }
 
     @Override
     public DomainModel build() {
         MetamodelBuildingContext context = new MetamodelBuildingContext(this);
-        for (DomainTypeDefinitionImplementor<?> typeDefinition : domainTypeDefinitions.values()) {
+        handleChangedDomainTypes();
+        for (DomainTypeDefinitionImplementor typeDefinition : domainTypeDefinitions.values()) {
             typeDefinition.bindTypes(this, context);
         }
         for (DomainFunctionDefinitionImpl domainFunctionDefinition : domainFunctionDefinitions.values()) {
@@ -714,23 +861,12 @@ public class DomainBuilderImpl implements DomainBuilder {
         for (CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition : collectionDomainTypeDefinitions.values()) {
             collectionDomainTypeDefinition.bindTypes(this, context);
         }
-
         Map<String, DomainType> domainTypes = new HashMap<>(domainTypeDefinitions.size());
-        Map<Class<?>, DomainType> domainTypesByJavaType = new HashMap<>(domainTypeDefinitions.size());
         Map<DomainType, CollectionDomainType> collectionDomainTypes = new HashMap<>(domainTypeDefinitions.size());
         if (!context.hasErrors()) {
-            if (baseModel != null) {
-                domainTypes.putAll(baseModel.getTypes());
-                domainTypesByJavaType.putAll(baseModel.getTypesByJavaType());
-                collectionDomainTypes.putAll(baseModel.getCollectionTypes());
-            }
-
-            for (DomainTypeDefinitionImplementor<?> typeDefinition : domainTypeDefinitions.values()) {
+            for (DomainTypeDefinitionImplementor typeDefinition : domainTypeDefinitions.values()) {
                 DomainType domainType = context.getType(typeDefinition);
                 domainTypes.put(typeDefinition.getName(), domainType);
-                if (typeDefinition.getJavaType() != null) {
-                    domainTypesByJavaType.put(domainType.getJavaType(), domainType);
-                }
             }
             for (CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition : collectionDomainTypeDefinitions.values()) {
                 CollectionDomainType collectionDomainType = collectionDomainTypeDefinition.getType(context);
@@ -745,18 +881,12 @@ public class DomainBuilderImpl implements DomainBuilder {
             domainFunctions = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         }
         if (!context.hasErrors()) {
-            if (baseModel != null) {
-                domainFunctions.putAll(baseModel.getFunctions());
-            }
             for (DomainFunctionDefinitionImpl functionDefinition : domainFunctionDefinitions.values()) {
                 domainFunctions.put(functionDefinition.getName().toUpperCase(), functionDefinition.getFunction(context));
             }
         }
         Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers = new HashMap<>(this.domainFunctionTypeResolvers.size());
         if (!context.hasErrors()) {
-            if (baseModel != null) {
-                domainFunctionTypeResolvers.putAll(baseModel.getFunctionTypeResolvers());
-            }
             for (Map.Entry<String, DomainFunctionTypeResolver> entry : this.domainFunctionTypeResolvers.entrySet()) {
                 String name = entry.getKey().toUpperCase();
                 domainFunctionTypeResolvers.put(name, entry.getValue());
@@ -767,51 +897,20 @@ public class DomainBuilderImpl implements DomainBuilder {
         }
 
         Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers = new HashMap<>(this.domainOperationTypeResolvers.size());
-        Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType = new HashMap<>(this.domainOperationTypeResolversByJavaType.size());
         if (!context.hasErrors()) {
-            resolveDomainOperationTypeResolvers(context, domainTypes, domainOperationTypeResolvers, domainOperationTypeResolversByJavaType);
-        }
-
-        if (!context.hasErrors()) {
-            resolveDomainOperationTypeResolversByJavaType(context, domainTypesByJavaType, domainOperationTypeResolvers, domainOperationTypeResolversByJavaType);
+            resolveDomainOperationTypeResolvers(context, domainTypes, domainOperationTypeResolvers);
         }
 
         Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers = new HashMap<>(this.domainPredicateTypeResolvers.size());
-        Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType = new HashMap<>(this.domainPredicateTypeResolversByJavaType.size());
         if (!context.hasErrors()) {
-            resolveDomainPredicateTypeResolvers(context, domainTypes, domainPredicateTypeResolvers, domainPredicateTypeResolversByJavaType);
+            resolveDomainPredicateTypeResolvers(context, domainTypes, domainPredicateTypeResolvers);
         }
 
+        Map<String, Object> properties = getImmutableProperties();
+        Map<Class<?>, Object> services = getImmutableServices();
+        List<ServiceProvider> serviceProviders = getImmutableServiceProviders();
+        DomainType predicateDefaultResultType = null;
         if (!context.hasErrors()) {
-            resolveDomainPredicateTypeResolversByJavaType(context, domainTypesByJavaType, domainPredicateTypeResolvers, domainPredicateTypeResolversByJavaType);
-        }
-
-        if (!context.hasErrors()) {
-            String booleanTypeName = null;
-            if (booleanLiteralResolver != null) {
-                DomainModelImpl temporaryDomainModel = new DomainModelImpl(
-                    properties,
-                    domainTypes,
-                    domainTypesByJavaType,
-                    collectionDomainTypes,
-                    domainFunctions,
-                    domainFunctionTypeResolvers,
-                    domainOperationTypeResolvers,
-                    domainOperationTypeResolversByJavaType,
-                    domainPredicateTypeResolvers,
-                    domainPredicateTypeResolversByJavaType,
-                    Collections.emptyList(),
-                    numericLiteralResolver,
-                    booleanLiteralResolver,
-                    stringLiteralResolver,
-                    temporalLiteralResolver,
-                    enumLiteralResolver,
-                    entityLiteralResolver,
-                    collectionLiteralResolver
-                );
-                ResolvedLiteral booleanLiteral = booleanLiteralResolver.resolveLiteral(temporaryDomainModel, true);
-                booleanTypeName = booleanLiteral == null ? null : booleanLiteral.getType().getName();
-            }
             for (DomainType domainType : domainTypes.values()) {
                 Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = domainOperationTypeResolvers.get(domainType.getName());
                 if (operationTypeResolverMap == null && !domainType.getEnabledOperators().isEmpty()) {
@@ -825,7 +924,7 @@ public class DomainBuilderImpl implements DomainBuilder {
                     }
                 }
 
-                if (booleanTypeName != null) {
+                if ((predicateDefaultResultType = domainTypes.get(this.predicateDefaultResultType)) != null) {
                     Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(domainType.getName());
                     if (predicateTypeResolverMap == null && !domainType.getEnabledPredicates().isEmpty()) {
                         predicateTypeResolverMap = new HashMap<>();
@@ -833,7 +932,7 @@ public class DomainBuilderImpl implements DomainBuilder {
                     }
                     for (DomainPredicate enabledPredicate : domainType.getEnabledPredicates()) {
                         if (!predicateTypeResolverMap.containsKey(enabledPredicate)) {
-                            predicateTypeResolverMap.put(enabledPredicate, StaticDomainPredicateTypeResolvers.returning(booleanTypeName));
+                            predicateTypeResolverMap.put(enabledPredicate, StaticDomainPredicateTypeResolvers.returning(this.predicateDefaultResultType));
                         }
                     }
                 }
@@ -849,36 +948,61 @@ public class DomainBuilderImpl implements DomainBuilder {
 
             throw new IllegalArgumentException(sb.toString());
         }
-
-        return new DomainModelImpl(
+        return createDomainModel(
+            baseModel,
             properties,
+            services,
+            serviceProviders,
             domainTypes,
-            domainTypesByJavaType,
             collectionDomainTypes,
             domainFunctions,
             domainFunctionTypeResolvers,
             domainOperationTypeResolvers,
-            domainOperationTypeResolversByJavaType,
             domainPredicateTypeResolvers,
-            domainPredicateTypeResolversByJavaType,
-            Collections.unmodifiableList(new ArrayList<>(domainSerializers)),
-            numericLiteralResolver,
-            booleanLiteralResolver,
-            stringLiteralResolver,
-            temporalLiteralResolver,
-            enumLiteralResolver,
-            entityLiteralResolver,
-            collectionLiteralResolver
+            predicateDefaultResultType,
+            getImmutableDomainSerializers()
         );
     }
 
-    private void resolveDomainOperationTypeResolvers(MetamodelBuildingContext context, Map<String, DomainType> domainTypes, Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers, Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType) {
+    private DomainModel createDomainModel(DomainModel baseModel, Map<String, Object> properties, Map<Class<?>, Object> services, List<ServiceProvider> serviceProviders, Map<String, DomainType> domainTypes, Map<DomainType, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
+                                          Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers, Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers,
+                                          Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, DomainType predicateDefaultResultType, List<DomainSerializer<?>> domainSerializers) {
+        if (baseModel == null) {
+            return new RootDomainModel(
+                properties,
+                services,
+                serviceProviders,
+                domainTypes,
+                collectionDomainTypes,
+                domainFunctions,
+                domainFunctionTypeResolvers,
+                domainOperationTypeResolvers,
+                domainPredicateTypeResolvers,
+                predicateDefaultResultType,
+                domainSerializers
+            );
+        } else {
+            return new SubDomainModel(
+                baseModel,
+                properties,
+                services,
+                serviceProviders,
+                domainTypes,
+                collectionDomainTypes,
+                domainFunctions,
+                domainFunctionTypeResolvers,
+                domainOperationTypeResolvers,
+                domainPredicateTypeResolvers,
+                predicateDefaultResultType,
+                domainSerializers
+            );
+        }
+    }
+
+    private void resolveDomainOperationTypeResolvers(MetamodelBuildingContext context, Map<String, DomainType> domainTypes, Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers) {
         if (baseModel != null) {
             for (Map.Entry<String, Map<DomainOperator, DomainOperationTypeResolver>> entry : baseModel.getOperationTypeResolvers().entrySet()) {
                 domainOperationTypeResolvers.put(entry.getKey(), entry.getValue());
-            }
-            for (Map.Entry<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> entry : baseModel.getOperationTypeResolversByJavaType().entrySet()) {
-                domainOperationTypeResolversByJavaType.put(entry.getKey(), entry.getValue());
             }
         }
         for (Map.Entry<String, Map<DomainOperator, DomainOperationTypeResolver>> entry : this.domainOperationTypeResolvers.entrySet()) {
@@ -890,18 +1014,9 @@ public class DomainBuilderImpl implements DomainBuilder {
                 Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = new HashMap<>(entry.getValue().size());
                 domainOperationTypeResolvers.put(typeName, operationTypeResolverMap);
 
-                Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMapByJavaType = domainOperationTypeResolversByJavaType.get(domainType.getJavaType());
-                if (operationTypeResolverMapByJavaType == null && domainType.getJavaType() != null) {
-                    operationTypeResolverMapByJavaType = new HashMap<>();
-                    domainOperationTypeResolversByJavaType.put(domainType.getJavaType(), operationTypeResolverMapByJavaType);
-                }
-
                 for (Map.Entry<DomainOperator, DomainOperationTypeResolver> resolverEntry : entry.getValue().entrySet()) {
                     if (domainType.getEnabledOperators().contains(resolverEntry.getKey())) {
                         operationTypeResolverMap.put(resolverEntry.getKey(), resolverEntry.getValue());
-                        if (operationTypeResolverMapByJavaType != null) {
-                            operationTypeResolverMapByJavaType.put(resolverEntry.getKey(), resolverEntry.getValue());
-                        }
                     } else {
                         context.addError("An operation type resolver for the type with the name '" + typeName + "' was registered for a non enabled operator '" + resolverEntry.getKey() + "': " + resolverEntry.getValue());
                     }
@@ -910,44 +1025,10 @@ public class DomainBuilderImpl implements DomainBuilder {
         }
     }
 
-    private void resolveDomainOperationTypeResolversByJavaType(MetamodelBuildingContext context, Map<Class<?>, DomainType> domainTypesByJavaType, Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers, Map<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolversByJavaType) {
-        for (Map.Entry<Class<?>, Map<DomainOperator, DomainOperationTypeResolver>> entry : this.domainOperationTypeResolversByJavaType.entrySet()) {
-            Class<?> javaType = entry.getKey();
-            DomainType domainType = domainTypesByJavaType.get(javaType);
-            if (domainType == null) {
-                context.addError("An operation type resolver was registered but no type with the java type '" + javaType + "' was found: " + entry.getValue());
-            } else {
-                Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = domainOperationTypeResolvers.get(domainType.getName());
-                if (operationTypeResolverMap == null) {
-                    operationTypeResolverMap = new HashMap<>(entry.getValue().size());
-                    domainOperationTypeResolvers.put(domainType.getName(), operationTypeResolverMap);
-                }
-
-                Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMapByJavaType = domainOperationTypeResolversByJavaType.get(domainType.getJavaType());
-                if (operationTypeResolverMapByJavaType == null) {
-                    operationTypeResolverMapByJavaType = new HashMap<>();
-                    domainOperationTypeResolversByJavaType.put(domainType.getJavaType(), operationTypeResolverMapByJavaType);
-                }
-
-                for (Map.Entry<DomainOperator, DomainOperationTypeResolver> resolverEntry : entry.getValue().entrySet()) {
-                    if (domainType.getEnabledOperators().contains(resolverEntry.getKey())) {
-                        operationTypeResolverMap.put(resolverEntry.getKey(), resolverEntry.getValue());
-                        operationTypeResolverMapByJavaType.put(resolverEntry.getKey(), resolverEntry.getValue());
-                    } else {
-                        context.addError("An operation type resolver for the type with the java type '" + javaType + "' was registered for a non enabled operator '" + resolverEntry.getKey() + "': " + resolverEntry.getValue());
-                    }
-                }
-            }
-        }
-    }
-
-    private void resolveDomainPredicateTypeResolvers(MetamodelBuildingContext context, Map<String, DomainType> domainTypes, Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType) {
+    private void resolveDomainPredicateTypeResolvers(MetamodelBuildingContext context, Map<String, DomainType> domainTypes, Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers) {
         if (baseModel != null) {
             for (Map.Entry<String, Map<DomainPredicate, DomainPredicateTypeResolver>> entry : baseModel.getPredicateTypeResolvers().entrySet()) {
                 domainPredicateTypeResolvers.put(entry.getKey(), entry.getValue());
-            }
-            for (Map.Entry<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> entry : baseModel.getPredicateTypeResolversByJavaType().entrySet()) {
-                domainPredicateTypeResolversByJavaType.put(entry.getKey(), entry.getValue());
             }
         }
         for (Map.Entry<String, Map<DomainPredicate, DomainPredicateTypeResolver>> entry : this.domainPredicateTypeResolvers.entrySet()) {
@@ -959,51 +1040,11 @@ public class DomainBuilderImpl implements DomainBuilder {
                 Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = new HashMap<>(entry.getValue().size());
                 domainPredicateTypeResolvers.put(typeName, predicateTypeResolverMap);
 
-                Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMapByJavaType = domainPredicateTypeResolversByJavaType.get(domainType.getJavaType());
-                if (predicateTypeResolverMapByJavaType == null && domainType.getJavaType() != null) {
-                    predicateTypeResolverMapByJavaType = new HashMap<>();
-                    domainPredicateTypeResolversByJavaType.put(domainType.getJavaType(), predicateTypeResolverMapByJavaType);
-                }
-
                 for (Map.Entry<DomainPredicate, DomainPredicateTypeResolver> resolverEntry : entry.getValue().entrySet()) {
                     if (domainType.getEnabledPredicates().contains(resolverEntry.getKey())) {
                         predicateTypeResolverMap.put(resolverEntry.getKey(), resolverEntry.getValue());
-                        if (predicateTypeResolverMapByJavaType != null) {
-                            predicateTypeResolverMapByJavaType.put(resolverEntry.getKey(), resolverEntry.getValue());
-                        }
                     } else {
                         context.addError("A predicate type resolver for the type with the name '" + typeName + "' was registered for a non enabled predicate '" + resolverEntry.getKey() + "': " + resolverEntry.getValue());
-                    }
-                }
-            }
-        }
-    }
-
-    private void resolveDomainPredicateTypeResolversByJavaType(MetamodelBuildingContext context, Map<Class<?>, DomainType> domainTypesByJavaType, Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, Map<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolversByJavaType) {
-        for (Map.Entry<Class<?>, Map<DomainPredicate, DomainPredicateTypeResolver>> entry : this.domainPredicateTypeResolversByJavaType.entrySet()) {
-            Class<?> javaType = entry.getKey();
-            DomainType domainType = domainTypesByJavaType.get(javaType);
-            if (domainType == null) {
-                context.addError("An operation type resolver was registered but no type with the java type '" + javaType + "' was found: " + entry.getValue());
-            } else {
-                Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(domainType.getName());
-                if (predicateTypeResolverMap == null) {
-                    predicateTypeResolverMap = new HashMap<>(entry.getValue().size());
-                    domainPredicateTypeResolvers.put(domainType.getName(), predicateTypeResolverMap);
-                }
-
-                Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMapByJavaType = domainPredicateTypeResolversByJavaType.get(domainType.getJavaType());
-                if (predicateTypeResolverMapByJavaType == null) {
-                    predicateTypeResolverMapByJavaType = new HashMap<>();
-                    domainPredicateTypeResolversByJavaType.put(domainType.getJavaType(), predicateTypeResolverMapByJavaType);
-                }
-
-                for (Map.Entry<DomainPredicate, DomainPredicateTypeResolver> resolverEntry : entry.getValue().entrySet()) {
-                    if (domainType.getEnabledPredicates().contains(resolverEntry.getKey())) {
-                        predicateTypeResolverMap.put(resolverEntry.getKey(), resolverEntry.getValue());
-                        predicateTypeResolverMapByJavaType.put(resolverEntry.getKey(), resolverEntry.getValue());
-                    } else {
-                        context.addError("An operation type resolver for the type with the java type '" + javaType + "' was registered for a non enabled operator '" + resolverEntry.getKey() + "': " + resolverEntry.getValue());
                     }
                 }
             }

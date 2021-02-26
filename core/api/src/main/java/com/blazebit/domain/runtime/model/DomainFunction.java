@@ -52,7 +52,7 @@ public interface DomainFunction extends MetadataHolder {
      *
      * @return the domain function arguments
      */
-    public List<DomainFunctionArgument> getArguments();
+    public List<? extends DomainFunctionArgument> getArguments();
 
     /**
      * The domain function argument with the given name.
