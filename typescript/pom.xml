@@ -12,6 +12,7 @@
 
     <properties>
         <module.name>com.blazebit.domain.typescript</module.name>
+        <skipNpmDeploy>false</skipNpmDeploy>
     </properties>
 
     <dependencies>
@@ -119,6 +120,7 @@
                                     <goal>npm</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipNpmDeploy}</skip>
                                     <arguments>version ${project.version}</arguments>
                                 </configuration>
                             </execution>
@@ -129,6 +131,7 @@
                                     <goal>npm</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipNpmDeploy}</skip>
                                     <arguments>publish</arguments>
                                 </configuration>
                             </execution>
