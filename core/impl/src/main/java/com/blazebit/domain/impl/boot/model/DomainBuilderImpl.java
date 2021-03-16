@@ -94,7 +94,7 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
     private final Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers = new HashMap<>();
     private final Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers = new HashMap<>();
     private boolean functionsCaseSensitive = true;
-    private String predicateDefaultResultType;
+    private String predicateDefaultResultTypeName;
     private Set<DomainType> changedDomainTypes;
 
     public DomainBuilderImpl() {
@@ -104,7 +104,7 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
     public DomainBuilderImpl(DomainModel domainModel) {
         this.baseModel = domainModel;
         DomainType type = baseModel.getPredicateDefaultResultType();
-        this.predicateDefaultResultType = type == null ? null : type.getName();
+        this.predicateDefaultResultTypeName = type == null ? null : type.getName();
     }
 
     DomainModel getBaseModel() {
@@ -180,7 +180,7 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
 
     @Override
     public DomainBuilder withDefaultPredicateResultType(String typeName) {
-        this.predicateDefaultResultType = typeName;
+        this.predicateDefaultResultTypeName = typeName;
         return this;
     }
 
@@ -909,7 +909,15 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
         Map<String, Object> properties = getImmutableProperties();
         Map<Class<?>, Object> services = getImmutableServices();
         List<ServiceProvider> serviceProviders = getImmutableServiceProviders();
-        DomainType predicateDefaultResultType = null;
+        DomainType predicateDefaultResultType;
+        if (predicateDefaultResultTypeName == null) {
+            predicateDefaultResultType = null;
+        } else {
+            predicateDefaultResultType = domainTypes.get(predicateDefaultResultTypeName);
+            if (predicateDefaultResultType == null && baseModel != null) {
+                predicateDefaultResultType = baseModel.getType(predicateDefaultResultTypeName);
+            }
+        }
         if (!context.hasErrors()) {
             for (DomainType domainType : domainTypes.values()) {
                 Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = domainOperationTypeResolvers.get(domainType.getName());
@@ -924,7 +932,7 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
                     }
                 }
 
-                if ((predicateDefaultResultType = domainTypes.get(this.predicateDefaultResultType)) != null) {
+                if (predicateDefaultResultType != null) {
                     Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(domainType.getName());
                     if (predicateTypeResolverMap == null && !domainType.getEnabledPredicates().isEmpty()) {
                         predicateTypeResolverMap = new HashMap<>();
@@ -932,7 +940,7 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
                     }
                     for (DomainPredicate enabledPredicate : domainType.getEnabledPredicates()) {
                         if (!predicateTypeResolverMap.containsKey(enabledPredicate)) {
-                            predicateTypeResolverMap.put(enabledPredicate, StaticDomainPredicateTypeResolvers.returning(this.predicateDefaultResultType));
+                            predicateTypeResolverMap.put(enabledPredicate, StaticDomainPredicateTypeResolvers.returning(this.predicateDefaultResultTypeName));
                         }
                     }
                 }
