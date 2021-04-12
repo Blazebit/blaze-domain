@@ -499,6 +499,48 @@ export class DomainTypeResolverException extends Error {
 }
 
 /**
+ * A function type resolver exception.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export class FunctionTypeResolverException extends DomainTypeResolverException {
+    domainFunction: DomainFunction;
+    argumentIndex: number;
+    actualArgumentType: DomainType;
+    supportedArgumentTypes: string[];
+
+    constructor(message: string, domainFunction: DomainFunction, argumentIndex: number, actualArgType: DomainType, supportedArgumentTypes: string[]) {
+        super(message);
+        this.domainFunction = domainFunction;
+        this.argumentIndex = argumentIndex;
+        this.actualArgumentType = actualArgType;
+        this.supportedArgumentTypes = supportedArgumentTypes;
+    }
+
+}
+
+/**
+ * An operand type resolver exception.
+ *
+ * @author Christian Beikov
+ * @since 1.0.0
+ */
+export class OperandTypeResolverException extends DomainTypeResolverException {
+    operandIndex: number;
+    actualOperandType: DomainType;
+    supportedOperandTypes: string[];
+
+    constructor(message: string, operandIndex: number, actualOperandType: DomainType, supportedOperandTypes: string[]) {
+        super(message);
+        this.operandIndex = operandIndex;
+        this.actualOperandType = actualOperandType;
+        this.supportedOperandTypes = supportedOperandTypes;
+    }
+
+}
+
+/**
  * A type checked domain model that can be used for domain introspection.
  *
  * @author Christian Beikov
@@ -557,7 +599,7 @@ export class DomainModel {
                     }
                 }
                 if (functionArgument.type != argType) {
-                    throw new DomainTypeResolverException("Unsupported argument type '" + argType + "' for argument '" + functionArgument + "' of function '" + domainFunction.name + "'! Expected type: " + functionArgument.type);
+                    throw new FunctionTypeResolverException("Unsupported argument type '" + argType + "' for argument '" + functionArgument + "' of function '" + domainFunction.name + "'! Expected type: " + functionArgument.type, domainFunction, i, argType, [functionArgument.type.name]);
                 }
             }
         };
@@ -576,7 +618,7 @@ export class DomainModel {
                             typesString += supportedType + ", ";
                         }
                         typesString = typesString.substring(0, typesString.length - 2) + "]";
-                        throw new DomainTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType.name + "' is unsupported! Expected one of the following types: " + typesString);
+                        throw new OperandTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType.name + "' is unsupported! Expected one of the following types: " + typesString, i, domainType, supportedTypes);
                     }
                 }
                 return domainModel.types[returningType];
@@ -593,7 +635,7 @@ export class DomainModel {
                             typesString += supportedType + ", ";
                         }
                         typesString = typesString.substring(0, typesString.length - 2) + "]";
-                        throw new DomainTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType.name + "' is unsupported! Expected one of the following types: " + typesString);
+                        throw new OperandTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType.name + "' is unsupported! Expected one of the following types: " + typesString, i, domainType, supportedTypes);
                     }
                 }
                 return domainModel.types[returningType];
@@ -604,27 +646,27 @@ export class DomainModel {
                 return domainModel.types[type];
             }};
         });
-        registerIfAbsent("WidestDomainOperationTypeResolver", function(types: string[]): DomainOperationTypeResolver {
+        registerIfAbsent("WidestDomainOperationTypeResolver", function(supportedTypes: string[]): DomainOperationTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
                 let typeIndex = Number.MAX_VALUE;
                 for (var i = 0; i < domainTypes.length; i++) {
                     let domainType = domainTypes[i];
-                    let idx = types.indexOf(domainType.name);
+                    let idx = supportedTypes.indexOf(domainType.name);
                     if (idx == -1) {
                         let typesString = "[";
-                        for (let supportedType of types) {
+                        for (let supportedType of supportedTypes) {
                             typesString += supportedType + ", ";
                         }
                         typesString = typesString.substring(0, typesString.length - 2) + "]";
-                        throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + typesString);
+                        throw new OperandTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + typesString, i, domainType, supportedTypes);
                     }
                     typeIndex = Math.min(typeIndex, idx);
                 }
 
                 if (typeIndex == Number.MAX_VALUE) {
-                    return domainModel.types[types[0]];
+                    return domainModel.types[supportedTypes[0]];
                 } else {
-                    return domainModel.types[types[typeIndex]];
+                    return domainModel.types[supportedTypes[typeIndex]];
                 }
             }};
         });
@@ -638,7 +680,7 @@ export class DomainModel {
                             typesString += supportedType + ", ";
                         }
                         typesString = typesString.substring(0, typesString.length - 2) + "]";
-                        throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + typesString);
+                        throw new OperandTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + typesString, i, domainType, supportedTypes);
                     }
                 }
 
@@ -656,7 +698,7 @@ export class DomainModel {
                             typesString += supportedType + ", ";
                         }
                         typesString = typesString.substring(0, typesString.length - 2) + "]";
-                        throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + typesString);
+                        throw new OperandTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + typesString, i, domainType, supportedTypes);
                     }
                 }
 
@@ -687,7 +729,7 @@ export class DomainModel {
                             typesString += supportedType + ", ";
                         }
                         typesString = typesString.substring(0, typesString.length - 2) + "]";
-                        throw new DomainTypeResolverException("Unsupported argument type '" + domainType + "' for argument '" + domainFunction.arguments[i] + "' of function '" + domainFunction.name + "'! Expected one of the following types: " + typesString);
+                        throw new FunctionTypeResolverException("Unsupported argument type '" + domainType + "' for argument '" + domainFunction.arguments[i] + "' of function '" + domainFunction.name + "'! Expected one of the following types: " + typesString, domainFunction, i, domainType, types);
                     }
                     typeIndex = Math.min(typeIndex, idx);
                 }
@@ -854,7 +896,7 @@ export class DomainModel {
                 let collectionType = domainTypes[name] as CollectionDomainType;
                 let prefix = 'Collection[';
                 if (name.length > prefix.length) {
-                    collectionType.elementType = domainTypes[name.substring(prefix.length + 1, name.length - 1)];
+                    collectionType.elementType = domainTypes[name.substring(prefix.length, name.length - 1)];
                 }
             }
         });
