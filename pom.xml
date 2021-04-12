@@ -19,7 +19,7 @@
     </modules>
 
     <artifactId>blaze-domain</artifactId>
-    <version>2.0.2-SNAPSHOT</version>
+    <version>2.0.2</version>
 
     <name>Blazebit Blaze-Domain</name>
     <url>https://domain.blazebit.com</url>
@@ -60,7 +60,7 @@
         <connection>scm:git:git@github.com:Blazebit/blaze-domain.git</connection>
         <developerConnection>scm:git:git@github.com:Blazebit/blaze-domain.git</developerConnection>
         <url>git@github.com:Blazebit/blaze-domain.git</url>
-        <tag>HEAD</tag>
+        <tag>2.0.2</tag>
     </scm>
 
     <developers>
