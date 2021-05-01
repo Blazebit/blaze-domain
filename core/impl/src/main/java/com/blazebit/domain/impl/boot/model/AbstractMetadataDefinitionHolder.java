@@ -37,6 +37,12 @@ public abstract class AbstractMetadataDefinitionHolder implements MetadataDefini
     public AbstractMetadataDefinitionHolder() {
     }
 
+    public AbstractMetadataDefinitionHolder(MetadataDefinitionHolder metadataHolder) {
+        if (!metadataHolder.getMetadataDefinitions().isEmpty()) {
+            metadataDefinitions = new HashMap<>(metadataHolder.getMetadataDefinitions());
+        }
+    }
+
     public AbstractMetadataDefinitionHolder(MetadataHolder metadataHolder) {
         if (!metadataHolder.getMetadata().isEmpty()) {
             metadataDefinitions = new HashMap<>();

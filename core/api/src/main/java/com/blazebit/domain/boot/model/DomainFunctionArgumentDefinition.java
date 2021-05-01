@@ -45,4 +45,12 @@ public interface DomainFunctionArgumentDefinition extends MetadataDefinitionHold
      */
     public String getTypeName();
 
+    /**
+     * Whether the type is a collection.
+     *
+     * @return <code>true</code> if the type is a collection, <code>false</code> otherwise
+     * @since 2.0.3
+     */
+    public boolean isCollection();
+
 }

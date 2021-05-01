@@ -171,6 +171,23 @@ public interface DomainBuilder extends ServiceProvider {
     public DomainFunctionBuilder createFunction(String name);
 
     /**
+     * Creates a builder for a domain function that extends the domain function with the given name.
+     *
+     * @param name The function name
+     * @return the domain function builder
+     */
+    public DomainFunctionBuilder extendFunction(String name);
+
+    /**
+     * Extends the domain function with the given name with the given metadata definitions, if it exists.
+     *
+     * @param name The function name
+     * @param metadataDefinitions The metadata definitions for the domain function
+     * @return this for chaining
+     */
+    public DomainBuilder extendFunction(String name, MetadataDefinition<?>... metadataDefinitions);
+
+    /**
      * Creates a basic domain type with the given type name.
      *
      * @param name The type name
@@ -205,6 +222,25 @@ public interface DomainBuilder extends ServiceProvider {
      * @return this for chaining
      */
     public DomainBuilder createBasicType(String name, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions);
+
+    /**
+     * Creates an basic domain type with the given type name that extends the basic type with the given type name, if it exists.
+     *
+     * @param name The type name
+     * @param metadataDefinitions The metadata definitions to extend the basic type with
+     * @return this for chaining
+     */
+    public DomainBuilder extendBasicType(String name, MetadataDefinition<?>... metadataDefinitions);
+
+    /**
+     * Creates a basic domain type with the given type name and Java type that extends the basic type with the given type name, if it exists.
+     *
+     * @param name The type name
+     * @param javaType The Java type
+     * @param metadataDefinitions The metadata definitions to extend the basic type with
+     * @return this for chaining
+     */
+    public DomainBuilder extendBasicType(String name, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions);
 
     /**
      * Creates an entity domain type with the given type name.

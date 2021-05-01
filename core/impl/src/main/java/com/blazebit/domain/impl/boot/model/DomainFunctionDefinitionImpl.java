@@ -18,6 +18,7 @@ package com.blazebit.domain.impl.boot.model;
 
 import com.blazebit.domain.boot.model.CollectionDomainTypeDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
+import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.impl.runtime.model.DomainFunctionImpl;
 import com.blazebit.domain.runtime.model.CollectionDomainType;
@@ -38,7 +39,7 @@ public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHold
     private int minArgumentCount = -1;
     private int argumentCount = -1;
     private String resultTypeName;
-    private boolean collection;
+    private boolean resultCollection;
     private Boolean positional;
     private List<DomainFunctionArgumentDefinitionImpl> argumentDefinitions = new ArrayList<>();
     private DomainTypeDefinition resultTypeDefinition;
@@ -46,6 +47,18 @@ public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHold
 
     public DomainFunctionDefinitionImpl(String name) {
         this.name = name;
+    }
+
+    public DomainFunctionDefinitionImpl(DomainFunctionDefinition domainFunction) {
+        super(domainFunction);
+        this.name = domainFunction.getName();
+        this.minArgumentCount = domainFunction.getMinArgumentCount();
+        this.argumentCount = domainFunction.getArgumentCount();
+        this.resultTypeName = domainFunction.getResultTypeName();
+        this.resultCollection = domainFunction.isResultCollection();
+        for (DomainFunctionArgumentDefinition argument : domainFunction.getArgumentDefinitions()) {
+            addArgumentDefinition(argument);
+        }
     }
 
     public DomainFunctionDefinitionImpl(DomainFunction domainFunction) {
@@ -57,10 +70,10 @@ public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHold
             if (domainFunction.getResultType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
                 CollectionDomainType resultType = (CollectionDomainType) domainFunction.getResultType();
                 this.resultTypeName = resultType.getElementType().getName();
-                this.collection = true;
+                this.resultCollection = true;
             } else {
                 this.resultTypeName = domainFunction.getResultType().getName();
-                this.collection = false;
+                this.resultCollection = false;
             }
         }
         for (DomainFunctionArgument argument : domainFunction.getArguments()) {
@@ -97,6 +110,7 @@ public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHold
         this.minArgumentCount = argumentCount;
     }
 
+    @Override
     public String getResultTypeName() {
         return resultTypeName;
     }
@@ -105,12 +119,13 @@ public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHold
         this.resultTypeName = resultTypeName;
     }
 
-    public boolean isCollection() {
-        return collection;
+    @Override
+    public boolean isResultCollection() {
+        return resultCollection;
     }
 
-    public void setCollection(boolean collection) {
-        this.collection = collection;
+    public void setResultCollection(boolean resultCollection) {
+        this.resultCollection = resultCollection;
     }
 
     @Override
@@ -125,18 +140,27 @@ public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHold
         return (List<DomainFunctionArgumentDefinitionImplementor>) (List<?>) argumentDefinitions;
     }
 
-    public DomainFunctionArgumentDefinitionImpl addArgumentDefinition(String name, String typeName, Class<?> javaType, boolean collection) {
+    public DomainFunctionArgumentDefinitionImpl addArgumentDefinition(String name, String typeName, boolean collection) {
         if (positional == null) {
-            if (name == null || name.isEmpty()) {
-                positional = true;
-            } else {
-                positional = false;
-            }
+            positional = name == null || name.isEmpty();
         }
         if (positional && name != null && !name.isEmpty() || !positional && (name == null || name.isEmpty())) {
             throw new IllegalArgumentException("Can't mix positional and named parameters!");
         }
-        DomainFunctionArgumentDefinitionImpl argumentDefinition = new DomainFunctionArgumentDefinitionImpl(this, name, argumentDefinitions.size(), typeName, javaType, collection);
+        DomainFunctionArgumentDefinitionImpl argumentDefinition = new DomainFunctionArgumentDefinitionImpl(this, name, argumentDefinitions.size(), typeName, collection);
+        argumentDefinitions.add(argumentDefinition);
+        return argumentDefinition;
+    }
+
+    public DomainFunctionArgumentDefinitionImpl addArgumentDefinition(DomainFunctionArgumentDefinition definition) {
+        String name = definition.getName();
+        if (positional == null) {
+            positional = name == null || name.isEmpty();
+        }
+        if (positional && name != null && !name.isEmpty() || !positional && (name == null || name.isEmpty())) {
+            throw new IllegalArgumentException("Can't mix positional and named parameters!");
+        }
+        DomainFunctionArgumentDefinitionImpl argumentDefinition = new DomainFunctionArgumentDefinitionImpl(this, definition);
         argumentDefinitions.add(argumentDefinition);
         return argumentDefinition;
     }
@@ -155,7 +179,7 @@ public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHold
             if (resultTypeDefinition == null) {
                 context.addError("The result type '" + resultTypeName + "' defined for the function " + name + " is unknown!");
             }
-            if (collection) {
+            if (resultCollection) {
                 resultTypeDefinition = domainBuilder.getCollectionDomainTypeDefinition(resultTypeDefinition);
             }
         }

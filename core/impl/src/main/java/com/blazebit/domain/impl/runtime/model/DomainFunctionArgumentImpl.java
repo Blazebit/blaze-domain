@@ -22,6 +22,7 @@ import com.blazebit.domain.impl.boot.model.DomainFunctionArgumentDefinitionImple
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
+import com.blazebit.domain.runtime.model.DomainType;
 
 import java.util.Map;
 
@@ -73,6 +74,11 @@ public class DomainFunctionArgumentImpl extends AbstractMetadataHolder implement
     @Override
     public String getTypeName() {
         return type.getName();
+    }
+
+    @Override
+    public boolean isCollection() {
+        return type.getKind() == DomainType.DomainTypeKind.COLLECTION;
     }
 
     @Override

@@ -19,6 +19,7 @@ package com.blazebit.domain.impl.boot.model;
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionBuilder;
+import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 
 import java.util.List;
@@ -36,6 +37,11 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
     public DomainFunctionBuilderImpl(DomainBuilderImpl domainBuilder, String name) {
         this.domainBuilder = domainBuilder;
         this.domainFunctionDefinition = new DomainFunctionDefinitionImpl(name);
+    }
+
+    public DomainFunctionBuilderImpl(DomainBuilderImpl domainBuilder, DomainFunctionDefinition definition) {
+        this.domainBuilder = domainBuilder;
+        this.domainFunctionDefinition = new DomainFunctionDefinitionImpl(definition);
     }
 
     @Override
@@ -72,25 +78,25 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
 
     @Override
     public DomainFunctionBuilder withArgument(String name) {
-        domainFunctionDefinition.addArgumentDefinition(name, null, null, false);
+        domainFunctionDefinition.addArgumentDefinition(name, null, false);
         return this;
     }
 
     @Override
     public DomainFunctionBuilder withArgument(String name, String typeName) {
-        domainFunctionDefinition.addArgumentDefinition(name, typeName, null, false);
+        domainFunctionDefinition.addArgumentDefinition(name, typeName, false);
         return this;
     }
 
     @Override
     public DomainFunctionBuilder withCollectionArgument(String name) {
-        domainFunctionDefinition.addArgumentDefinition(name, null, null, true);
+        domainFunctionDefinition.addArgumentDefinition(name, null, true);
         return this;
     }
 
     @Override
     public DomainFunctionBuilder withCollectionArgument(String name, String typeName) {
-        domainFunctionDefinition.addArgumentDefinition(name, typeName, null, true);
+        domainFunctionDefinition.addArgumentDefinition(name, typeName, true);
         return this;
     }
 
@@ -101,7 +107,7 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
 
     @Override
     public DomainFunctionBuilder withArgument(String name, String typeName, MetadataDefinition<?>... metadataDefinitions) {
-        DomainFunctionArgumentDefinitionImpl argumentDefinition = domainFunctionDefinition.addArgumentDefinition(name, typeName, null, false);
+        DomainFunctionArgumentDefinitionImpl argumentDefinition = domainFunctionDefinition.addArgumentDefinition(name, typeName, false);
         for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
             argumentDefinition.withMetadataDefinition(metadataDefinition);
         }
@@ -111,7 +117,7 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
 
     @Override
     public DomainFunctionBuilder withCollectionArgument(String name, String typeName, MetadataDefinition<?>... metadataDefinitions) {
-        DomainFunctionArgumentDefinitionImpl argumentDefinition = domainFunctionDefinition.addArgumentDefinition(name, typeName, null, true);
+        DomainFunctionArgumentDefinitionImpl argumentDefinition = domainFunctionDefinition.addArgumentDefinition(name, typeName, true);
         for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
             argumentDefinition.withMetadataDefinition(metadataDefinition);
         }
@@ -127,7 +133,7 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
     @Override
     public DomainFunctionBuilder withArgumentTypes(String... typeNames) {
         for (String typeName : typeNames) {
-            domainFunctionDefinition.addArgumentDefinition(null, typeName, null, false);
+            domainFunctionDefinition.addArgumentDefinition(null, typeName, false);
         }
         return this;
     }
@@ -140,14 +146,14 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
 
     @Override
     public DomainFunctionBuilder withCollectionResultType() {
-        domainFunctionDefinition.setCollection(true);
+        domainFunctionDefinition.setResultCollection(true);
         return this;
     }
 
     @Override
     public DomainFunctionBuilder withCollectionResultType(String typeName) {
         domainFunctionDefinition.setResultTypeName(typeName);
-        domainFunctionDefinition.setCollection(true);
+        domainFunctionDefinition.setResultCollection(true);
         return this;
     }
 

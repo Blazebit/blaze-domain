@@ -16,6 +16,7 @@
 
 package com.blazebit.domain.impl.boot.model;
 
+import com.blazebit.domain.boot.model.BasicDomainTypeDefinition;
 import com.blazebit.domain.boot.model.CollectionDomainTypeDefinition;
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.boot.model.DomainFunctionBuilder;
@@ -374,6 +375,35 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
     }
 
     @Override
+    public DomainFunctionBuilder extendFunction(String name) {
+        DomainFunctionDefinition functionDefinition = getFunction(name);
+        if (functionDefinition == null) {
+            throw new IllegalArgumentException("Function with name '" + name + "' does not exist!");
+        }
+        return new DomainFunctionBuilderImpl(this, functionDefinition);
+    }
+
+    @Override
+    public DomainBuilder extendFunction(String name, MetadataDefinition<?>... metadataDefinitions) {
+        if (metadataDefinitions != null && metadataDefinitions.length != 0) {
+            DomainFunctionDefinition definition = getFunction(name);
+            if (definition instanceof DomainFunctionDefinitionImpl) {
+                DomainFunctionDefinitionImpl domainFunctionDefinition = (DomainFunctionDefinitionImpl) definition;
+                for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
+                    domainFunctionDefinition.withMetadataDefinition(metadataDefinition);
+                }
+            } else if (definition != null) {
+                DomainFunctionBuilder builder = extendFunction(name);
+                for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
+                    builder.withMetadata(metadataDefinition);
+                }
+                builder.build();
+            }
+        }
+        return this;
+    }
+
+    @Override
     public DomainBuilder createBasicType(String name) {
         return withDomainTypeDefinition(new BasicDomainTypeDefinitionImpl(name, null));
     }
@@ -401,6 +431,50 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
         }
 
         return withDomainTypeDefinition(basicDomainTypeDefinition);
+    }
+
+    @Override
+    public DomainBuilder extendBasicType(String name, MetadataDefinition<?>... metadataDefinitions) {
+        if (metadataDefinitions != null && metadataDefinitions.length != 0) {
+            DomainTypeDefinition definition = getType(name);
+            if (definition instanceof BasicDomainTypeDefinition) {
+                BasicDomainTypeDefinitionImpl basicTypeDefinition;
+                if (definition instanceof BasicDomainTypeDefinitionImpl) {
+                    basicTypeDefinition = (BasicDomainTypeDefinitionImpl) definition;
+                } else {
+                    basicTypeDefinition = new BasicDomainTypeDefinitionImpl((BasicDomainTypeDefinition) definition);
+                    withDomainTypeDefinition(basicTypeDefinition);
+                }
+                for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
+                    basicTypeDefinition.withMetadataDefinition(metadataDefinition);
+                }
+            } else if (definition != null) {
+                throw new IllegalArgumentException("The type with the name '" + name + "' is not a basic type: " + definition);
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public DomainBuilder extendBasicType(String name, Class<?> javaType, MetadataDefinition<?>... metadataDefinitions) {
+        if (metadataDefinitions != null && metadataDefinitions.length != 0) {
+            DomainTypeDefinition definition = getType(name);
+            if (definition instanceof BasicDomainTypeDefinition) {
+                BasicDomainTypeDefinitionImpl basicTypeDefinition;
+                if (definition.getJavaType() == javaType && definition instanceof BasicDomainTypeDefinitionImpl) {
+                    basicTypeDefinition = (BasicDomainTypeDefinitionImpl) definition;
+                } else {
+                    basicTypeDefinition = new BasicDomainTypeDefinitionImpl((BasicDomainTypeDefinition) definition, javaType);
+                    withDomainTypeDefinition(basicTypeDefinition);
+                }
+                for (MetadataDefinition<?> metadataDefinition : metadataDefinitions) {
+                    basicTypeDefinition.withMetadataDefinition(metadataDefinition);
+                }
+            } else if (definition != null) {
+                throw new IllegalArgumentException("The type with the name '" + name + "' is not a basic type: " + definition);
+            }
+        }
+        return this;
     }
 
     @Override

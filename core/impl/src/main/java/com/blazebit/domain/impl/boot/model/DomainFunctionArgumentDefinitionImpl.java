@@ -16,6 +16,7 @@
 
 package com.blazebit.domain.impl.boot.model;
 
+import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.impl.runtime.model.DomainFunctionArgumentImpl;
@@ -34,18 +35,25 @@ public class DomainFunctionArgumentDefinitionImpl extends AbstractMetadataDefini
     private final String name;
     private final int index;
     private final String typeName;
-    private final Class<?> javaType;
     private final boolean collection;
     private DomainTypeDefinition typeDefinition;
     private DomainFunctionArgumentImpl domainFunctionArgument;
 
-    public DomainFunctionArgumentDefinitionImpl(DomainFunctionDefinition owner, String name, int index, String typeName, Class<?> javaType, boolean collection) {
+    public DomainFunctionArgumentDefinitionImpl(DomainFunctionDefinition owner, String name, int index, String typeName, boolean collection) {
         this.owner = owner;
         this.name = name;
         this.index = index;
         this.typeName = typeName;
-        this.javaType = javaType;
         this.collection = collection;
+    }
+
+    public DomainFunctionArgumentDefinitionImpl(DomainFunctionDefinitionImpl owner, DomainFunctionArgumentDefinition argument) {
+        super(argument);
+        this.owner = owner;
+        this.name = argument.getName();
+        this.index = argument.getIndex();
+        this.typeName = argument.getTypeName();
+        this.collection = argument.isCollection();
     }
 
     public DomainFunctionArgumentDefinitionImpl(DomainFunctionDefinitionImpl owner, DomainFunctionArgument argument) {
@@ -57,23 +65,21 @@ public class DomainFunctionArgumentDefinitionImpl extends AbstractMetadataDefini
         if (argument.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
             CollectionDomainType resultType = (CollectionDomainType) argument.getType();
             this.typeName = resultType.getElementType().getName();
-            this.javaType = resultType.getElementType().getJavaType();
             this.collection = true;
         } else {
             this.typeName = argument.getType().getName();
-            this.javaType = argument.getType().getJavaType();
             this.collection = false;
         }
     }
 
     public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context) {
-        if (typeName == null && javaType == null) {
+        if (typeName == null) {
             typeDefinition = collection ? domainBuilder.getCollectionDomainTypeDefinition(null) : null;
         } else {
-            typeDefinition = typeName == null ? null : domainBuilder.getDomainTypeDefinition(typeName);
+            typeDefinition = domainBuilder.getDomainTypeDefinition(typeName);
             if (typeDefinition == null) {
                 String name = this.name == null || this.name.isEmpty() ? "" : "(" + this.name + ")";
-                context.addError("The argument type '" + (typeName == null ? javaType.getName() : typeName) + "' defined for the function argument index " + index + name + " of function " + owner.getName() + " is unknown!");
+                context.addError("The argument type '" + typeName + "' defined for the function argument index " + index + name + " of function " + owner.getName() + " is unknown!");
             }
             if (collection) {
                 typeDefinition = domainBuilder.getCollectionDomainTypeDefinition(typeDefinition);
@@ -94,6 +100,11 @@ public class DomainFunctionArgumentDefinitionImpl extends AbstractMetadataDefini
     @Override
     public String getTypeName() {
         return typeName;
+    }
+
+    @Override
+    public boolean isCollection() {
+        return collection;
     }
 
     @Override

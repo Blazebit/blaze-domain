@@ -65,7 +65,7 @@ public class DomainFunctionImpl extends AbstractMetadataHolder implements Domain
                     domainFunctionArgumentMap.put(functionArgument.getName(), functionArgument);
                 }
             } else {
-                DomainFunctionArgumentDefinitionImpl argumentDefinition = new DomainFunctionArgumentDefinitionImpl(functionDefinition, null, i, null, null, false);
+                DomainFunctionArgumentDefinitionImpl argumentDefinition = new DomainFunctionArgumentDefinitionImpl(functionDefinition, null, i, null, false);
                 domainFunctionArguments.add(argumentDefinition.createFunctionArgument(this, context));
             }
         }
@@ -112,6 +112,16 @@ public class DomainFunctionImpl extends AbstractMetadataHolder implements Domain
     @Override
     public DomainType getResultType() {
         return resultType;
+    }
+
+    @Override
+    public String getResultTypeName() {
+        return resultType.getName();
+    }
+
+    @Override
+    public boolean isResultCollection() {
+        return resultType.getKind() == DomainType.DomainTypeKind.COLLECTION;
     }
 
     @Override

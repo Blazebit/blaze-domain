@@ -54,4 +54,20 @@ public interface DomainFunctionDefinition extends MetadataDefinitionHolder {
      */
     public List<? extends DomainFunctionArgumentDefinition> getArgumentDefinitions();
 
+    /**
+     * The name of the domain function result type.
+     *
+     * @return the result type name
+     * @since 2.0.3
+     */
+    public String getResultTypeName();
+
+    /**
+     * Whether the result type is a collection.
+     *
+     * @return <code>true</code> if the result is a collection, <code>false</code> otherwise
+     * @since 2.0.3
+     */
+    public boolean isResultCollection();
+
 }

@@ -35,6 +35,16 @@ public class BasicDomainTypeDefinitionImpl extends AbstractMetadataDefinitionHol
         this.javaType = javaType;
     }
 
+    public BasicDomainTypeDefinitionImpl(BasicDomainTypeDefinition basicDomainType) {
+        this(basicDomainType, basicDomainType.getJavaType());
+    }
+
+    public BasicDomainTypeDefinitionImpl(BasicDomainTypeDefinition basicDomainType, Class<?> javaType) {
+        super(basicDomainType);
+        this.name = basicDomainType.getName();
+        this.javaType = javaType;
+    }
+
     public BasicDomainTypeDefinitionImpl(BasicDomainType basicDomainType) {
         super(basicDomainType);
         this.name = basicDomainType.getName();
