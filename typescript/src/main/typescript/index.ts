@@ -705,10 +705,10 @@ export class DomainModel {
                 return domainModel.types[returningType];
             }};
         });
-        registerIfAbsent("FirstArgumentDomainFunctionTypeResolver", function(): DomainFunctionTypeResolver {
+        registerIfAbsent("NthArgumentDomainFunctionTypeResolver", function(index: number): DomainFunctionTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
                 validateArgumentTypes(domainFunction, argumentTypes);
-                return argumentTypes.length == 0 ? null : argumentTypes[0];
+                return argumentTypes.length > index ? argumentTypes[index] : null;
             }};
         });
         registerIfAbsent("FixedDomainFunctionTypeResolver", function(type: string): DomainFunctionTypeResolver {

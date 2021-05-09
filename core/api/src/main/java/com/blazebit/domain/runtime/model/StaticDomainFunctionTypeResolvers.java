@@ -38,6 +38,21 @@ public final class StaticDomainFunctionTypeResolvers {
     public static final DomainFunctionTypeResolver FIRST_ARGUMENT_TYPE = new FirstArgumentDomainFunctionTypeResolver();
 
     /**
+     * A domain function type resolver that always resolves to the second argument type.
+     */
+    public static final DomainFunctionTypeResolver SECOND_ARGUMENT_TYPE = new SecondArgumentDomainFunctionTypeResolver();
+
+    /**
+     * A domain function type resolver that always resolves to the third argument type.
+     */
+    public static final DomainFunctionTypeResolver THIRD_ARGUMENT_TYPE = new ThirdArgumentDomainFunctionTypeResolver();
+
+    /**
+     * A domain function type resolver that always resolves to the fourth argument type.
+     */
+    public static final DomainFunctionTypeResolver FOURTH_ARGUMENT_TYPE = new FourthArgumentDomainFunctionTypeResolver();
+
+    /**
      * A domain function type resolver that always resolves to the static domain function return type.
      */
     public static final DomainFunctionTypeResolver STATIC_RETURN_TYPE = new StaticDomainFunctionTypeResolver();
@@ -80,6 +95,16 @@ public final class StaticDomainFunctionTypeResolvers {
             WIDEST_TYPE_NAME_CACHE.put(key, domainFunctionTypeResolver);
         }
         return domainFunctionTypeResolver;
+    }
+
+    /**
+     * A domain function type resolver that always resolves to the nth argument type.
+     * @param index The 0-based parameter index
+     * @return the domain function type resolver
+     * @since 2.0.3
+     */
+    public static DomainFunctionTypeResolver nthArgument(int index) {
+        return new NthArgumentDomainFunctionTypeResolver(index);
     }
 
     private static void validateArgumentTypes(Map<DomainFunctionArgument, DomainType> argumentTypes) {
@@ -190,10 +215,88 @@ public final class StaticDomainFunctionTypeResolvers {
     /**
      * A resolver that returns the first argument type as result type.
      *
+     * This class is useful for the use with annotations e.g. {@code @DomainFunction(typeResolver = FirstArgumentDomainFunctionTypeResolver.class)}.
+     *
      * @author Christian Beikov
-     * @since 1.0.0
+     * @since 2.0.3
      */
-    public static class FirstArgumentDomainFunctionTypeResolver implements DomainFunctionTypeResolver, DomainSerializer<DomainFunctionTypeResolver>, Serializable {
+    public static class FirstArgumentDomainFunctionTypeResolver extends NthArgumentDomainFunctionTypeResolver {
+        /**
+         * Creates a new domain function type resolver that resolves the result type to first argument type.
+         */
+        public FirstArgumentDomainFunctionTypeResolver() {
+            super(0);
+        }
+    }
+
+    /**
+     * A resolver that returns the second argument type as result type.
+     *
+     * This class is useful for the use with annotations e.g. {@code @DomainFunction(typeResolver = SecondArgumentDomainFunctionTypeResolver.class)}.
+     *
+     * @author Christian Beikov
+     * @since 2.0.3
+     */
+    public static class SecondArgumentDomainFunctionTypeResolver extends NthArgumentDomainFunctionTypeResolver {
+        /**
+         * Creates a new domain function type resolver that resolves the result type to second argument type.
+         */
+        public SecondArgumentDomainFunctionTypeResolver() {
+            super(1);
+        }
+    }
+
+    /**
+     * A resolver that returns the third argument type as result type.
+     *
+     * This class is useful for the use with annotations e.g. {@code @DomainFunction(typeResolver = ThirdArgumentDomainFunctionTypeResolver.class)}.
+     *
+     * @author Christian Beikov
+     * @since 2.0.3
+     */
+    public static class ThirdArgumentDomainFunctionTypeResolver extends NthArgumentDomainFunctionTypeResolver {
+        /**
+         * Creates a new domain function type resolver that resolves the result type to third argument type.
+         */
+        public ThirdArgumentDomainFunctionTypeResolver() {
+            super(2);
+        }
+    }
+
+    /**
+     * A resolver that returns the fourth argument type as result type.
+     *
+     * This class is useful for the use with annotations e.g. {@code @DomainFunction(typeResolver = FourthArgumentDomainFunctionTypeResolver.class)}.
+     *
+     * @author Christian Beikov
+     * @since 2.0.3
+     */
+    public static class FourthArgumentDomainFunctionTypeResolver extends NthArgumentDomainFunctionTypeResolver {
+        /**
+         * Creates a new domain function type resolver that resolves the result type to fourth argument type.
+         */
+        public FourthArgumentDomainFunctionTypeResolver() {
+            super(3);
+        }
+    }
+
+    /**
+     * A resolver that returns the nth argument type as result type.
+     *
+     * @author Christian Beikov
+     * @since 2.0.3
+     */
+    public static class NthArgumentDomainFunctionTypeResolver implements DomainFunctionTypeResolver, DomainSerializer<DomainFunctionTypeResolver>, Serializable {
+
+        private final int index;
+
+        /**
+         * Creates a new domain function type resolver that resolves the result type to the argument type at the given index.
+         * @param index The argument index of the argument type to resolve the result type to
+         */
+        public NthArgumentDomainFunctionTypeResolver(int index) {
+            this.index = index;
+        }
 
         @Override
         public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes) {
@@ -213,7 +316,7 @@ public final class StaticDomainFunctionTypeResolvers {
             if (targetType != String.class || !"json".equals(format)) {
                 return null;
             }
-            return (T) "\"FirstArgumentDomainFunctionTypeResolver\"";
+            return (T) ("{\"NthArgumentDomainFunctionTypeResolver\":[" + index + "]}");
         }
     }
 

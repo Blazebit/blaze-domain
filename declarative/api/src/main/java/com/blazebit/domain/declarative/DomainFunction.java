@@ -65,6 +65,7 @@ public @interface DomainFunction {
      * The type resolver for the domain function type.
      *
      * @return the type resolver for the domain function type
+     * @see com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers
      */
     Class<? extends DomainFunctionTypeResolver> typeResolver() default DomainFunctionTypeResolver.class;
 

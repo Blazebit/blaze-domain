@@ -30,6 +30,7 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
+import javax.enterprise.inject.spi.WithAnnotations;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +46,7 @@ public class DeclarativeDomainExtension implements Extension {
     private final DeclarativeDomainConfiguration configuration = DeclarativeDomain.getDefaultProvider().createDefaultConfiguration();
     private final List<RuntimeException> exceptions = new ArrayList<>();
 
-    <X> void processEntityView(@Observes ProcessAnnotatedType<X> pat) {
+    <X> void processEntityView(@Observes @WithAnnotations({DomainType.class, DomainFunctions.class}) ProcessAnnotatedType<X> pat) {
         if (pat.getAnnotatedType().isAnnotationPresent(DomainType.class)) {
             try {
                 configuration.addDomainType(pat.getAnnotatedType().getJavaClass());
