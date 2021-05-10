@@ -24,6 +24,7 @@ import com.blazebit.domain.impl.boot.model.DomainFunctionDefinitionImplementor;
 import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
+import com.blazebit.domain.runtime.model.DomainFunctionVolatility;
 import com.blazebit.domain.runtime.model.DomainType;
 
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import java.util.Map;
 public class DomainFunctionImpl extends AbstractMetadataHolder implements DomainFunction, DomainFunctionDefinition {
 
     private final String name;
+    private final DomainFunctionVolatility volatility;
     private final int minArgumentCount;
     private final int argumentCount;
     private final DomainTypeImplementor resultType;
@@ -49,6 +51,7 @@ public class DomainFunctionImpl extends AbstractMetadataHolder implements Domain
     @SuppressWarnings("unchecked")
     public DomainFunctionImpl(DomainFunctionDefinitionImplementor functionDefinition, MetamodelBuildingContext context) {
         this.name = functionDefinition.getName();
+        this.volatility = functionDefinition.getVolatility();
         this.minArgumentCount = functionDefinition.getMinArgumentCount();
         this.argumentCount = functionDefinition.getArgumentCount();
         this.resultType = context.getType(functionDefinition.getResultTypeDefinition());
@@ -77,6 +80,11 @@ public class DomainFunctionImpl extends AbstractMetadataHolder implements Domain
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public DomainFunctionVolatility getVolatility() {
+        return volatility;
     }
 
     @Override

@@ -55,6 +55,15 @@ public interface DomainModel extends ServiceProvider {
     public EntityDomainType getEntityType(String name);
 
     /**
+     * Returns the enum domain type with the given type name or <code>null</code>.
+     *
+     * @param name The type name of the desired domain type
+     * @return the enum domain type or <code>null</code>
+     * @since 2.0.3
+     */
+    public EnumDomainType getEnumType(String name);
+
+    /**
      * Returns the collection domain type with the given element domain type or <code>null</code>.
      *
      * @param elementDomainType The element domain type of the desired collection domain type

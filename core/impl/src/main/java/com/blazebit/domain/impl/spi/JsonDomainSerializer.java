@@ -384,6 +384,7 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel>, Seri
 
     protected void serializeFunction(StringBuilder sb, DomainFunction domainFunction, DomainModel model, Map<String, Object> properties) {
         sb.append("{\"name\":\"").append(domainFunction.getName())
+            .append("\",\"volatility\":").append(domainFunction.getVolatility().name().charAt(0))
             .append("\",\"argCount\":").append(domainFunction.getArgumentCount())
             .append(",\"minArgCount\":").append(domainFunction.getMinArgumentCount());
         if (domainFunction.getResultType() == null) {

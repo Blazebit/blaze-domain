@@ -26,6 +26,7 @@ import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
+import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.spi.DomainSerializer;
 import com.blazebit.domain.spi.ServiceProvider;
 
@@ -93,6 +94,15 @@ public class SubDomainModel implements DomainModel, Serializable {
             return baseModel.getEntityType(name);
         }
         return entityDomainType;
+    }
+
+    @Override
+    public EnumDomainType getEnumType(String name) {
+        EnumDomainType enumDomainType = (EnumDomainType) domainTypes.get(name);
+        if (enumDomainType == null) {
+            return baseModel.getEnumType(name);
+        }
+        return enumDomainType;
     }
 
     @Override

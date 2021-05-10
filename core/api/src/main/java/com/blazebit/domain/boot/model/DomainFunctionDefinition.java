@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.boot.model;
 
+import com.blazebit.domain.runtime.model.DomainFunctionVolatility;
+
 import java.util.List;
 
 /**
@@ -32,6 +34,13 @@ public interface DomainFunctionDefinition extends MetadataDefinitionHolder {
      * @return the name
      */
     public String getName();
+
+    /**
+     * The volatility of the domain function.
+     *
+     * @return the volatility of the domain function.
+     */
+    public DomainFunctionVolatility getVolatility();
 
     /**
      * The minimum argument count for the function.

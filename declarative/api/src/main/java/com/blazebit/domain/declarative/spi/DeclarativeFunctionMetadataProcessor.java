@@ -47,6 +47,24 @@ public interface DeclarativeFunctionMetadataProcessor<T extends Annotation> {
      * @param serviceProvider The service provider
      * @return A metadata definition or <code>null</code>
      */
+    @Deprecated
     public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, T annotation, ServiceProvider serviceProvider);
+
+    /**
+     * Processes the annotation of the given annotated class and method and produces a metadata definition.
+     *
+     * @param annotatedClass The annotated class
+     * @param method The method
+     * @param annotation The annotation
+     * @param name The name of the function that is processed
+     * @param typeName The resolved result type name of the function that is processed
+     * @param collection Whether the resolved result type of the function that is processed is a collection
+     * @param serviceProvider The service provider
+     * @return A metadata definition or <code>null</code>
+     * @since 2.0.3
+     */
+    public default MetadataDefinition<?> process(Class<?> annotatedClass, Method method, T annotation, String name, String typeName, boolean collection, ServiceProvider serviceProvider) {
+        return process(annotatedClass, method, annotation, serviceProvider);
+    }
 
 }

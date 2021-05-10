@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.boot.model;
 
+import com.blazebit.domain.runtime.model.DomainFunctionVolatility;
+
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +35,21 @@ public interface DomainFunctionBuilder {
      * @return the name
      */
     public String getName();
+
+    /**
+     * The volatility of the domain function.
+     *
+     * @return the volatility of the domain function.
+     */
+    public DomainFunctionVolatility getVolatility();
+
+    /**
+     * Sets the volatility of the domain function.
+     *
+     * @param volatility  the volatility of the domain function.
+     * @return this for chaining
+     */
+    public DomainFunctionBuilder withVolatility(DomainFunctionVolatility volatility);
 
     /**
      * The minimum argument count for the function.

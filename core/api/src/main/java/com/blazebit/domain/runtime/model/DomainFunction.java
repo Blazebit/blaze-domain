@@ -34,6 +34,13 @@ public interface DomainFunction extends MetadataHolder {
     public String getName();
 
     /**
+     * The volatility of the domain function.
+     *
+     * @return the volatility of the domain function.
+     */
+    public DomainFunctionVolatility getVolatility();
+
+    /**
      * The minimum argument count for the function.
      *
      * @return the minimum function argument count

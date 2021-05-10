@@ -46,7 +46,26 @@ public interface DeclarativeAttributeMetadataProcessor<T extends Annotation> {
      * @param annotation The annotation
      * @param serviceProvider The service provider
      * @return A metadata definition or <code>null</code>
+     * @deprecated Use {@link #process(Class, Method, Annotation, String, String, boolean, ServiceProvider)} instead
      */
+    @Deprecated
     public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, T annotation, ServiceProvider serviceProvider);
+
+    /**
+     * Processes the annotation of the given annotated class and method and produces a metadata definition.
+     *
+     * @param annotatedClass The annotated class
+     * @param method The method
+     * @param annotation The annotation
+     * @param name The name of the attribute that is processed
+     * @param typeName The resolved type name of the attribute that is processed
+     * @param collection Whether the attribute that is processed is a collection
+     * @param serviceProvider The service provider
+     * @return A metadata definition or <code>null</code>
+     * @since 2.0.3
+     */
+    public default MetadataDefinition<?> process(Class<?> annotatedClass, Method method, T annotation, String name, String typeName, boolean collection, ServiceProvider serviceProvider) {
+        return process(annotatedClass, method, annotation, serviceProvider);
+    }
 
 }

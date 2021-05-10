@@ -116,6 +116,27 @@ export enum DomainPredicate {
 }
 
 /**
+ * The volatility of a domain function.
+ *
+ * @author Christian Beikov
+ * @since 2.0.3
+ */
+export enum DomainFunctionVolatility {
+    /**
+     * The function result can change at any time and is not just dependent on the arguments.
+     */
+    VOLATILE,
+    /**
+     * The function result depends on the arguments and possibly other state which stays stable throughout the execution.
+     */
+    STABLE,
+    /**
+     * The function result depends just on the arguments.
+     */
+    IMMUTABLE
+}
+
+/**
  * A domain element that can have metadata.
  *
  * @author Christian Beikov
@@ -276,6 +297,10 @@ export class DomainFunction extends MetadataHolder {
      */
     name: string;
     /**
+     * The volatility of the domain function.
+     */
+    volatility: DomainFunctionVolatility;
+    /**
      * The minimum argument count for the function.
      */
     minArgumentCount: number;
@@ -300,9 +325,10 @@ export class DomainFunction extends MetadataHolder {
      */
     arguments: readonly DomainFunctionArgument[];
 
-    constructor(name: string, minArgumentCount: number, argumentCount: number, resultType: DomainType, resultTypeResolver: DomainFunctionTypeResolver, documentation: string, args: readonly DomainFunctionArgument[], metadata: any[]) {
+    constructor(name: string, volatility: DomainFunctionVolatility, minArgumentCount: number, argumentCount: number, resultType: DomainType, resultTypeResolver: DomainFunctionTypeResolver, documentation: string, args: readonly DomainFunctionArgument[], metadata: any[]) {
         super(metadata);
         this.name = name;
+        this.volatility = volatility;
         this.minArgumentCount = minArgumentCount;
         this.argumentCount = argumentCount;
         this.resultType = resultType;
@@ -923,7 +949,19 @@ export class DomainModel {
                         }
                     };
                 }
-                funcs[func['name']] = new DomainFunction(func['name'], func['minArgCount'], func['argCount'], resultType, resultTypeResolver, doc(meta), params, meta);
+                let volatility: DomainFunctionVolatility = DomainFunctionVolatility.IMMUTABLE;
+                switch (func['volatility']) {
+                    case 'I':
+                        volatility = DomainFunctionVolatility.IMMUTABLE;
+                        break;
+                    case 'S':
+                        volatility = DomainFunctionVolatility.STABLE;
+                        break;
+                    case 'V':
+                        volatility = DomainFunctionVolatility.VOLATILE;
+                        break;
+                }
+                funcs[func['name']] = new DomainFunction(func['name'], volatility, func['minArgCount'], func['argCount'], resultType, resultTypeResolver, doc(meta), params, meta);
             });
         }
         if (Array.isArray(opResolvers)) {

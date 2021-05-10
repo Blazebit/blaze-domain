@@ -18,6 +18,7 @@ package com.blazebit.domain.declarative.impl.spi;
 
 import com.blazebit.domain.declarative.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
+import com.blazebit.domain.runtime.model.DomainFunctionVolatility;
 
 import java.lang.annotation.Annotation;
 
@@ -55,6 +56,11 @@ public class DomainFunctionLiteral implements DomainFunction {
     @Override
     public int minArguments() {
         return -1;
+    }
+
+    @Override
+    public DomainFunctionVolatility volatility() {
+        return DomainFunctionVolatility.IMMUTABLE;
     }
 
     @Override

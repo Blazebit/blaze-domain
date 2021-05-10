@@ -21,6 +21,7 @@ import com.blazebit.domain.boot.model.DomainFunctionArgumentDefinition;
 import com.blazebit.domain.boot.model.DomainFunctionBuilder;
 import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
+import com.blazebit.domain.runtime.model.DomainFunctionVolatility;
 
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,17 @@ public class DomainFunctionBuilderImpl implements DomainFunctionBuilder {
     @Override
     public String getName() {
         return domainFunctionDefinition.getName();
+    }
+
+    @Override
+    public DomainFunctionVolatility getVolatility() {
+        return domainFunctionDefinition.getVolatility();
+    }
+
+    @Override
+    public DomainFunctionBuilder withVolatility(DomainFunctionVolatility volatility) {
+        domainFunctionDefinition.setVolatility(volatility);
+        return this;
     }
 
     @Override

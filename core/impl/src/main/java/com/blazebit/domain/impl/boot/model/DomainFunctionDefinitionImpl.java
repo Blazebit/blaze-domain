@@ -24,6 +24,7 @@ import com.blazebit.domain.impl.runtime.model.DomainFunctionImpl;
 import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
+import com.blazebit.domain.runtime.model.DomainFunctionVolatility;
 import com.blazebit.domain.runtime.model.DomainType;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import java.util.List;
 public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHolder implements DomainFunctionDefinitionImplementor {
 
     private final String name;
+    private DomainFunctionVolatility volatility = DomainFunctionVolatility.IMMUTABLE;
     private int minArgumentCount = -1;
     private int argumentCount = -1;
     private String resultTypeName;
@@ -84,6 +86,15 @@ public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHold
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public DomainFunctionVolatility getVolatility() {
+        return volatility;
+    }
+
+    public void setVolatility(DomainFunctionVolatility volatility) {
+        this.volatility = volatility;
     }
 
     @Override

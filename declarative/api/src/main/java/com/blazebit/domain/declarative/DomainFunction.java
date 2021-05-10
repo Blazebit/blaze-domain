@@ -17,6 +17,7 @@
 package com.blazebit.domain.declarative;
 
 import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
+import com.blazebit.domain.runtime.model.DomainFunctionVolatility;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -75,5 +76,12 @@ public @interface DomainFunction {
      * @return The minimum number of arguments that are necessary for this function
      */
     int minArguments() default -1;
+
+    /**
+     * The domain function volatility.
+     *
+     * @return the domain function volatility
+     */
+    DomainFunctionVolatility volatility() default DomainFunctionVolatility.IMMUTABLE;
 
 }

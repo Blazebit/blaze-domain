@@ -219,6 +219,9 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         ServiceProvider serviceProvider = new ServiceProvider() {
             @Override
             public <T> T getService(Class<T> serviceClass) {
+                if (serviceClass == DomainBuilder.class) {
+                    return (T) domainBuilder;
+                }
                 Object service = services.get(serviceClass);
                 if (service == null) {
                     for (ServiceProvider serviceProvider : serviceProviders) {
@@ -363,12 +366,26 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         DomainFunctionBuilder function = domainBuilder.createFunction(name);
 
         ResolvedType resolvedType = resolveType(typeName, elementTypeName, type, elementType, domainFunctionsClass, method, null);
+        String resolvedTypeName = null;
+        boolean resolvedCollection = false;
         if (resolvedType != null) {
+            resolvedTypeName = resolvedType.resolveTypeName(this, domainBuilder);
             if (resolvedType.collection) {
-                function.withCollectionResultType(resolvedType.resolveTypeName(this, domainBuilder));
+                resolvedCollection = true;
+                function.withCollectionResultType(resolvedTypeName);
             } else {
-                function.withResultType(resolvedType.resolveTypeName(this, domainBuilder));
+                function.withResultType(resolvedTypeName);
             }
+        }
+
+        if (domainFunction.typeResolver() != DomainFunctionTypeResolver.class) {
+            DomainFunctionTypeResolver functionTypeResolver = createInstance(domainFunction.typeResolver(), "function type resolver", errors);
+            if (functionTypeResolver != null) {
+                domainBuilder.withFunctionTypeResolver(name, functionTypeResolver);
+            }
+        }
+        if (domainFunction.minArguments() > 0) {
+            function.withMinArgumentCount(domainFunction.minArguments());
         }
 
         // automatic metadata discovery via meta annotations
@@ -378,7 +395,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         for (Map.Entry<Class<? extends Annotation>, List<DeclarativeFunctionMetadataProcessor<Annotation>>> entry : functionMetadataProcessors.entrySet()) {
             if (entry.getKey() == null) {
                 for (DeclarativeFunctionMetadataProcessor<Annotation> processor : entry.getValue()) {
-                    MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, null, serviceProvider);
+                    MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, null, name, resolvedTypeName, resolvedCollection, serviceProvider);
                     if (metadataDefinition != null) {
                         function.withMetadata(metadataDefinition);
                     }
@@ -387,7 +404,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 Annotation annotation = AnnotationUtils.findAnnotation(method, entry.getKey());
                 if (annotation != null) {
                     for (DeclarativeFunctionMetadataProcessor<Annotation> processor : entry.getValue()) {
-                        MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, annotation, serviceProvider);
+                        MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, annotation, name, resolvedTypeName, resolvedCollection, serviceProvider);
                         if (metadataDefinition != null) {
                             function.withMetadata(metadataDefinition);
                         }
@@ -400,17 +417,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         for (int i = 0; i < parameters.length; i++) {
             handleDomainFunctionParameter(domainBuilder, function, domainFunctionsClass, method, parameters[i], serviceProvider, errors);
         }
-
         function.build();
-        if (domainFunction.typeResolver() != DomainFunctionTypeResolver.class) {
-            DomainFunctionTypeResolver functionTypeResolver = createInstance(domainFunction.typeResolver(), "function type resolver", errors);
-            if (functionTypeResolver != null) {
-                domainBuilder.withFunctionTypeResolver(name, functionTypeResolver);
-            }
-        }
-        if (domainFunction.minArguments() > 0) {
-            function.withMinArgumentCount(domainFunction.minArguments());
-        }
     }
 
     private String resolveJavaType(Class<?> type, Map<Class<?>, String> domainTypeNamesByJavaTypes) {
@@ -456,12 +463,22 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
             }
         }
 
+        ResolvedType resolvedType = resolveType(typeName, elementTypeName, type, elementType, domainFunctionsClass, method, parameter);
+        String resolvedTypeName = null;
+        boolean resolvedCollection;
+        if (resolvedType == null) {
+            resolvedCollection = param != null && param.collection();
+        } else {
+            resolvedTypeName = resolvedType.resolveTypeName(this, domainBuilder);
+            resolvedCollection = resolvedType.collection;
+        }
+
         // automatic metadata discovery via meta annotations
         List<MetadataDefinition<?>> metadataDefinitions = getMetadataDefinitions(parameter.getAnnotation(Metadata.class), errors);
         for (Map.Entry<Class<? extends Annotation>, List<DeclarativeFunctionParameterMetadataProcessor<Annotation>>> entry : functionParameterMetadataProcessors.entrySet()) {
             if (entry.getKey() == null) {
                 for (DeclarativeFunctionParameterMetadataProcessor<Annotation> processor : entry.getValue()) {
-                    MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, parameter, null, serviceProvider);
+                    MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, parameter, null, parameterName, resolvedTypeName, resolvedCollection, serviceProvider);
                     if (metadataDefinition != null) {
                         if (metadataDefinition.getJavaType() == Transient.class) {
                             return;
@@ -473,7 +490,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 Annotation annotation = parameter.getAnnotation(entry.getKey());
                 if (annotation != null) {
                     for (DeclarativeFunctionParameterMetadataProcessor<Annotation> processor : entry.getValue()) {
-                        MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, parameter, annotation, serviceProvider);
+                        MetadataDefinition<?> metadataDefinition = processor.process(domainFunctionsClass, method, parameter, annotation, parameterName, resolvedTypeName, resolvedCollection, serviceProvider);
                         if (metadataDefinition != null) {
                             if (metadataDefinition.getJavaType() == Transient.class) {
                                 return;
@@ -491,19 +508,17 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         } else {
             metadataDefinitionArray = metadataDefinitions.toArray(new MetadataDefinition[metadataDefinitions.size()]);
         }
-
-        ResolvedType resolvedType = resolveType(typeName, elementTypeName, type, elementType, domainFunctionsClass, method, parameter);
-        if (resolvedType == null) {
-            if (param != null && param.collection()) {
+        if (resolvedTypeName == null) {
+            if (resolvedCollection) {
                 function.withCollectionArgument(parameterName, metadataDefinitionArray);
             } else {
                 function.withArgument(parameterName, metadataDefinitionArray);
             }
         } else {
-            if (resolvedType.collection) {
-                function.withCollectionArgument(parameterName, resolvedType.resolveTypeName(this, domainBuilder), metadataDefinitionArray);
+            if (resolvedCollection) {
+                function.withCollectionArgument(parameterName, resolvedTypeName, metadataDefinitionArray);
             } else {
-                function.withArgument(parameterName, resolvedType.resolveTypeName(this, domainBuilder), metadataDefinitionArray);
+                function.withArgument(parameterName, resolvedTypeName, metadataDefinitionArray);
             }
         }
         if (parameter.isVarArgs()) {
@@ -685,20 +700,25 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         String typeName = domainAttribute.collection() ? "Collection" : domainAttribute.typeName();
         Class<?> elementType = domainAttribute.collection() ? domainAttribute.value() : void.class;
         String elementTypeName = domainAttribute.collection() ? domainAttribute.typeName() : "";
+        ResolvedType resolvedType = resolveType(typeName, elementTypeName, type, elementType, domainTypeClass, method, null);
+        if (resolvedType == null) {
+            resolvedType = ResolvedType.basic(Object.class);
+        }
+        String resolvedTypeName = resolvedType.resolveTypeName(this, domainBuilder);
 
         // automatic metadata discovery via meta annotations
         List<MetadataDefinition<?>> metadataDefinitions = getMetadataDefinitions(AnnotationUtils.findAnnotation(method, Metadata.class), errors);
         for (Map.Entry<Class<? extends Annotation>, List<DeclarativeAttributeMetadataProcessor<Annotation>>> entry : attributeMetadataProcessors.entrySet()) {
             if (entry.getKey() == DomainAttribute.class) {
                 for (DeclarativeAttributeMetadataProcessor<Annotation> processor : entry.getValue()) {
-                    MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, domainAttribute, serviceProvider);
+                    MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, domainAttribute, name, resolvedTypeName, resolvedType.collection, serviceProvider);
                     if (metadataDefinition != null) {
                         metadataDefinitions.add(metadataDefinition);
                     }
                 }
             } else if (entry.getKey() == null) {
                 for (DeclarativeAttributeMetadataProcessor<Annotation> processor : entry.getValue()) {
-                    MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, null, serviceProvider);
+                    MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, null, name, resolvedTypeName, resolvedType.collection, serviceProvider);
                     if (metadataDefinition != null) {
                         metadataDefinitions.add(metadataDefinition);
                     }
@@ -707,7 +727,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
                 Annotation annotation = AnnotationUtils.findAnnotation(method, entry.getKey());
                 if (annotation != null) {
                     for (DeclarativeAttributeMetadataProcessor<Annotation> processor : entry.getValue()) {
-                        MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, annotation, serviceProvider);
+                        MetadataDefinition<?> metadataDefinition = processor.process(domainTypeClass, method, annotation, name, resolvedTypeName, resolvedType.collection, serviceProvider);
                         if (metadataDefinition != null) {
                             metadataDefinitions.add(metadataDefinition);
                         }
@@ -722,15 +742,10 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         } else {
             metadataDefinitionArray = metadataDefinitions.toArray(new MetadataDefinition[metadataDefinitions.size()]);
         }
-
-        ResolvedType resolvedType = resolveType(typeName, elementTypeName, type, elementType, domainTypeClass, method, null);
-        if (resolvedType == null) {
-            resolvedType = ResolvedType.basic(Object.class);
-        }
         if (resolvedType.collection) {
-            entityType.addCollectionAttribute(name, resolvedType.resolveTypeName(this, domainBuilder), metadataDefinitionArray);
+            entityType.addCollectionAttribute(name, resolvedTypeName, metadataDefinitionArray);
         } else {
-            entityType.addAttribute(name, resolvedType.resolveTypeName(this, domainBuilder), metadataDefinitionArray);
+            entityType.addAttribute(name, resolvedTypeName, metadataDefinitionArray);
         }
     }
 
