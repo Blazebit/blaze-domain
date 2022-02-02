@@ -19,7 +19,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 /**
@@ -259,10 +261,10 @@ public class TemporalInterval implements Comparable<TemporalInterval> {
     }
 
     /**
-     * Adds this interval to the given instant producing a new instant.
+     * Adds this interval to the given local date producing a new local date.
      *
-     * @param localDate The instant to which to add this interval.
-     * @return A new instant representing the sum of the given instant plus this interval
+     * @param localDate The local date to which to add this interval.
+     * @return A new local date representing the sum of the given local date plus this interval
      */
     public LocalDate add(LocalDate localDate) {
         if (hours != 0 || minutes != 0 || seconds != 0) {
@@ -275,10 +277,10 @@ public class TemporalInterval implements Comparable<TemporalInterval> {
     }
 
     /**
-     * Subtract this interval from the given instant producing a new instant.
+     * Subtract this interval from the given local date producing a new local date.
      *
-     * @param localDate The instant from which to subtract this interval.
-     * @return A new instant representing the sum of the given instant subtracted by this interval
+     * @param localDate The local date from which to subtract this interval.
+     * @return A new local date representing the sum of the given local date subtracted by this interval
      */
     public LocalDate subtract(LocalDate localDate) {
         if (hours != 0 || minutes != 0 || seconds != 0) {
@@ -290,12 +292,11 @@ public class TemporalInterval implements Comparable<TemporalInterval> {
                 .minusDays(days);
     }
 
-
     /**
-     * Adds this interval to the given instant producing a new instant.
+     * Adds this interval to the given local date time producing a new local date time.
      *
-     * @param localDateTime The instant to which to add this interval.
-     * @return A new instant representing the sum of the given instant plus this interval
+     * @param localDateTime The local date time to which to add this interval.
+     * @return A new local date time representing the sum of the given local date time plus this interval
      */
     public LocalDateTime add(LocalDateTime localDateTime) {
         return localDateTime
@@ -308,13 +309,77 @@ public class TemporalInterval implements Comparable<TemporalInterval> {
     }
 
     /**
-     * Subtract this interval from the given instant producing a new instant.
+     * Subtract this interval from the given local date time producing a new local date time.
      *
-     * @param localDateTime The instant from which to subtract this interval.
-     * @return A new instant representing the sum of the given instant subtracted by this interval
+     * @param localDateTime The local date time from which to subtract this interval.
+     * @return A new local date time representing the sum of the given local date time subtracted by this interval
      */
     public LocalDateTime subtract(LocalDateTime localDateTime) {
         return localDateTime
+                .minusYears(years)
+                .minusMonths(months)
+                .minusDays(days)
+                .minusHours(hours)
+                .minusMinutes(minutes)
+                .minusSeconds(seconds);
+    }
+
+    /**
+     * Adds this interval to the given zoned date time producing a new zoned date time.
+     *
+     * @param zonedDateTime The zoned date time  to which to add this interval.
+     * @return A new zoned date time  representing the sum of the given zoned date time plus this interval
+     */
+    public ZonedDateTime add(ZonedDateTime zonedDateTime) {
+        return zonedDateTime
+                .plusYears(years)
+                .plusMonths(months)
+                .plusDays(days)
+                .plusHours(hours)
+                .plusMinutes(minutes)
+                .plusSeconds(seconds);
+    }
+
+    /**
+     * Subtract this interval from the given zoned date time producing a new zoned date time.
+     *
+     * @param zonedDateTime The zoned date time  from which to subtract this interval.
+     * @return A new zoned date time  representing the sum of the given zoned date time subtracted by this interval
+     */
+    public ZonedDateTime subtract(ZonedDateTime zonedDateTime) {
+        return zonedDateTime
+                .minusYears(years)
+                .minusMonths(months)
+                .minusDays(days)
+                .minusHours(hours)
+                .minusMinutes(minutes)
+                .minusSeconds(seconds);
+    }
+
+    /**
+     * Adds this interval to the given offset date time producing a new offset date time.
+     *
+     * @param offsetDateTime The offset date time to which to add this interval.
+     * @return A new offset date time representing the sum of the given offset date time plus this interval
+     */
+    public OffsetDateTime add(OffsetDateTime offsetDateTime) {
+        return offsetDateTime
+                .plusYears(years)
+                .plusMonths(months)
+                .plusDays(days)
+                .plusHours(hours)
+                .plusMinutes(minutes)
+                .plusSeconds(seconds);
+    }
+
+    /**
+     * Subtract this interval from the given offset date time producing a new offset date time.
+     *
+     * @param offsetDateTime The offset date time from which to subtract this interval.
+     * @return A new offset date time representing the sum of the given offset date time subtracted by this interval
+     */
+    public OffsetDateTime subtract(OffsetDateTime offsetDateTime) {
+        return offsetDateTime
                 .minusYears(years)
                 .minusMonths(months)
                 .minusDays(days)
