@@ -280,7 +280,7 @@ public class TemporalInterval implements Comparable<TemporalInterval> {
      * @return A new instant representing the sum of the given instant subtracted by this interval
      */
     public LocalDate subtract(LocalDate localDate) {
-        if (years != 0 || months != 0 || days != 0) {
+        if (hours != 0 || minutes != 0 || seconds != 0) {
             throw new IllegalArgumentException("Can't add interval with non-date portion to DATE: " + toString());
         }
         return localDate
