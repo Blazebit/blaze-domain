@@ -17,6 +17,7 @@ package com.blazebit.domain.runtime.model;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.Objects;
@@ -287,6 +288,39 @@ public class TemporalInterval implements Comparable<TemporalInterval> {
                 .minusYears(years)
                 .minusMonths(months)
                 .minusDays(days);
+    }
+
+
+    /**
+     * Adds this interval to the given instant producing a new instant.
+     *
+     * @param localDateTime The instant to which to add this interval.
+     * @return A new instant representing the sum of the given instant plus this interval
+     */
+    public LocalDateTime add(LocalDateTime localDateTime) {
+        return localDateTime
+                .plusYears(years)
+                .plusMonths(months)
+                .plusDays(days)
+                .plusHours(hours)
+                .plusMinutes(minutes)
+                .plusSeconds(seconds);
+    }
+
+    /**
+     * Subtract this interval from the given instant producing a new instant.
+     *
+     * @param localDateTime The instant from which to subtract this interval.
+     * @return A new instant representing the sum of the given instant subtracted by this interval
+     */
+    public LocalDateTime subtract(LocalDateTime localDateTime) {
+        return localDateTime
+                .minusYears(years)
+                .minusMonths(months)
+                .minusDays(days)
+                .minusHours(hours)
+                .minusMinutes(minutes)
+                .minusSeconds(seconds);
     }
 
     /**
