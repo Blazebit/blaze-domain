@@ -28,6 +28,7 @@ import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
+import com.blazebit.domain.runtime.model.UnionDomainType;
 import com.blazebit.domain.spi.DomainSerializer;
 
 import java.io.Serializable;
@@ -69,16 +70,18 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel>, Seri
 
     private void serialize(DomainModel model, DomainModel baseModel, StringBuilder sb, Map<String, Object> properties) {
         Map<String, DomainType> types = model.getTypes();
-        Map<DomainType, CollectionDomainType> collectionTypes = model.getCollectionTypes();
 
         sb.append("{\"types\":[");
         int length = sb.length();
-        for (DomainType domainType : types.values()) {
+        for (Map.Entry<String, DomainType> entry : types.entrySet()) {
+            DomainType domainType = entry.getValue();
             // Don't serialize stuff that is defined on the parent
             if (baseModel != null && baseModel.getType(domainType.getName()) == domainType) {
                 continue;
             }
-            if (domainType instanceof EntityDomainType) {
+            if (domainType == null) {
+                serializeDomainTypeTombstone(sb, entry.getKey());
+            } else if (domainType instanceof EntityDomainType) {
                 serializeEntityDomainType(sb, (EntityDomainType) domainType, model, properties);
                 sb.append(',');
             } else if (domainType instanceof EnumDomainType) {
@@ -87,15 +90,13 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel>, Seri
             } else if (domainType instanceof BasicDomainType) {
                 serializeBasicDomainType(sb, (BasicDomainType) domainType, model, properties);
                 sb.append(',');
+            } else if (domainType instanceof UnionDomainType) {
+                serializeUnionDomainType(sb, (UnionDomainType) domainType, model, properties);
+                sb.append(',');
+            } else if (domainType instanceof CollectionDomainType) {
+                serializeCollectionDomainType(sb, (CollectionDomainType) domainType, model, properties);
+                sb.append(',');
             }
-        }
-        for (CollectionDomainType collectionDomainType : collectionTypes.values()) {
-            // Don't serialize stuff that is defined on the parent
-            if (baseModel != null && baseModel.getCollectionType(collectionDomainType.getElementType()) == collectionDomainType) {
-                continue;
-            }
-            serializeCollectionDomainType(sb, collectionDomainType, model, properties);
-            sb.append(',');
         }
         if (length == sb.length()) {
             sb.append(']');
@@ -107,12 +108,17 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel>, Seri
             sb.append(',');
             sb.append("\"funcs\":[");
             length = sb.length();
-            for (DomainFunction domainFunction : model.getFunctions().values()) {
+            for (Map.Entry<String, DomainFunction> entry : model.getFunctions().entrySet()) {
+                DomainFunction domainFunction = entry.getValue();
                 // Don't serialize stuff that is defined on the parent
                 if (baseModel != null && baseModel.getFunction(domainFunction.getName()) == domainFunction) {
                     continue;
                 }
-                serializeFunction(sb, domainFunction, model, properties);
+                if (domainFunction == null) {
+                    sb.append("{\"name\":\"").append(entry.getKey()).append("\"}");
+                } else {
+                    serializeFunction(sb, domainFunction, model, properties);
+                }
                 sb.append(',');
             }
             if (length == sb.length()) {
@@ -133,7 +139,11 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel>, Seri
                 length = sb.length();
                 for (Map.Entry<String, Set<DomainOperator>> typeEntry : entry.getValue().entrySet()) {
                     sb.append("\"").append(typeEntry.getKey()).append("\":");
-                    serializeDomainOperators(sb, typeEntry.getValue());
+                    if (typeEntry.getValue() == null) {
+                        sb.append("null");
+                    } else {
+                        serializeDomainOperators(sb, typeEntry.getValue());
+                    }
                     sb.append(',');
                 }
 
@@ -163,7 +173,11 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel>, Seri
                     sb.append(",\"typePreds\":{");
                     for (Map.Entry<String, Set<DomainPredicate>> typeEntry : entry.getValue().entrySet()) {
                         sb.append("\"").append(typeEntry.getKey()).append("\":");
-                        serializeDomainPredicates(sb, typeEntry.getValue());
+                        if (typeEntry.getValue() == null) {
+                            sb.append("null");
+                        } else {
+                            serializeDomainPredicates(sb, typeEntry.getValue());
+                        }
                         sb.append(',');
                     }
 
@@ -192,6 +206,9 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel>, Seri
             Map<String, Map<String, Set<DomainElement>>> resolverMap = new HashMap<>();
             StringBuilder tempSb = new StringBuilder();
             for (Map.Entry<String, Map<DomainElement, Result>> typeEntry : resolvers.entrySet()) {
+                if (typeEntry.getValue() == null) {
+                    continue;
+                }
                 Map<DomainElement, Result> parentResolverMap = null;
                 if (parentResolvers != null) {
                     parentResolverMap = parentResolvers.get(typeEntry.getKey());
@@ -281,6 +298,15 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel>, Seri
         sb.append('}');
     }
 
+    protected void serializeUnionDomainType(StringBuilder sb, UnionDomainType basicDomainType, DomainModel model, Map<String, Object> properties) {
+        serializeDomainType(sb, basicDomainType, model, properties);
+        sb.append('}');
+    }
+
+    private void serializeDomainTypeTombstone(StringBuilder sb, String typeName) {
+        sb.append("{\"name\":\"").append(typeName).append("\",\"kind\":\"T\"},");
+    }
+
     protected void serializeDomainType(StringBuilder sb, DomainType domainType, DomainModel model, Map<String, Object> properties) {
         sb.append("{\"name\":\"").append(domainType.getName()).append("\",\"kind\":\"");
         switch (domainType.getKind()) {
@@ -295,6 +321,9 @@ public class JsonDomainSerializer implements DomainSerializer<DomainModel>, Seri
                 break;
             case COLLECTION:
                 sb.append('C');
+                break;
+            case UNION:
+                sb.append('U');
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported domain type kind: " + domainType.getKind());

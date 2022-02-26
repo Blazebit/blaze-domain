@@ -48,7 +48,7 @@ public class SubDomainModel implements DomainModel, Serializable {
     private final Map<Class<?>, Object> services;
     private final List<ServiceProvider> serviceProviders;
     private final Map<String, DomainType> domainTypes;
-    private final Map<DomainType, CollectionDomainType> collectionDomainTypes;
+    private final Map<String, CollectionDomainType> collectionDomainTypes;
     private final Map<String, DomainFunction> domainFunctions;
     private final Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers;
     private final Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers;
@@ -56,7 +56,7 @@ public class SubDomainModel implements DomainModel, Serializable {
     private final DomainType predicateDefaultResultType;
     private final List<DomainSerializer<?>> domainSerializers;
 
-    public SubDomainModel(DomainModel baseModel, Map<String, Object> properties, Map<Class<?>, Object> services, List<ServiceProvider> serviceProviders, Map<String, DomainType> domainTypes, Map<DomainType, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
+    public SubDomainModel(DomainModel baseModel, Map<String, Object> properties, Map<Class<?>, Object> services, List<ServiceProvider> serviceProviders, Map<String, DomainType> domainTypes, Map<String, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
                           Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers, Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers,
                           Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, DomainType predicateDefaultResultType, List<DomainSerializer<?>> domainSerializers) {
         this.baseModel = baseModel;
@@ -80,9 +80,24 @@ public class SubDomainModel implements DomainModel, Serializable {
 
     @Override
     public DomainType getType(String name) {
+        if (name.startsWith("Collection")) {
+            if (name.length() == "Collection".length()) {
+                return CollectionDomainTypeImpl.INSTANCE;
+            } else if (name.charAt("Collection".length()) == '[') {
+                String elementTypeName = name.substring("Collection".length() + 1, name.length() - 1);
+                return getCollectionType(elementTypeName);
+            }
+        }
+        return getBaseType(name);
+    }
+
+    private DomainType getBaseType(String name) {
         DomainType domainType = domainTypes.get(name);
         if (domainType == null) {
-            return baseModel.getType(name);
+            DomainType type = baseModel.getType(name);
+            if (type != null && !domainTypes.containsKey(name)) {
+                return type;
+            }
         }
         return domainType;
     }
@@ -91,7 +106,10 @@ public class SubDomainModel implements DomainModel, Serializable {
     public EntityDomainType getEntityType(String name) {
         EntityDomainType entityDomainType = (EntityDomainType) domainTypes.get(name);
         if (entityDomainType == null) {
-            return baseModel.getEntityType(name);
+            EntityDomainType type = baseModel.getEntityType(name);
+            if (type != null && !domainTypes.containsKey(name)) {
+                return type;
+            }
         }
         return entityDomainType;
     }
@@ -100,16 +118,37 @@ public class SubDomainModel implements DomainModel, Serializable {
     public EnumDomainType getEnumType(String name) {
         EnumDomainType enumDomainType = (EnumDomainType) domainTypes.get(name);
         if (enumDomainType == null) {
-            return baseModel.getEnumType(name);
+            EnumDomainType type = baseModel.getEnumType(name);
+            if (type != null && !domainTypes.containsKey(name)) {
+                return type;
+            }
         }
         return enumDomainType;
     }
 
     @Override
-    public CollectionDomainType getCollectionType(DomainType elementDomainType) {
-        CollectionDomainType collectionDomainType = collectionDomainTypes.get(elementDomainType);
+    public CollectionDomainType getCollectionType(String elementTypeName) {
+        if (elementTypeName == null) {
+            return CollectionDomainTypeImpl.INSTANCE;
+        }
+        CollectionDomainType collectionDomainType = collectionDomainTypes.get(elementTypeName);
         if (collectionDomainType == null) {
-            return baseModel.getCollectionType(elementDomainType);
+            DomainType baseType = getBaseType(elementTypeName);
+            collectionDomainType = baseModel.getCollectionType(elementTypeName);
+            // Special case when the domain type definition was explicitly removed
+            if (collectionDomainType != null && baseType == null) {
+                return null;
+            }
+
+            if (collectionDomainType == null) {
+                if (baseType == null) {
+                    return null;
+                }
+                String typeName = "Collection[" + elementTypeName + "]";
+                collectionDomainType = new CollectionDomainTypeImpl(typeName, (DomainTypeImplementor) baseType);
+                collectionDomainTypes.put(elementTypeName, collectionDomainType);
+            }
+            return collectionDomainType;
         }
         return collectionDomainType;
     }
@@ -119,24 +158,25 @@ public class SubDomainModel implements DomainModel, Serializable {
         Map<String, DomainType> types = baseModel.getTypes();
         Map<String, DomainType> map = new HashMap<>(types.size() + domainTypes.size());
         map.putAll(types);
-        map.putAll(domainTypes);
-        return map;
-    }
-
-    @Override
-    public Map<DomainType, CollectionDomainType> getCollectionTypes() {
-        Map<DomainType, CollectionDomainType> types = baseModel.getCollectionTypes();
-        Map<DomainType, CollectionDomainType> map = new HashMap<>(types.size() + collectionDomainTypes.size());
-        map.putAll(types);
-        map.putAll(collectionDomainTypes);
+        for (Map.Entry<String, DomainType> entry : domainTypes.entrySet()) {
+            if (entry.getValue() == null) {
+                map.put(entry.getKey(), null);
+            } else {
+                map.put(entry.getKey(), entry.getValue());
+            }
+        }
         return map;
     }
 
     @Override
     public DomainFunction getFunction(String name) {
-        DomainFunction domainFunction = domainFunctions.get(name.toUpperCase());
+        String key = name.toUpperCase();
+        DomainFunction domainFunction = domainFunctions.get(key);
         if (domainFunction == null) {
-            return baseModel.getFunction(name);
+            DomainFunction function = baseModel.getFunction(name);
+            if (function != null && !domainFunctions.containsKey(key)) {
+                return function;
+            }
         }
         return domainFunction;
     }
@@ -145,15 +185,25 @@ public class SubDomainModel implements DomainModel, Serializable {
         Map<String, DomainFunction> functions = baseModel.getFunctions();
         Map<String, DomainFunction> map = new HashMap<>(functions.size() + domainFunctions.size());
         map.putAll(functions);
-        map.putAll(domainFunctions);
+        for (Map.Entry<String, DomainFunction> entry : domainFunctions.entrySet()) {
+            if (entry.getValue() == null) {
+                map.put(entry.getKey(), null);
+            } else {
+                map.put(entry.getKey(), entry.getValue());
+            }
+        }
         return map;
     }
 
     @Override
     public DomainFunctionTypeResolver getFunctionTypeResolver(String functionName) {
-        DomainFunctionTypeResolver typeResolver = domainFunctionTypeResolvers.get(functionName.toUpperCase());
+        String key = functionName.toUpperCase();
+        DomainFunctionTypeResolver typeResolver = domainFunctionTypeResolvers.get(key);
         if (typeResolver == null) {
-            return baseModel.getFunctionTypeResolver(functionName);
+            DomainFunctionTypeResolver functionTypeResolver = baseModel.getFunctionTypeResolver(functionName);
+            if (functionTypeResolver != null && !domainFunctionTypeResolvers.containsKey(key)) {
+                return functionTypeResolver;
+            }
         }
         return typeResolver;
     }
@@ -163,7 +213,13 @@ public class SubDomainModel implements DomainModel, Serializable {
         Map<String, DomainFunctionTypeResolver> functionTypeResolvers = baseModel.getFunctionTypeResolvers();
         Map<String, DomainFunctionTypeResolver> map = new HashMap<>(functionTypeResolvers.size() + domainFunctionTypeResolvers.size());
         map.putAll(functionTypeResolvers);
-        map.putAll(domainFunctionTypeResolvers);
+        for (Map.Entry<String, DomainFunctionTypeResolver> entry : domainFunctionTypeResolvers.entrySet()) {
+            if (entry.getValue() == null) {
+                map.put(entry.getKey(), null);
+            } else {
+                map.put(entry.getKey(), entry.getValue());
+            }
+        }
         return map;
     }
 
@@ -172,7 +228,11 @@ public class SubDomainModel implements DomainModel, Serializable {
         Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = domainOperationTypeResolvers.get(typeName);
         DomainOperationTypeResolver resolver;
         if (operationTypeResolverMap == null || (resolver = operationTypeResolverMap.get(operator)) == null) {
-            return baseModel.getOperationTypeResolver(typeName, operator);
+            DomainOperationTypeResolver operationTypeResolver = baseModel.getOperationTypeResolver(typeName, operator);
+            if (operationTypeResolver != null && !domainOperationTypeResolvers.containsKey(typeName)) {
+                return operationTypeResolver;
+            }
+            return null;
         }
         return resolver;
     }
@@ -182,7 +242,11 @@ public class SubDomainModel implements DomainModel, Serializable {
         Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = domainPredicateTypeResolvers.get(typeName);
         DomainPredicateTypeResolver resolver;
         if (predicateTypeResolverMap == null || (resolver = predicateTypeResolverMap.get(predicateType)) == null) {
-            return baseModel.getPredicateTypeResolver(typeName, predicateType);
+            DomainPredicateTypeResolver predicateTypeResolver = baseModel.getPredicateTypeResolver(typeName, predicateType);
+            if (predicateTypeResolver != null && !domainPredicateTypeResolvers.containsKey(typeName)) {
+                return predicateTypeResolver;
+            }
+            return predicateTypeResolver;
         }
         return resolver;
     }
@@ -193,12 +257,16 @@ public class SubDomainModel implements DomainModel, Serializable {
         Map<String, Map<DomainOperator, DomainOperationTypeResolver>> map = new HashMap<>(operationTypeResolvers.size() + domainOperationTypeResolvers.size());
         map.putAll(operationTypeResolvers);
         for (Map.Entry<String, Map<DomainOperator, DomainOperationTypeResolver>> entry : domainOperationTypeResolvers.entrySet()) {
-            map.merge(entry.getKey(), entry.getValue(), (oldMap, newMap) -> {
-                Map<DomainOperator, DomainOperationTypeResolver> subMap = new HashMap<>(oldMap.size() + newMap.size());
-                subMap.putAll(oldMap);
-                subMap.putAll(newMap);
-                return Collections.unmodifiableMap(subMap);
-            });
+            if (entry.getValue() == null) {
+                map.put(entry.getKey(), null);
+            } else {
+                map.merge(entry.getKey(), entry.getValue(), (oldMap, newMap) -> {
+                    Map<DomainOperator, DomainOperationTypeResolver> subMap = new HashMap<>(oldMap.size() + newMap.size());
+                    subMap.putAll(oldMap);
+                    subMap.putAll(newMap);
+                    return Collections.unmodifiableMap(subMap);
+                });
+            }
         }
         return map;
     }
@@ -209,12 +277,16 @@ public class SubDomainModel implements DomainModel, Serializable {
         Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> map = new HashMap<>(predicateTypeResolvers.size() + domainPredicateTypeResolvers.size());
         map.putAll(predicateTypeResolvers);
         for (Map.Entry<String, Map<DomainPredicate, DomainPredicateTypeResolver>> entry : domainPredicateTypeResolvers.entrySet()) {
-            map.merge(entry.getKey(), entry.getValue(), (oldMap, newMap) -> {
-                Map<DomainPredicate, DomainPredicateTypeResolver> subMap = new HashMap<>(oldMap.size() + newMap.size());
-                subMap.putAll(oldMap);
-                subMap.putAll(newMap);
-                return Collections.unmodifiableMap(subMap);
-            });
+            if (entry.getValue() == null) {
+                map.put(entry.getKey(), null);
+            } else {
+                map.merge(entry.getKey(), entry.getValue(), (oldMap, newMap) -> {
+                    Map<DomainPredicate, DomainPredicateTypeResolver> subMap = new HashMap<>(oldMap.size() + newMap.size());
+                    subMap.putAll(oldMap);
+                    subMap.putAll(newMap);
+                    return Collections.unmodifiableMap(subMap);
+                });
+            }
         }
         return map;
     }

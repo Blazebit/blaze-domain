@@ -27,6 +27,12 @@ import java.util.Set;
  * @since 1.0.0
  */
 public enum DomainOperator {
+    // Note that the operators are ordered by precedence
+
+    /**
+     * The <code>!</code> operator.
+     */
+    NOT,
     /**
      * The unary <code>+</code> operator.
      */
@@ -35,14 +41,6 @@ public enum DomainOperator {
      * The unary <code>-</code> operator.
      */
     UNARY_MINUS,
-    /**
-     * The <code>+</code> operator.
-     */
-    PLUS,
-    /**
-     * The <code>-</code> operator.
-     */
-    MINUS,
     /**
      * The <code>*</code> operator.
      */
@@ -56,9 +54,13 @@ public enum DomainOperator {
      */
     MODULO,
     /**
-     * The <code>!</code> operator.
+     * The <code>+</code> operator.
      */
-    NOT;
+    PLUS,
+    /**
+     * The <code>-</code> operator.
+     */
+    MINUS;
 
     /**
      * The arithmetic operators.
@@ -76,5 +78,15 @@ public enum DomainOperator {
      */
     public static DomainOperator[] arithmetic() {
         return ARITHMETIC.toArray(new DomainOperator[0]);
+    }
+
+    /**
+     * Returns whether this operator has precedence over the given one.
+     *
+     * @param operator The other operator
+     * @return whether this operator has precedence over the given one
+     */
+    public boolean hasPrecedenceOver(DomainOperator operator) {
+        return ordinal() <= operator.ordinal();
     }
 }

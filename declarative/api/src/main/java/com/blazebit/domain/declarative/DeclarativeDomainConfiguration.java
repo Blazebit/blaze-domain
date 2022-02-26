@@ -54,6 +54,14 @@ public interface DeclarativeDomainConfiguration extends ServiceProvider {
     DeclarativeDomainConfiguration addDomainType(Class<?> domainTypeClass, DomainType domainTypeAnnotation);
 
     /**
+     * Removes the domain type registered for the given domain type java class.
+     *
+     * @param domainTypeClass The domain type java class to remove
+     * @return this for chaining
+     */
+    DeclarativeDomainConfiguration removeDomainType(Class<?> domainTypeClass);
+
+    /**
      * Adds the given domain functions java class for later analysis to add its functions as domain function to the domain builder.
      *
      * @param domainFunctionsClass The domain functions java class to analyze
@@ -69,6 +77,14 @@ public interface DeclarativeDomainConfiguration extends ServiceProvider {
      * @return this for chaining
      */
     DeclarativeDomainConfiguration addDomainFunctions(Class<?> domainFunctionsClass, DomainFunctions domainFunctionsAnnotation);
+
+    /**
+     * Removes the domain functions registered for the given domain functions java class.
+     *
+     * @param domainFunctionsClass The domain functions java class to remove
+     * @return this for chaining
+     */
+    DeclarativeDomainConfiguration removeDomainFunctions(Class<?> domainFunctionsClass);
 
     /**
      * Returns the type resolver.

@@ -76,13 +76,14 @@ public class DomainFunctionArgumentDefinitionImpl extends AbstractMetadataDefini
         if (typeName == null) {
             typeDefinition = collection ? domainBuilder.getCollectionDomainTypeDefinition(null) : null;
         } else {
-            typeDefinition = domainBuilder.getDomainTypeDefinition(typeName);
+            if (collection) {
+                typeDefinition = domainBuilder.getDomainTypeDefinitionForFunctionArgument("Collection[" + typeName + "]");
+            } else {
+                typeDefinition = domainBuilder.getDomainTypeDefinitionForFunctionArgument(typeName);
+            }
             if (typeDefinition == null) {
                 String name = this.name == null || this.name.isEmpty() ? "" : "(" + this.name + ")";
                 context.addError("The argument type '" + typeName + "' defined for the function argument index " + index + name + " of function " + owner.getName() + " is unknown!");
-            }
-            if (collection) {
-                typeDefinition = domainBuilder.getCollectionDomainTypeDefinition(typeDefinition);
             }
         }
     }

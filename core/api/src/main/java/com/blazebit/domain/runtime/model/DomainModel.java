@@ -64,26 +64,20 @@ public interface DomainModel extends ServiceProvider {
     public EnumDomainType getEnumType(String name);
 
     /**
-     * Returns the collection domain type with the given element domain type or <code>null</code>.
+     * Returns the collection domain type with the given element domain type name or <code>null</code>.
      *
-     * @param elementDomainType The element domain type of the desired collection domain type
+     * @param elementDomainTypeName The element domain type name of the desired collection domain type
      * @return the collection domain type or <code>null</code>
      */
-    public CollectionDomainType getCollectionType(DomainType elementDomainType);
+    public CollectionDomainType getCollectionType(String elementDomainTypeName);
 
     /**
      * Returns the types of the domain model as map indexed by their type name.
+     * Note that some entries can have a null value which marks them as explicitly removed.
      *
      * @return the types of the domain model
      */
     public Map<String, DomainType> getTypes();
-
-    /**
-     * Returns the collection types of the domain model as map indexed by their element domain type.
-     *
-     * @return the collection types of the domain model
-     */
-    public Map<DomainType, CollectionDomainType> getCollectionTypes();
 
     /**
      * Returns the domain function with the given name or <code>null</code>.
@@ -95,6 +89,7 @@ public interface DomainModel extends ServiceProvider {
 
     /**
      * Returns the functions of the domain model as map indexed by their function name.
+     * Note that some entries can have a null value which marks them as explicitly removed.
      *
      * @return the functions of the domain model
      */
@@ -110,6 +105,7 @@ public interface DomainModel extends ServiceProvider {
 
     /**
      * Returns the function type resolvers of the domain model as map indexed by their function name.
+     * Note that some entries can have a null value which marks them as explicitly removed.
      *
      * @return the function type resolvers of the domain model
      */
@@ -135,6 +131,7 @@ public interface DomainModel extends ServiceProvider {
 
     /**
      * Returns the operation type resolvers of the domain model as map indexed by their type name.
+     * Note that some entries can have a null value which marks them as explicitly removed.
      *
      * @return the operation type resolvers of the domain model
      */
@@ -142,6 +139,7 @@ public interface DomainModel extends ServiceProvider {
 
     /**
      * Returns the predicate type resolvers of the domain model as map indexed by their type name.
+     * Note that some entries can have a null value which marks them as explicitly removed.
      *
      * @return the predicate type resolvers of the domain model
      */

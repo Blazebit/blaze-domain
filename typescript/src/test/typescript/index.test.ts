@@ -99,6 +99,7 @@ describe('Test parse ', function() {
             funcs: [
                 {
                     name: "indexOf",
+                    volatility: "S",
                     argCount: -1,
                     minArgCount: 2,
                     type: "Integer",
@@ -131,6 +132,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "substring",
+                    volatility: "S",
                     argCount: -1,
                     minArgCount: 2,
                     type: "String",
@@ -163,6 +165,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "startsWith",
+                    volatility: "S",
                     argCount: 2,
                     minArgCount: 2,
                     type: "Boolean",
@@ -188,6 +191,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "SIZE",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     type: "Integer",
@@ -279,6 +283,7 @@ describe('Test parse ', function() {
             funcs: [
                 {
                     name: "TAN",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -289,6 +294,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "CURRENT_TIMESTAMP",
+                    volatility: "S",
                     argCount: 0,
                     minArgCount: 0,
                     type: "Timestamp",
@@ -297,6 +303,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "TRIM",
+                    volatility: "S",
                     argCount: 2,
                     minArgCount: 1,
                     type: "String",
@@ -312,6 +319,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "SUBSTRING",
+                    volatility: "S",
                     argCount: 3,
                     minArgCount: 2,
                     type: "String",
@@ -335,6 +343,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "SQRT",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -346,6 +355,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "ROUND",
+                    volatility: "S",
                     argCount: 2,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -358,6 +368,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "LEAST",
+                    volatility: "S",
                     argCount: 3,
                     minArgCount: 2,
                     typeResolver: {"WidestDomainFunctionTypeResolver": ["Numeric"]},
@@ -369,6 +380,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "LENGTH",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     type: "Integer",
@@ -381,6 +393,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "ASIN",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -389,6 +402,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "contains",
+                    volatility: "S",
                     argCount: 2,
                     minArgCount: 2,
                     type: "Boolean",
@@ -396,6 +410,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "UPPER",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     type: "String",
@@ -404,6 +419,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "ABS",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"NthArgumentDomainFunctionTypeResolver": [0]},
@@ -415,6 +431,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "FLOOR",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Integer"]},
@@ -426,6 +443,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "ENDS_WITH",
+                    volatility: "S",
                     argCount: 2,
                     minArgCount: 2,
                     type: "Boolean",
@@ -438,6 +456,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "ACOS",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -446,6 +465,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "RADIANS",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -454,6 +474,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "CEIL",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Integer"]},
@@ -462,6 +483,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "CURRENT_TIME",
+                    volatility: "S",
                     argCount: 0,
                     minArgCount: 0,
                     type: "Time",
@@ -469,6 +491,7 @@ describe('Test parse ', function() {
                     meta: [{doc: "Returns the current time."}]
                 }, {
                     name: "REPLACE",
+                    volatility: "S",
                     argCount: 3,
                     minArgCount: 3,
                     type: "String",
@@ -485,6 +508,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "RTRIM",
+                    volatility: "S",
                     argCount: 2,
                     minArgCount: 1,
                     type: "String",
@@ -497,6 +521,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "STARTS_WITH",
+                    volatility: "S",
                     argCount: 3,
                     minArgCount: 2,
                     type: "Boolean",
@@ -513,6 +538,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "LOG",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -521,6 +547,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "COS",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -529,6 +556,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "RANDOM",
+                    volatility: "V",
                     argCount: 0,
                     minArgCount: 0,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -537,6 +565,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "SIZE",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     type: "Integer",
@@ -545,6 +574,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "ATAN2",
+                    volatility: "S",
                     argCount: 2,
                     minArgCount: 2,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -557,6 +587,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "LOCATE_LAST",
+                    volatility: "S",
                     argCount: 3,
                     minArgCount: 2,
                     type: "Integer",
@@ -577,6 +608,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "DEGREES",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -585,6 +617,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "LOWER",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     type: "String",
@@ -593,6 +626,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "GREATEST",
+                    volatility: "S",
                     argCount: 3,
                     minArgCount: 2,
                     typeResolver: {"WidestDomainFunctionTypeResolver": ["Numeric"]},
@@ -604,6 +638,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "LTRIM",
+                    volatility: "S",
                     argCount: 2,
                     minArgCount: 1,
                     type: "String",
@@ -616,6 +651,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "SIN",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -624,6 +660,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "POW",
+                    volatility: "S",
                     argCount: 2,
                     minArgCount: 2,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -636,6 +673,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "LOCATE",
+                    volatility: "S",
                     argCount: 3,
                     minArgCount: 2,
                     type: "Integer",
@@ -656,6 +694,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "CURRENT_DATE",
+                    volatility: "S",
                     argCount: 0,
                     minArgCount: 0,
                     type: "Timestamp",
@@ -664,6 +703,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "EXP",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -672,6 +712,7 @@ describe('Test parse ', function() {
                 },
                 {
                     name: "ATAN",
+                    volatility: "S",
                     argCount: 1,
                     minArgCount: 1,
                     typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
@@ -705,6 +746,158 @@ describe('Test parse ', function() {
         }));
         expect(domainModel.types['Integer'].name).to.equal("Integer");
         expect(domainModel.operationTypeResolvers['Integer'][domain.DomainOperator[domain.DomainOperator.PLUS]].resolveType(domainModel, [domainModel.types['Integer'], domainModel.types['Integer']]).name).to.equal("Integer");
+    });
+
+    it('With base model', function() {
+        var baseDomainModel = domain.DomainModel.parse(JSON.stringify({
+            types: [
+                {
+                    name: "Integer",
+                    kind: "B",
+                    ops: ["+", "-", "*", "/", "%", "M", "P"],
+                    preds: ["R", "E", "N"],
+                    meta: []
+                },
+                {
+                    name: "Numeric",
+                    kind: "B",
+                    ops: ["+", "-", "*", "/", "%", "M", "P"],
+                    preds: ["R", "E", "N"],
+                    meta: []
+                },
+                {
+                    name: "String",
+                    kind: "B",
+                    ops: ["+"],
+                    preds: ["R", "E", "N"],
+                    meta: []
+                },
+                {
+                    name: "Boolean",
+                    kind: "B",
+                    ops: ["!"],
+                    preds: ["E", "N"],
+                    meta: []
+                },
+                {
+                    name: "User",
+                    kind: "E",
+                    preds: ["E", "N"],
+                    meta: [],
+                    attrs: [
+                        { name: "id", type: "Integer", meta: [] },
+                        { name: "name", type: "String", meta: [] }
+                    ]
+                },
+                {
+                    name: "Post",
+                    kind: "E",
+                    preds: ["E", "N"],
+                    meta: [],
+                    attrs: [
+                        { name: "id", type: "Integer", meta: [] },
+                        { name: "name", type: "String", meta: [] },
+                        { name: "writer", type: "User", meta: [] },
+                        { name: "comments", type: "Collection[Comment]", meta: [] }
+                    ]
+                },
+                {
+                    name: "Comment",
+                    kind: "E",
+                    preds: ["E", "N"],
+                    meta: [],
+                    attrs: [
+                        { name: "id", type: "Integer", meta: [] },
+                        { name: "content", type: "String", meta: [] },
+                        { name: "writer", type: "User", meta: [] }
+                    ]
+                },
+                {
+                    name: "Collection",
+                    kind: "C",
+                    preds: ["C"],
+                    meta: []
+                },
+                {
+                    name: "Collection[Comment]",
+                    kind: "C",
+                    preds: ["C"],
+                    meta: []
+                }
+            ],
+            funcs: [
+                {
+                    name: "indexOf",
+                    volatility: "S",
+                    argCount: -1,
+                    minArgCount: 2,
+                    type: "Integer",
+                    meta: [
+                        { doc: "The indexOf function" }
+                    ],
+                    args: [
+                        {
+                            name: "string",
+                            type: "String",
+                            meta: [
+                                { doc: "The string in which to search" }
+                            ]
+                        },
+                        {
+                            name: "substring",
+                            type: "String",
+                            meta: [
+                                { doc: "The substring to search" }
+                            ]
+                        },
+                        {
+                            name: "startIndex",
+                            type: "Integer",
+                            meta: [
+                                { doc: "The index at which to start searching" }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            opResolvers: [
+                { resolver: { "FixedDomainOperationTypeResolver": ["Integer"] }, typeOps: { "Integer": ["%", "M", "P"], "Numeric": ["%"] } },
+                { resolver: { "FixedDomainOperationTypeResolver": ["Numeric"] }, typeOps: { "Integer": ["/"], "Numeric": ["/", "%", "M", "P"] } },
+                { resolver: { "WidestDomainOperationTypeResolver": ["Numeric", "Integer"] }, typeOps: { "Integer": ["+", "-", "*"], "Numeric": ["+", "-", "*"] } },
+                { resolver: { "FixedDomainOperationTypeResolver": ["String"] }, typeOps: { "String": ["+"] } },
+                { resolver: { "FixedDomainOperationTypeResolver": ["Boolean"] }, typeOps: { "Boolean": ["!"] } }
+            ],
+            predResolvers: []
+        }));
+
+        var domainModel = domain.DomainModel.parse(JSON.stringify({
+            types: [
+                {
+                    name: "Numeric",
+                    kind: "B",
+                    ops: ["+"],
+                    preds: ["R"],
+                    meta: []
+                },
+                {
+                    name: "Boolean",
+                    kind: "T",
+                },
+            ],
+            funcs: [
+                {
+                    name: "indexOf"
+                }
+            ],
+            opResolvers: [
+                { resolver: { "WidestDomainOperationTypeResolver": ["Numeric", "Integer"] }, typeOps: { "Numeric": ["+"] } },
+            ],
+            predResolvers: []
+        }), baseDomainModel);
+        expect(domainModel.types['Boolean']).to.equal(null);
+        expect((domainModel.types['Numeric'] as domain.BasicDomainType).enabledOperators.length).to.equal(1);
+        expect((domainModel.types['Numeric'] as domain.BasicDomainType).enabledPredicates.length).to.equal(1);
+        expect(domainModel.functions['indexOf']).to.equal(null);
     });
 
 });

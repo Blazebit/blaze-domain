@@ -83,7 +83,11 @@ public interface DomainType extends MetadataHolder {
         /**
          * A collection domain type.
          */
-        COLLECTION;
+        COLLECTION,
+        /**
+         * A union domain type.
+         */
+        UNION;
     }
 
 }

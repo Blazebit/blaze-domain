@@ -46,7 +46,11 @@ export enum DomainTypeKind {
     /**
      * A collection domain type.
      */
-    COLLECTION
+    COLLECTION,
+    /**
+     * A union domain type.
+     */
+    UNION
 }
 
 /**
@@ -57,6 +61,10 @@ export enum DomainTypeKind {
  */
 export enum DomainOperator {
     /**
+     * The <code>!</code> operator.
+     */
+    NOT,
+    /**
      * The unary <code>+</code> operator.
      */
     UNARY_PLUS,
@@ -64,14 +72,6 @@ export enum DomainOperator {
      * The unary <code>-</code> operator.
      */
     UNARY_MINUS,
-    /**
-     * The <code>+</code> operator.
-     */
-    PLUS,
-    /**
-     * The <code>-</code> operator.
-     */
-    MINUS,
     /**
      * The <code>*</code> operator.
      */
@@ -85,9 +85,13 @@ export enum DomainOperator {
      */
     MODULO,
     /**
-     * The <code>!</code> operator.
+     * The <code>+</code> operator.
      */
-    NOT
+    PLUS,
+    /**
+     * The <code>-</code> operator.
+     */
+    MINUS
 }
 
 /**
@@ -219,8 +223,8 @@ export class CollectionDomainType extends DomainType {
      */
     elementType: DomainType;
 
-    constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicate[], elementType: DomainType, metadata: any[]) {
-        super(name, DomainTypeKind.COLLECTION, enabledOperators, enabledPredicates, metadata);
+    constructor(name: string, elementType: DomainType) {
+        super(name, DomainTypeKind.COLLECTION, [], [DomainPredicate.COLLECTION], []);
         this.elementType = elementType;
     }
 
@@ -230,6 +234,23 @@ export class CollectionDomainType extends DomainType {
         } else {
             return "Collection[" + this.elementType + "]";
         }
+    }
+}
+
+/**
+ * A collection type in the domain.
+ *
+ * @author Christian Beikov
+ * @since 2.0.6
+ */
+export class UnionDomainType extends DomainType {
+    /**
+     * The domain type of the collection element.
+     */
+    unionElements: DomainType[];
+
+    constructor(name: string, enabledOperators: readonly DomainOperator[], enabledPredicates: readonly DomainPredicate[], metadata: any[]) {
+        super(name, DomainTypeKind.UNION, enabledOperators, enabledPredicates, metadata);
     }
 }
 
@@ -590,6 +611,35 @@ export class DomainModel {
      */
     predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>>;
 
+    private collectionTypes: StringMap<CollectionDomainType>;
+
+    constructor(types: StringMap<DomainType>, functions: StringMap<DomainFunction>, operationTypeResolvers: StringMap<StringMap<DomainOperationTypeResolver>>, predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>>) {
+        this.types = types;
+        this.functions = functions;
+        this.operationTypeResolvers = operationTypeResolvers;
+        this.predicateTypeResolvers = predicateTypeResolvers;
+        this.collectionTypes = {};
+    }
+
+    getType(input: string): DomainType {
+        if (input.startsWith("Collection")) {
+            let elementTypeName;
+            if (input.length == "Collection".length) {
+                elementTypeName = "";
+            } else if (input.charAt("Collection".length) == '[') {
+                elementTypeName = input.substring("Collection".length, input.length - 1);
+            } else {
+                return this.types[input];
+            }
+            if (this.collectionTypes[elementTypeName] !== undefined) {
+                return this.collectionTypes[elementTypeName];
+            } else {
+                return this.collectionTypes[elementTypeName] = new CollectionDomainType(input, this.getType(elementTypeName));
+            }
+        }
+        return this.types[input];
+    }
+
     /**
      * Parses the given JSON string to a domain model.
      *
@@ -613,7 +663,7 @@ export class DomainModel {
             }
         };
         let validateArgumentTypes = function(domainFunction: DomainFunction, argumentTypes: DomainType[]) {
-            for (var i = 0; i < argumentTypes.length; i++) {
+            OUTER: for (var i = 0; i < argumentTypes.length; i++) {
                 let functionArgument = domainFunction.arguments[i];
                 let argType = argumentTypes[i];
                 if (functionArgument.type == null || argType == null) {
@@ -624,6 +674,22 @@ export class DomainModel {
                         continue;
                     }
                 }
+                if (functionArgument.type instanceof UnionDomainType) {
+                    let unionElements = functionArgument.type.unionElements;
+                    if (argType instanceof CollectionDomainType) {
+                        for (const unionElement of unionElements) {
+                            if (unionElement == argType || unionElement instanceof CollectionDomainType && (unionElement as CollectionDomainType).elementType == null) {
+                                continue OUTER;
+                            }
+                        }
+                    } else {
+                        for (const unionElement of unionElements) {
+                            if (unionElement == argType) {
+                                continue OUTER;
+                            }
+                        }
+                    }
+                }
                 if (functionArgument.type != argType) {
                     throw new FunctionTypeResolverException("Unsupported argument type '" + argType + "' for argument '" + functionArgument + "' of function '" + domainFunction.name + "'! Expected type: " + functionArgument.type, domainFunction, i, argType, [functionArgument.type.name]);
                 }
@@ -631,7 +697,7 @@ export class DomainModel {
         };
         registerIfAbsent("FixedDomainPredicateTypeResolver", function(type: string): DomainPredicateTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
-                return domainModel.types[type];
+                return domainModel.getType(type);
             }};
         });
         registerIfAbsent("RestrictedDomainPredicateTypeResolver", function(returningType: string, supportedTypes: string[]): DomainPredicateTypeResolver {
@@ -647,7 +713,7 @@ export class DomainModel {
                         throw new OperandTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType.name + "' is unsupported! Expected one of the following types: " + typesString, i, domainType, supportedTypes);
                     }
                 }
-                return domainModel.types[returningType];
+                return domainModel.getType(returningType);
             }};
         });
         registerIfAbsent("OperandRestrictedDomainPredicateTypeResolver", function(returningType: string, supportedTypesPerOperand: string[][]): DomainPredicateTypeResolver {
@@ -664,12 +730,12 @@ export class DomainModel {
                         throw new OperandTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType.name + "' is unsupported! Expected one of the following types: " + typesString, i, domainType, supportedTypes);
                     }
                 }
-                return domainModel.types[returningType];
+                return domainModel.getType(returningType);
             }};
         });
         registerIfAbsent("FixedDomainOperationTypeResolver", function(type: string): DomainOperationTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainTypes: DomainType[]): DomainType {
-                return domainModel.types[type];
+                return domainModel.getType(type);
             }};
         });
         registerIfAbsent("WidestDomainOperationTypeResolver", function(supportedTypes: string[]): DomainOperationTypeResolver {
@@ -690,9 +756,9 @@ export class DomainModel {
                 }
 
                 if (typeIndex == Number.MAX_VALUE) {
-                    return domainModel.types[supportedTypes[0]];
+                    return domainModel.getType(supportedTypes[0]);
                 } else {
-                    return domainModel.types[supportedTypes[typeIndex]];
+                    return domainModel.getType(supportedTypes[typeIndex]);
                 }
             }};
         });
@@ -710,7 +776,7 @@ export class DomainModel {
                     }
                 }
 
-                return domainModel.types[returningType];
+                return domainModel.getType(returningType);
             }};
         });
         registerIfAbsent("OperandRestrictedDomainOperationTypeResolver", function(returningType: string, supportedTypesPerOperand: string[][]): DomainOperationTypeResolver {
@@ -728,7 +794,7 @@ export class DomainModel {
                     }
                 }
 
-                return domainModel.types[returningType];
+                return domainModel.getType(returningType);
             }};
         });
         registerIfAbsent("NthArgumentDomainFunctionTypeResolver", function(index: number): DomainFunctionTypeResolver {
@@ -740,7 +806,7 @@ export class DomainModel {
         registerIfAbsent("FixedDomainFunctionTypeResolver", function(type: string): DomainFunctionTypeResolver {
             return { resolveType: function(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
                 validateArgumentTypes(domainFunction, argumentTypes);
-                return domainModel.types[type];
+                return domainModel.getType(type);
             }};
         });
         registerIfAbsent("WidestDomainFunctionTypeResolver", function(types: string[]): DomainFunctionTypeResolver {
@@ -761,9 +827,9 @@ export class DomainModel {
                 }
 
                 if (typeIndex == Number.MAX_VALUE) {
-                    return domainModel.types[types[0]];
+                    return domainModel.getType(types[0]);
                 } else {
-                    return domainModel.types[types[typeIndex]];
+                    return domainModel.getType(types[typeIndex]);
                 }
             }};
         });
@@ -887,16 +953,21 @@ export class DomainModel {
                 });
             }
             let meta = parseMeta(type['meta']);
+            let oldDomainType = domainTypes[name];
+            let newDomainType;
             switch (type['kind']) {
                 case 'B':
-                    domainTypes[name] = new BasicDomainType(name, ops, preds, meta);
+                    newDomainType = new BasicDomainType(name, ops, preds, meta);
                     break;
                 case 'C':
-                    domainTypes[name] = new CollectionDomainType(name, ops, preds, null, meta);
+                    newDomainType = new CollectionDomainType(name, null);
+                    break;
+                case 'U':
+                    newDomainType = new UnionDomainType(name, ops, preds, meta);
                     break;
                 case 'E':
                     var attrs: StringMap<EntityAttribute> = {};
-                    domainTypes[name] = new EntityDomainType(name, ops, preds, attrs, meta);
+                    newDomainType = new EntityDomainType(name, ops, preds, attrs, meta);
                     break;
                 case 'N':
                     var vals: StringMap<EnumDomainTypeValue> = {};
@@ -904,30 +975,73 @@ export class DomainModel {
                         let valMeta = parseMeta(val['meta']);
                         vals[val['name']] = new EnumDomainTypeValue(val['name'], doc(valMeta), valMeta);
                     });
-                    domainTypes[name] = new EnumDomainType(name, ops, preds, vals, meta);
+                    newDomainType = new EnumDomainType(name, ops, preds, vals, meta);
+                    break;
+                case 'T':
+                default:
+                    newDomainType = null;
                     break;
             }
+            if (oldDomainType !== undefined) {
+                if (newDomainType == null) {
+                    operationTypeResolvers[name] = null;
+                    predicateTypeResolvers[name] = null;
+                } else {
+                    let operationResolvers = operationTypeResolvers[name];
+                    if (operationResolvers !== undefined) {
+                        for (const enabledOperator of oldDomainType.enabledOperators) {
+                            if (newDomainType.enabledOperators.indexOf(enabledOperator) == -1) {
+                                operationResolvers[DomainOperator[enabledOperator]] = null;
+                            }
+                        }
+                    }
+                    let predicateResolvers = predicateTypeResolvers[name];
+                    if (predicateResolvers !== undefined) {
+                        for (const enabledPredicate of oldDomainType.enabledPredicates) {
+                            if (newDomainType.enabledPredicates.indexOf(enabledPredicate) == -1) {
+                                predicateResolvers[DomainPredicate[enabledPredicate]] = null;
+                            }
+                        }
+                    }
+                }
+            }
+            domainTypes[name] = newDomainType;
         });
         types.forEach(function (type) {
             let name = type['name'];
-            if (type['kind'] == 'E') {
-                let entityType = domainTypes[name] as EntityDomainType;
-                if (Array.isArray(type['attrs'])) {
-                    type['attrs'].forEach(function (a) {
-                        let attrMeta = parseMeta(a['meta']);
-                        entityType.attributes[a['name']] = new EntityAttribute(a['name'], domainTypes[a['type']], doc(attrMeta), attrMeta);
-                    });
-                }
-            } else if (type['kind'] == 'C') {
-                let collectionType = domainTypes[name] as CollectionDomainType;
-                let prefix = 'Collection[';
-                if (name.length > prefix.length) {
-                    collectionType.elementType = domainTypes[name.substring(prefix.length, name.length - 1)];
-                }
+            switch (type['kind']) {
+                case 'E':
+                    let entityType = domainTypes[name] as EntityDomainType;
+                    if (Array.isArray(type['attrs'])) {
+                        type['attrs'].forEach(function (a) {
+                            let attrMeta = parseMeta(a['meta']);
+                            entityType.attributes[a['name']] = new EntityAttribute(a['name'], domainTypes[a['type']], doc(attrMeta), attrMeta);
+                        });
+                    }
+                    break;
+                case 'C':
+                    let collectionType = domainTypes[name] as CollectionDomainType;
+                    let prefix = 'Collection[';
+                    if (name.length > prefix.length) {
+                        collectionType.elementType = domainTypes[name.substring(prefix.length, name.length - 1)];
+                    }
+                    break;
+                case 'U':
+                    let unionType = domainTypes[name] as UnionDomainType;
+                    let unionElementTypeNames = unionType.name.split('|');
+                    unionType.unionElements = [];
+                    for (const unionElementTypeName of unionElementTypeNames) {
+                        unionType.unionElements.push(domainTypes[unionElementTypeName])
+                    }
+                    break;
             }
         });
         if (Array.isArray(functions)) {
             functions.forEach(function (func) {
+                if (func['volatility'] === undefined) {
+                    funcs[func['name']] = null;
+                    return;
+                }
                 var params: DomainFunctionArgument[] = [];
                 let args = func['args'];
                 if (Array.isArray(args)) {
@@ -970,19 +1084,19 @@ export class DomainModel {
                 let r: DomainOperationTypeResolver = resolver(op['resolver']);
                 if (r != null) {
                     for (let prop in typeOps) {
-                        if (domainTypes[prop] != null && Array.isArray(typeOps[prop])) {
-                            let opMap = operationTypeResolvers[prop];
-                            if (opMap == null) {
-                                opMap = operationTypeResolvers[prop] = {};
-                            }
-
-                            typeOps[prop].forEach(function(op) {
-                                let o = parseOp(op);
-                                if (o != null) {
-                                    opMap[DomainOperator[o]] = r;
+                        if (domainTypes[prop] != null) {
+                            if (Array.isArray(typeOps[prop])) {
+                                let opMap = operationTypeResolvers[prop];
+                                if (opMap == null) {
+                                    opMap = operationTypeResolvers[prop] = {};
                                 }
-                            });
-
+                                typeOps[prop].forEach(function(op) {
+                                    let o = parseOp(op);
+                                    if (o != null) {
+                                        opMap[DomainOperator[o]] = r;
+                                    }
+                                });
+                            }
                         }
                     }
                 }
@@ -1006,18 +1120,20 @@ export class DomainModel {
                         }
                     } else {
                         for (let prop in typePreds) {
-                            if (domainTypes[prop] != null && Array.isArray(typePreds[prop])) {
-                                let predMap = predicateTypeResolvers[prop];
-                                if (predMap == null) {
-                                    predMap = predicateTypeResolvers[prop] = {};
-                                }
-
-                                typePreds[prop].forEach(function (pred) {
-                                    let p = parsePred(pred);
-                                    if (p != null) {
-                                        predMap[DomainPredicate[p]] = r;
+                            if (domainTypes[prop] != null) {
+                                if (Array.isArray(typePreds[prop])) {
+                                    let predMap = predicateTypeResolvers[prop];
+                                    if (predMap == null) {
+                                        predMap = predicateTypeResolvers[prop] = {};
                                     }
-                                });
+
+                                    typePreds[prop].forEach(function (pred) {
+                                        let p = parsePred(pred);
+                                        if (p != null) {
+                                            predMap[DomainPredicate[p]] = r;
+                                        }
+                                    });
+                                }
                             }
                         }
                     }
@@ -1025,11 +1141,11 @@ export class DomainModel {
             });
         }
 
-        return {
-            types:                      domainTypes,
-            functions:                  funcs,
-            operationTypeResolvers:     operationTypeResolvers,
-            predicateTypeResolvers:     predicateTypeResolvers
-        };
+        return new DomainModel(
+            domainTypes,
+            funcs,
+            operationTypeResolvers,
+            predicateTypeResolvers
+        );
     }
 }

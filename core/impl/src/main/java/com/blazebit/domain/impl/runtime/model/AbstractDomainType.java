@@ -22,6 +22,7 @@ import com.blazebit.domain.impl.boot.model.MetamodelBuildingContext;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicate;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -41,6 +42,13 @@ public abstract class AbstractDomainType extends AbstractMetadataHolder implemen
         this.javaType = typeDefinition.getJavaType();
         this.enabledOperators = context.getOperators(typeDefinition);
         this.enabledPredicates = context.getPredicates(typeDefinition);
+    }
+
+    protected AbstractDomainType(String name, Class<?> javaType) {
+        this.name = name;
+        this.javaType = javaType;
+        this.enabledOperators = Collections.emptySet();
+        this.enabledPredicates = Collections.emptySet();
     }
 
     @Override

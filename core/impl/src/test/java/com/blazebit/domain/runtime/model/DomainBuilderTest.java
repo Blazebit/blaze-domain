@@ -23,6 +23,10 @@ import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+
 public class DomainBuilderTest {
 
     private DomainBuilder createDefaultDomainBuilder() {
@@ -133,6 +137,71 @@ public class DomainBuilderTest {
         Assert.assertEquals(MetadataSample.INSTANCE, enumDomainType.getEnumValues().get("UnitTest").getMetadata(MetadataSample.class));
         Assert.assertEquals("TestKind", entityDomainType.getAttribute("kind").getType().getName());
         Assert.assertEquals(2, ((EnumDomainType) entityDomainType.getAttribute("kind").getType()).getEnumValues().size());
+    }
+
+    @Test
+    public void testBuildUnionModel() {
+        // Given
+        DomainBuilder domainBuilder = createDefaultDomainBuilder();
+        domainBuilder.createEntityType("Test")
+            .addAttribute("name", "String", MetadataSample.INSTANCE)
+            .withMetadata(MetadataSample.INSTANCE)
+            .build();
+        domainBuilder.createFunction("size")
+            .withArgument("argument", "Collection|String")
+            .withResultType("String")
+            .build();
+        // When
+        DomainModel domainModel = domainBuilder.build();
+
+        // Then
+        EntityDomainType entityDomainType = (EntityDomainType) domainModel.getType("Test");
+        Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType.getMetadata(MetadataSample.class));
+        Assert.assertEquals(MetadataSample.INSTANCE, entityDomainType.getAttribute("name").getMetadata(MetadataSample.class));
+        Assert.assertEquals("String", entityDomainType.getAttribute("name").getType().getName());
+
+        DomainFunction sizeFunction = domainModel.getFunction("size");
+        DomainType argumentType = sizeFunction.getArgument(0).getType();
+        Assert.assertTrue(argumentType instanceof UnionDomainType);
+        Assert.assertEquals("Collection|String", argumentType.getName());
+        UnionDomainType unionDomainType = (UnionDomainType) argumentType;
+        Assert.assertEquals("Collection", unionDomainType.getUnionElements().get(0).getName());
+        Assert.assertEquals(DomainType.DomainTypeKind.COLLECTION, unionDomainType.getUnionElements().get(0).getKind());
+        Assert.assertEquals("String", unionDomainType.getUnionElements().get(1).getName());
+        Assert.assertEquals(DomainType.DomainTypeKind.BASIC, unionDomainType.getUnionElements().get(1).getKind());
+
+        DomainModel newDomainModel = Domain.getDefaultProvider().createBuilder(domainModel)
+            .extendBasicType("String", MetadataSample.INSTANCE)
+            .build();
+
+        assertNotSame(domainModel.getType("String"), newDomainModel.getType("String"));
+        assertNotSame(domainModel.getType("Test"), newDomainModel.getType("Test"));
+        assertNotSame(domainModel.getFunction("size"), newDomainModel.getFunction("size"));
+    }
+
+    @Test
+    public void testBuildExtendedModelWithExplicitRemoved() {
+        // Given
+        DomainBuilder domainBuilder = createDefaultDomainBuilder();
+        domainBuilder.createEntityType("Test")
+            .addAttribute("name", "String", MetadataSample.INSTANCE)
+            .withMetadata(MetadataSample.INSTANCE)
+            .build();
+        domainBuilder.createFunction("size")
+            .withArgument("argument", "Collection|String")
+            .withResultType("String")
+            .build();
+        DomainModel domainModel = domainBuilder.build();
+
+        // When
+        DomainBuilder builder = Domain.getDefaultProvider().createBuilder(domainModel);
+        builder.removeType("Test");
+        builder.removeFunction("size");
+        DomainModel newDomainModel = builder.build();
+
+        // Then
+        assertNull(newDomainModel.getType("Test"));
+        assertNull(newDomainModel.getFunction("size"));
     }
 
     private static class MetadataSample implements MetadataDefinition<MetadataSample> {

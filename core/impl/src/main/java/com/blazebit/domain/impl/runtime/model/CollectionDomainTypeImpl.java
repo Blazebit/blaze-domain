@@ -23,6 +23,8 @@ import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicate;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +35,7 @@ import java.util.Set;
  */
 public class CollectionDomainTypeImpl extends AbstractDomainType implements CollectionDomainType, CollectionDomainTypeDefinition {
 
+    public static final CollectionDomainTypeImpl INSTANCE = new CollectionDomainTypeImpl("Collection", null);
     private static final Set<DomainOperator> ENABLED_OPERATORS = EnumSet.noneOf(DomainOperator.class);
     private static final Set<DomainPredicate> ENABLED_PREDICATES = EnumSet.of(DomainPredicate.COLLECTION);
     private final DomainTypeImplementor elementType;
@@ -42,6 +45,12 @@ public class CollectionDomainTypeImpl extends AbstractDomainType implements Coll
         super(typeDefinition, context);
         this.elementType = context.getType(typeDefinition.getElementType());
         this.metadata = context.createMetadata(typeDefinition);
+    }
+
+    public CollectionDomainTypeImpl(String name, DomainTypeImplementor elementType) {
+        super(name, Collection.class);
+        this.elementType = elementType;
+        this.metadata = Collections.emptyMap();
     }
 
     @Override

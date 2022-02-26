@@ -108,18 +108,34 @@ public final class StaticDomainFunctionTypeResolvers {
     }
 
     private static void validateArgumentTypes(Map<DomainFunctionArgument, DomainType> argumentTypes) {
-        for (Map.Entry<DomainFunctionArgument, DomainType> entry : argumentTypes.entrySet()) {
+        OUTER: for (Map.Entry<DomainFunctionArgument, DomainType> entry : argumentTypes.entrySet()) {
             DomainFunctionArgument functionArgument = entry.getKey();
-            if (functionArgument.getType() == null || entry.getValue() == null) {
+            DomainType argumentType = functionArgument.getType();
+            if (argumentType == null || entry.getValue() == null) {
                 continue;
             }
-            if (functionArgument.getType() instanceof CollectionDomainType && entry.getValue() instanceof CollectionDomainType) {
-                if (((CollectionDomainType) functionArgument.getType()).getElementType() == null || ((CollectionDomainType) entry.getValue()).getElementType() == null) {
+            if (argumentType instanceof CollectionDomainType && entry.getValue() instanceof CollectionDomainType) {
+                if (((CollectionDomainType) argumentType).getElementType() == null || ((CollectionDomainType) entry.getValue()).getElementType() == null) {
                     continue;
                 }
             }
-            if (functionArgument.getType() != entry.getValue()) {
-                throw new DomainTypeResolverException("Unsupported argument type '" + entry.getValue() + "' for argument '" + functionArgument + "' of function '" + functionArgument.getOwner().getName() + "'! Expected type: " + functionArgument.getType());
+            if (argumentType instanceof UnionDomainType) {
+                if (entry.getValue() instanceof CollectionDomainType) {
+                    for (DomainType unionElement : ((UnionDomainType) argumentType).getUnionElements()) {
+                        if (unionElement == entry.getValue() || unionElement instanceof CollectionDomainType && ((CollectionDomainType) unionElement).getElementType() == null) {
+                            continue OUTER;
+                        }
+                    }
+                } else {
+                    for (DomainType unionElement : ((UnionDomainType) argumentType).getUnionElements()) {
+                        if (unionElement == entry.getValue()) {
+                            continue OUTER;
+                        }
+                    }
+                }
+            }
+            if (argumentType != entry.getValue()) {
+                throw new DomainTypeResolverException("Unsupported argument type '" + entry.getValue() + "' for argument '" + functionArgument + "' of function '" + functionArgument.getOwner().getName() + "'! Expected type: " + argumentType);
             }
         }
     }

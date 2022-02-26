@@ -341,14 +341,6 @@ public interface DomainBuilder extends ServiceProvider {
     public EntityDomainTypeDefinition getEntityType(String name);
 
     /**
-     * Returns the collection domain type definition with the given element domain type name or <code>null</code>.
-     *
-     * @param elementDomainTypeName The element domain type name of the desired collection domain type definition
-     * @return the collection domain type definition or <code>null</code>
-     */
-    public CollectionDomainTypeDefinition getCollectionType(String elementDomainTypeName);
-
-    /**
      * Returns the type definitions of the domain builder as map indexed by their type name.
      *
      * @return the type definitions of the domain builder
@@ -356,11 +348,12 @@ public interface DomainBuilder extends ServiceProvider {
     public Map<String, DomainTypeDefinition> getTypes();
 
     /**
-     * Returns the collection type definitions of the domain builder as map indexed by their element domain type name.
+     * Removes and returns the domain type definition with the given name or <code>null</code>.
      *
-     * @return the collection type definitions of the domain builder
+     * @param name The name of the desired domain type definition
+     * @return the domain type definition or <code>null</code>
      */
-    public Map<String, CollectionDomainTypeDefinition> getCollectionTypes();
+    public DomainTypeDefinition removeType(String name);
 
     /**
      * Returns the domain function definition with the given name or <code>null</code>.
@@ -376,6 +369,14 @@ public interface DomainBuilder extends ServiceProvider {
      * @return the function definitions of the domain builder
      */
     public Map<String, DomainFunctionDefinition> getFunctions();
+
+    /**
+     * Removes and returns the domain function definition with the given name or <code>null</code>.
+     *
+     * @param name The name of the desired domain function definition
+     * @return the domain function definition or <code>null</code>
+     */
+    public DomainFunctionDefinition removeFunction(String name);
 
     /**
      * Returns all properties.

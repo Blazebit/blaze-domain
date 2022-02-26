@@ -186,12 +186,13 @@ public class DomainFunctionDefinitionImpl extends AbstractMetadataDefinitionHold
         if (resultTypeName == null) {
             resultTypeDefinition = null;
         } else {
-            resultTypeDefinition = domainBuilder.getDomainTypeDefinition(resultTypeName);
+            if (resultCollection) {
+                resultTypeDefinition = domainBuilder.getCollectionDomainTypeDefinition(resultTypeName);
+            } else {
+                resultTypeDefinition = domainBuilder.getDomainTypeDefinition(resultTypeName);
+            }
             if (resultTypeDefinition == null) {
                 context.addError("The result type '" + resultTypeName + "' defined for the function " + name + " is unknown!");
-            }
-            if (resultCollection) {
-                resultTypeDefinition = domainBuilder.getCollectionDomainTypeDefinition(resultTypeDefinition);
             }
         }
 

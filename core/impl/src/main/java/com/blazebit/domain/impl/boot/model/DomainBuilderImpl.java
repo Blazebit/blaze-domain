@@ -28,6 +28,7 @@ import com.blazebit.domain.boot.model.EntityDomainTypeDefinition;
 import com.blazebit.domain.boot.model.EnumDomainTypeDefinition;
 import com.blazebit.domain.boot.model.EnumDomainTypeValueDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
+import com.blazebit.domain.impl.runtime.model.CollectionDomainTypeImpl;
 import com.blazebit.domain.impl.runtime.model.RootDomainModel;
 import com.blazebit.domain.impl.runtime.model.SubDomainModel;
 import com.blazebit.domain.runtime.model.BasicDomainType;
@@ -46,6 +47,7 @@ import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
 import com.blazebit.domain.runtime.model.StaticDomainPredicateTypeResolvers;
+import com.blazebit.domain.runtime.model.UnionDomainType;
 import com.blazebit.domain.spi.DomainContributor;
 import com.blazebit.domain.spi.DomainSerializer;
 import com.blazebit.domain.spi.ServiceProvider;
@@ -55,6 +57,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -137,31 +140,84 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
         if (typeName == null) {
             throw new IllegalArgumentException("Null type name!");
         }
-        DomainTypeDefinition typeDefinition = domainTypeDefinitions.get(typeName);
-        if (typeDefinition == null && typeName.startsWith("Collection[")) {
-            typeDefinition = collectionDomainTypeDefinitions.get(typeName.substring("Collection[".length(), typeName.length() - 1));
+        if (typeName.startsWith("Collection")) {
+            if (typeName.length() == "Collection".length()) {
+                return CollectionDomainTypeImpl.INSTANCE;
+            } else if (typeName.charAt("Collection".length()) == '[') {
+                String elementTypeName = typeName.substring("Collection".length() + 1, typeName.length() - 1);
+                return getCollectionDomainTypeDefinition(elementTypeName);
+            }
         }
+        return getBaseTypeDefinition(typeName);
+    }
+
+    private DomainTypeDefinition getBaseTypeDefinition(String typeName) {
+        DomainTypeDefinition typeDefinition;
+        typeDefinition = domainTypeDefinitions.get(typeName);
         if (typeDefinition == null && baseModel != null) {
             typeDefinition = (DomainTypeDefinition) baseModel.getType(typeName);
+            // Special case when the domain type definition was explicitly removed
+            if (typeDefinition != null && domainTypeDefinitions.containsKey(typeName)) {
+                typeDefinition = null;
+            }
         }
         return typeDefinition;
     }
 
-    public CollectionDomainTypeDefinitionImpl getCollectionDomainTypeDefinition(DomainTypeDefinition typeDefinition) {
-        CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition;
-        if (typeDefinition == null) {
-            collectionDomainTypeDefinition = collectionDomainTypeDefinitions.get(null);
-            if (collectionDomainTypeDefinition == null) {
-                collectionDomainTypeDefinition = new CollectionDomainTypeDefinitionImpl("Collection", Collection.class, null);
-                collectionDomainTypeDefinitions.put(null, collectionDomainTypeDefinition);
-                withPredicate(collectionDomainTypeDefinition.getName(), DomainPredicate.COLLECTION);
-            }
+    public DomainTypeDefinition getDomainTypeDefinitionForFunctionArgument(String typeName) {
+        if (typeName == null) {
+            throw new IllegalArgumentException("Null type name!");
+        }
+        DomainTypeDefinition typeDefinition;
+        if (typeName.startsWith("Collection[")) {
+            final String elementTypeName = typeName.substring("Collection[".length(), typeName.length() - 1);
+            getDomainTypeDefinitionForFunctionArgument(elementTypeName);
+            typeDefinition = getCollectionDomainTypeDefinition(elementTypeName);
         } else {
-            collectionDomainTypeDefinition = collectionDomainTypeDefinitions.get(typeDefinition.getName());
+            if (typeName.indexOf('|') != -1) {
+                String[] unionElementTypeNames = typeName.split("\\|");
+                Arrays.sort(unionElementTypeNames);
+                DomainTypeDefinition[] unionElementTypeDefinitions = new DomainTypeDefinition[unionElementTypeNames.length];
+                for (int i = 0; i < unionElementTypeNames.length; i++) {
+                    DomainTypeDefinition domainTypeDefinition = getDomainTypeDefinition(unionElementTypeNames[i]);
+                    if (domainTypeDefinition == null) {
+                        return null;
+                    }
+                    unionElementTypeDefinitions[i] = domainTypeDefinition;
+                }
+                UnionDomainTypeDefinitionImpl unionDomainTypeDefinition = new UnionDomainTypeDefinitionImpl(typeName, unionElementTypeDefinitions);
+                domainTypeDefinitions.put(typeName, unionDomainTypeDefinition);
+                typeDefinition = unionDomainTypeDefinition;
+            } else {
+                typeDefinition = getDomainTypeDefinition(typeName);
+            }
+        }
+        return typeDefinition;
+    }
+
+    public CollectionDomainTypeDefinition getCollectionDomainTypeDefinition(String elementTypeName) {
+        if (elementTypeName == null) {
+            return CollectionDomainTypeImpl.INSTANCE;
+        }
+        CollectionDomainTypeDefinition collectionDomainTypeDefinition = collectionDomainTypeDefinitions.get(elementTypeName);
+        if (collectionDomainTypeDefinition == null) {
+            DomainTypeDefinition baseTypeDefinition = getBaseTypeDefinition(elementTypeName);
+            if (baseModel != null) {
+                collectionDomainTypeDefinition = (CollectionDomainTypeDefinition) baseModel.getCollectionType(elementTypeName);
+                // Special case when the domain type definition was explicitly removed
+                if (collectionDomainTypeDefinition != null && baseTypeDefinition == null) {
+                    return null;
+                }
+            }
             if (collectionDomainTypeDefinition == null) {
-                collectionDomainTypeDefinition = new CollectionDomainTypeDefinitionImpl("Collection[" + typeDefinition.getName() + "]", Collection.class, typeDefinition);
-                collectionDomainTypeDefinitions.put(typeDefinition.getName(), collectionDomainTypeDefinition);
-                withPredicate(collectionDomainTypeDefinition.getName(), DomainPredicate.COLLECTION);
+                if (baseTypeDefinition == null) {
+                    return null;
+                }
+                String typeName = "Collection[" + elementTypeName + "]";
+                CollectionDomainTypeDefinitionImpl definition = new CollectionDomainTypeDefinitionImpl(typeName, Collection.class, baseTypeDefinition);
+                collectionDomainTypeDefinitions.put(elementTypeName, definition);
+                withPredicate(definition.getName(), DomainPredicate.COLLECTION);
+                collectionDomainTypeDefinition = definition;
             }
         }
         return collectionDomainTypeDefinition;
@@ -555,9 +611,21 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
 
     @Override
     public DomainTypeDefinition getType(String name) {
+        if (name.startsWith("Collection")) {
+            if (name.length() == "Collection".length()) {
+                return CollectionDomainTypeImpl.INSTANCE;
+            } else if (name.charAt("Collection".length()) == '[') {
+                String elementTypeName = name.substring("Collection".length() + 1, name.length() - 1);
+                return getCollectionDomainTypeDefinition(elementTypeName);
+            }
+        }
         DomainTypeDefinitionImplementor typeDefinition = domainTypeDefinitions.get(name);
         if (typeDefinition == null && baseModel != null) {
-            typeDefinition = getType(baseModel.getType(name));
+            DomainType type = baseModel.getType(name);
+            // Special case when the domain type definition was explicitly removed
+            if (type != null && !domainTypeDefinitions.containsKey(name)) {
+                typeDefinition = getType(type);
+            }
         }
         return typeDefinition;
     }
@@ -566,16 +634,11 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
     public EntityDomainTypeDefinition getEntityType(String name) {
         EntityDomainTypeDefinition typeDefinition = (EntityDomainTypeDefinition) domainTypeDefinitions.get(name);
         if (typeDefinition == null && baseModel != null) {
-            typeDefinition = getEntityType(baseModel.getEntityType(name));
-        }
-        return typeDefinition;
-    }
-
-    @Override
-    public CollectionDomainTypeDefinition getCollectionType(String elementDomainTypeName) {
-        CollectionDomainTypeDefinition typeDefinition = collectionDomainTypeDefinitions.get(elementDomainTypeName);
-        if (typeDefinition == null && baseModel != null) {
-            typeDefinition = getCollectionType(baseModel.getCollectionType(baseModel.getType(elementDomainTypeName)));
+            EntityDomainType type = baseModel.getEntityType(name);
+            // Special case when the domain type definition was explicitly removed
+            if (type != null && !domainTypeDefinitions.containsKey(name)) {
+                typeDefinition = getEntityType(type);
+            }
         }
         return typeDefinition;
     }
@@ -596,18 +659,16 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
     }
 
     @Override
-    public Map<String, CollectionDomainTypeDefinition> getCollectionTypes() {
-        if (baseModel == null) {
-            return (Map<String, CollectionDomainTypeDefinition>) (Map<?, ?>) collectionDomainTypeDefinitions;
-        } else {
-            Map<DomainType, CollectionDomainType> collectionTypes = baseModel.getCollectionTypes();
-            Map<String, CollectionDomainTypeDefinition> map = new HashMap<>(collectionTypes.size() + collectionDomainTypeDefinitions.size());
-            for (Map.Entry<DomainType, CollectionDomainType> entry : collectionTypes.entrySet()) {
-                map.put(entry.getKey().getName(), getCollectionType(entry.getValue()));
+    public DomainTypeDefinition removeType(String name) {
+        DomainTypeDefinitionImplementor removed = domainTypeDefinitions.remove(name);
+        if (removed == null) {
+            if (baseModel != null && baseModel.getType(name) != null) {
+                domainTypeDefinitions.put(name, null);
+                domainOperationTypeResolvers.put(name, null);
+                domainPredicateTypeResolvers.put(name, null);
             }
-            map.putAll(collectionDomainTypeDefinitions);
-            return map;
         }
+        return removed;
     }
 
     @Override
@@ -632,6 +693,18 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
             map.putAll(domainFunctionDefinitions);
             return map;
         }
+    }
+
+    @Override
+    public DomainFunctionDefinition removeFunction(String name) {
+        DomainFunctionDefinitionImpl removed = domainFunctionDefinitions.remove(name);
+        if (removed == null) {
+            if (baseModel != null && baseModel.getFunction(name) != null) {
+                domainFunctionDefinitions.put(name, null);
+                domainFunctionTypeResolvers.put(name, null);
+            }
+        }
+        return removed;
     }
 
     @Override
@@ -818,40 +891,6 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
         }
     }
 
-    private EntityDomainType[] getBaseModelEntityTypes(Set<DomainType> dependencies) {
-        Collection<DomainType> domainTypes = baseModel.getTypes().values();
-        List<EntityDomainType> entityDomainTypes = new ArrayList<>(domainTypes.size());
-        for (DomainType domainType : domainTypes) {
-            if (domainType instanceof EntityDomainType) {
-                EntityDomainType entityDomainType = (EntityDomainType) domainType;
-                if (!dependencies.contains(entityDomainType) && collectAttributeDependencies(entityDomainType, dependencies)) {
-                    entityDomainTypes.add(entityDomainType);
-                }
-            }
-        }
-        return entityDomainTypes.toArray(entityDomainTypes.toArray(new EntityDomainType[0]));
-    }
-
-    private boolean collectAttributeDependencies(EntityDomainType entityDomainType, Set<DomainType> dependencies) {
-        boolean hasEntityTypedAttributes = false;
-        for (EntityDomainTypeAttribute attribute : entityDomainType.getAttributes().values()) {
-            DomainType type = attribute.getType();
-            if (type.getKind() == DomainType.DomainTypeKind.ENTITY) {
-                hasEntityTypedAttributes = true;
-            }
-            if (dependencies.contains(type)) {
-                dependencies.add(entityDomainType);
-                CollectionDomainType collectionType = baseModel.getCollectionType(entityDomainType);
-                if (collectionType != null) {
-                    dependencies.add(collectionType);
-                }
-                // No need to check this type again as it is already in the dependencies
-                return false;
-            }
-        }
-        return hasEntityTypedAttributes;
-    }
-
     private boolean dependsOn(DomainFunction domainFunction, Set<DomainType> dependencies) {
         if (dependencies.contains(domainFunction.getResultType())) {
             return true;
@@ -859,6 +898,12 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
         for (DomainFunctionArgument argument : domainFunction.getArguments()) {
             if (dependencies.contains(argument.getType())) {
                 return true;
+            } else if (argument.getType() instanceof UnionDomainType) {
+                for (DomainType unionElement : ((UnionDomainType) argument.getType()).getUnionElements()) {
+                    if (dependencies.contains(unionElement)) {
+                        return true;
+                    }
+                }
             }
         }
 
@@ -867,36 +912,31 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
 
     private void handleChangedDomainTypes() {
         if (changedDomainTypes != null) {
-            Set<DomainType> dependencies = new HashSet<>(changedDomainTypes);
-            for (DomainType dependency : dependencies) {
-                CollectionDomainType collectionType = baseModel.getCollectionType(dependency);
-                if (collectionType != null) {
-                    dependencies.add(collectionType);
-                }
-            }
-
-            EntityDomainType[] entityDomainTypes = getBaseModelEntityTypes(dependencies);
-            int lastSize = dependencies.size();
-            do {
-                int entityDomainTypesSize = entityDomainTypes.length;
-                for (int i = 0; i < entityDomainTypesSize; i++) {
-                    EntityDomainType entityDomainType = entityDomainTypes[i];
-                    if (dependencies.contains(entityDomainType) || !collectAttributeDependencies(entityDomainType, dependencies)) {
-                        // Remove this dependency by swapping last element in and decrementing size
-                        entityDomainTypesSize--;
-                        if (entityDomainTypesSize != 0) {
-                            entityDomainTypes[i] = entityDomainTypes[entityDomainTypesSize];
-                            i--;
-                        }
+            // Build a map from Type -> TypeThatNeedsRebuildOnChange
+            Map<String, Set<DomainType>> typeDependents = new HashMap<>();
+            for (DomainType value : baseModel.getTypes().values()) {
+                if (value instanceof EntityDomainType) {
+                    for (EntityDomainTypeAttribute attribute : ((EntityDomainType) value).getAttributes().values()) {
+                        typeDependents.computeIfAbsent(attribute.getType().getName(), k -> new HashSet<>()).add(value);
+                    }
+                } else if (value instanceof UnionDomainType) {
+                    for (DomainType unionElement : ((UnionDomainType) value).getUnionElements()) {
+                        typeDependents.computeIfAbsent(unionElement.getName(), k -> new HashSet<>()).add(value);
+                    }
+                } else if (value instanceof CollectionDomainType) {
+                    DomainType elementType = ((CollectionDomainType) value).getElementType();
+                    if (elementType != null) {
+                        typeDependents.computeIfAbsent(elementType.getName(), k -> new HashSet<>()).add(value);
                     }
                 }
-                if (dependencies.size() == lastSize) {
-                    break;
-                }
-                lastSize = dependencies.size();
-            } while (true);
+            }
+            // Based on that map, collect the transitive closure of the changed domain types
+            Set<DomainType> typesToRebuild = new HashSet<>(changedDomainTypes);
+            for (DomainType changedDomainType : changedDomainTypes) {
+                buildTransitiveDependencies(typesToRebuild, typeDependents, changedDomainType);
+            }
 
-            for (DomainType dependency : dependencies) {
+            for (DomainType dependency : typesToRebuild) {
                 if (!domainTypeDefinitions.containsKey(dependency.getName())) {
                     DomainTypeDefinitionImplementor domainTypeDefinition;
                     if (dependency instanceof BasicDomainType) {
@@ -913,9 +953,27 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
                     }
                 }
             }
+            for (DomainType dependency : typesToRebuild) {
+                if (dependency instanceof CollectionDomainType) {
+                    getCollectionDomainTypeDefinition(((CollectionDomainType) dependency).getElementType().getName());
+                } else if (dependency instanceof UnionDomainType && !domainTypeDefinitions.containsKey(dependency.getName())) {
+                    domainTypeDefinitions.put(dependency.getName(), new UnionDomainTypeDefinitionImpl((UnionDomainType) dependency, this));
+                }
+            }
             for (DomainFunction domainFunction : baseModel.getFunctions().values()) {
-                if (!domainFunctionDefinitions.containsKey(domainFunction.getName()) && dependsOn(domainFunction, dependencies)) {
+                if (!domainFunctionDefinitions.containsKey(domainFunction.getName()) && dependsOn(domainFunction, typesToRebuild)) {
                     domainFunctionDefinitions.put(domainFunction.getName(), new DomainFunctionDefinitionImpl(domainFunction));
+                }
+            }
+        }
+    }
+
+    private void buildTransitiveDependencies(Set<DomainType> dependencies, Map<String, Set<DomainType>> typeDependents, DomainType changedDomainType) {
+        Set<DomainType> dependents = typeDependents.get(changedDomainType.getName());
+        if (dependents != null) {
+            for (DomainType dependent : dependents) {
+                if (dependencies.add(dependent)) {
+                    buildTransitiveDependencies(dependencies, typeDependents, dependent);
                 }
             }
         }
@@ -926,26 +984,30 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
         MetamodelBuildingContext context = new MetamodelBuildingContext(this);
         handleChangedDomainTypes();
         for (DomainTypeDefinitionImplementor typeDefinition : domainTypeDefinitions.values()) {
-            typeDefinition.bindTypes(this, context);
+            if (typeDefinition != null) {
+                typeDefinition.bindTypes(this, context);
+            }
         }
         for (DomainFunctionDefinitionImpl domainFunctionDefinition : domainFunctionDefinitions.values()) {
-            domainFunctionDefinition.bindTypes(this, context);
+            if (domainFunctionDefinition != null) {
+                domainFunctionDefinition.bindTypes(this, context);
+            }
         }
         // Collection types might be added during type binding of functions or entity types so this must be done last
         for (CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition : collectionDomainTypeDefinitions.values()) {
             collectionDomainTypeDefinition.bindTypes(this, context);
         }
         Map<String, DomainType> domainTypes = new HashMap<>(domainTypeDefinitions.size());
-        Map<DomainType, CollectionDomainType> collectionDomainTypes = new HashMap<>(domainTypeDefinitions.size());
+        Map<String, CollectionDomainType> collectionDomainTypes = new ConcurrentHashMap<>(domainTypeDefinitions.size());
         if (!context.hasErrors()) {
-            for (DomainTypeDefinitionImplementor typeDefinition : domainTypeDefinitions.values()) {
-                DomainType domainType = context.getType(typeDefinition);
-                domainTypes.put(typeDefinition.getName(), domainType);
+            for (Map.Entry<String, DomainTypeDefinitionImplementor> entry : domainTypeDefinitions.entrySet()) {
+                DomainTypeDefinitionImplementor typeDefinition = entry.getValue();
+                domainTypes.put(entry.getKey(), typeDefinition == null ? null : context.getType(typeDefinition));
             }
-            for (CollectionDomainTypeDefinitionImpl collectionDomainTypeDefinition : collectionDomainTypeDefinitions.values()) {
-                CollectionDomainType collectionDomainType = collectionDomainTypeDefinition.getType(context);
-                collectionDomainTypes.put(collectionDomainType.getElementType(), collectionDomainType);
-                domainTypes.put(collectionDomainType.getName(), collectionDomainType);
+            for (Map.Entry<String, CollectionDomainTypeDefinitionImpl> entry : collectionDomainTypeDefinitions.entrySet()) {
+                if (entry.getValue() != null) {
+                    collectionDomainTypes.put(entry.getKey(), entry.getValue().getType(context));
+                }
             }
         }
         Map<String, DomainFunction> domainFunctions;
@@ -955,8 +1017,9 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
             domainFunctions = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         }
         if (!context.hasErrors()) {
-            for (DomainFunctionDefinitionImpl functionDefinition : domainFunctionDefinitions.values()) {
-                domainFunctions.put(functionDefinition.getName().toUpperCase(), functionDefinition.getFunction(context));
+            for (Map.Entry<String, DomainFunctionDefinitionImpl> entry : domainFunctionDefinitions.entrySet()) {
+                DomainFunctionDefinitionImpl functionDefinition = entry.getValue();
+                domainFunctions.put(entry.getKey().toUpperCase(), functionDefinition == null ? null : functionDefinition.getFunction(context));
             }
         }
         Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers = new HashMap<>(this.domainFunctionTypeResolvers.size());
@@ -994,6 +1057,9 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
         }
         if (!context.hasErrors()) {
             for (DomainType domainType : domainTypes.values()) {
+                if (domainType == null) {
+                    continue;
+                }
                 Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = domainOperationTypeResolvers.get(domainType.getName());
                 if (operationTypeResolverMap == null && !domainType.getEnabledOperators().isEmpty()) {
                     operationTypeResolverMap = new HashMap<>();
@@ -1046,7 +1112,7 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
         );
     }
 
-    private DomainModel createDomainModel(DomainModel baseModel, Map<String, Object> properties, Map<Class<?>, Object> services, List<ServiceProvider> serviceProviders, Map<String, DomainType> domainTypes, Map<DomainType, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
+    private DomainModel createDomainModel(DomainModel baseModel, Map<String, Object> properties, Map<Class<?>, Object> services, List<ServiceProvider> serviceProviders, Map<String, DomainType> domainTypes, Map<String, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
                                           Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers, Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers,
                                           Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, DomainType predicateDefaultResultType, List<DomainSerializer<?>> domainSerializers) {
         if (baseModel == null) {
@@ -1091,7 +1157,11 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
             String typeName = entry.getKey();
             DomainType domainType = domainTypes.get(typeName);
             if (domainType == null) {
-                context.addError("An operation type resolver was registered but no type with the name '" + typeName + "' was found: " + entry.getValue());
+                if (entry.getValue() == null) {
+                    domainOperationTypeResolvers.put(typeName, null);
+                } else {
+                    context.addError("An operation type resolver was registered but no type with the name '" + typeName + "' was found: " + entry.getValue());
+                }
             } else {
                 Map<DomainOperator, DomainOperationTypeResolver> operationTypeResolverMap = new HashMap<>(entry.getValue().size());
                 domainOperationTypeResolvers.put(typeName, operationTypeResolverMap);
@@ -1117,7 +1187,11 @@ public class DomainBuilderImpl implements DomainBuilder, Serializable {
             String typeName = entry.getKey();
             DomainType domainType = domainTypes.get(typeName);
             if (domainType == null) {
-                context.addError("An operation type resolver was registered but no type with the name '" + typeName + "' was found: " + entry.getValue());
+                if (entry.getValue() == null) {
+                    domainPredicateTypeResolvers.put(typeName, null);
+                } else {
+                    context.addError("An operation type resolver was registered but no type with the name '" + typeName + "' was found: " + entry.getValue());
+                }
             } else {
                 Map<DomainPredicate, DomainPredicateTypeResolver> predicateTypeResolverMap = new HashMap<>(entry.getValue().size());
                 domainPredicateTypeResolvers.put(typeName, predicateTypeResolverMap);

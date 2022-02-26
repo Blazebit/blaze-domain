@@ -45,7 +45,7 @@ public class RootDomainModel implements DomainModel, Serializable {
     private final Map<Class<?>, Object> services;
     private final List<ServiceProvider> serviceProviders;
     private final Map<String, DomainType> domainTypes;
-    private final Map<DomainType, CollectionDomainType> collectionDomainTypes;
+    private final Map<String, CollectionDomainType> collectionDomainTypes;
     private final Map<String, DomainFunction> domainFunctions;
     private final Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers;
     private final Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers;
@@ -53,7 +53,7 @@ public class RootDomainModel implements DomainModel, Serializable {
     private final DomainType predicateDefaultResultType;
     private final List<DomainSerializer<?>> domainSerializers;
 
-    public RootDomainModel(Map<String, Object> properties, Map<Class<?>, Object> services, List<ServiceProvider> serviceProviders, Map<String, DomainType> domainTypes, Map<DomainType, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
+    public RootDomainModel(Map<String, Object> properties, Map<Class<?>, Object> services, List<ServiceProvider> serviceProviders, Map<String, DomainType> domainTypes, Map<String, CollectionDomainType> collectionDomainTypes, Map<String, DomainFunction> domainFunctions,
                            Map<String, DomainFunctionTypeResolver> domainFunctionTypeResolvers, Map<String, Map<DomainOperator, DomainOperationTypeResolver>> domainOperationTypeResolvers,
                            Map<String, Map<DomainPredicate, DomainPredicateTypeResolver>> domainPredicateTypeResolvers, DomainType predicateDefaultResultType, List<DomainSerializer<?>> domainSerializers) {
         this.properties = properties;
@@ -76,6 +76,14 @@ public class RootDomainModel implements DomainModel, Serializable {
 
     @Override
     public DomainType getType(String name) {
+        if (name.startsWith("Collection")) {
+            if (name.length() == "Collection".length()) {
+                return CollectionDomainTypeImpl.INSTANCE;
+            } else if (name.charAt("Collection".length()) == '[') {
+                String elementTypeName = name.substring("Collection".length() + 1, name.length() - 1);
+                return getCollectionType(elementTypeName);
+            }
+        }
         return domainTypes.get(name);
     }
 
@@ -90,18 +98,24 @@ public class RootDomainModel implements DomainModel, Serializable {
     }
 
     @Override
-    public CollectionDomainType getCollectionType(DomainType elementDomainType) {
-        return collectionDomainTypes.get(elementDomainType);
+    public CollectionDomainType getCollectionType(String elementTypeName) {
+        if (elementTypeName == null) {
+            return CollectionDomainTypeImpl.INSTANCE;
+        }
+        CollectionDomainType collectionDomainType = collectionDomainTypes.get(elementTypeName);
+        if (collectionDomainType == null) {
+            DomainTypeImplementor domainType = (DomainTypeImplementor) domainTypes.get(elementTypeName);
+
+            String typeName = "Collection[" + elementTypeName + "]";
+            collectionDomainType = new CollectionDomainTypeImpl(typeName, domainType);
+            collectionDomainTypes.put(elementTypeName, collectionDomainType);
+        }
+        return collectionDomainType;
     }
 
     @Override
     public Map<String, DomainType> getTypes() {
         return domainTypes;
-    }
-
-    @Override
-    public Map<DomainType, CollectionDomainType> getCollectionTypes() {
-        return collectionDomainTypes;
     }
 
     @Override

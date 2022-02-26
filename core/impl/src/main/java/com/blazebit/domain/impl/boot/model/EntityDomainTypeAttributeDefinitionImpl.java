@@ -89,19 +89,20 @@ public class EntityDomainTypeAttributeDefinitionImpl extends AbstractMetadataDef
     public void bindTypes(DomainBuilderImpl domainBuilder, MetamodelBuildingContext context) {
         this.attribute = null;
         if (typeName == null) {
-            typeDefinition = null;
             if (collection) {
                 typeDefinition = domainBuilder.getCollectionDomainTypeDefinition(null);
-                return;
+            } else {
+                typeDefinition = null;
             }
         } else {
-            typeDefinition = domainBuilder.getDomainTypeDefinition(typeName);
+            if (collection) {
+                typeDefinition = domainBuilder.getCollectionDomainTypeDefinition(typeName);
+            } else {
+                typeDefinition = domainBuilder.getDomainTypeDefinition(typeName);
+            }
         }
         if (typeDefinition == null) {
             context.addError("The type '" + typeName + "' defined for the attribute " + owner.getName() + "#" + name + " is unknown!");
-        }
-        if (collection) {
-            typeDefinition = domainBuilder.getCollectionDomainTypeDefinition(typeDefinition);
         }
     }
 
