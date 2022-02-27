@@ -629,8 +629,16 @@ export class DomainModel {
         return DomainModel.getType(typeName, this.types, this.collectionTypes);
     }
 
+    getTypes(): StringMap<DomainType> {
+        return this.types;
+    }
+
     getFunction(typeName: string): DomainFunction {
         return this.functions[typeName];
+    }
+
+    getFunctions(): StringMap<DomainFunction> {
+        return this.functions;
     }
 
     getOperationTypeResolvers(typeName: string): StringMap<DomainOperationTypeResolver> {
@@ -638,7 +646,8 @@ export class DomainModel {
     }
 
     getOperationTypeResolver(typeName: string, operator: DomainOperator): DomainOperationTypeResolver {
-        return this.operationTypeResolvers[typeName][DomainOperator[operator]];
+        let resolvers = this.operationTypeResolvers[typeName][DomainOperator[operator]];
+        return resolvers == null ? null : resolvers;
     }
 
     getPredicateTypeResolvers(typeName: string): StringMap<DomainPredicateTypeResolver> {
@@ -646,7 +655,8 @@ export class DomainModel {
     }
 
     getPredicateTypeResolver(typeName: string, predicate: DomainPredicate): DomainPredicateTypeResolver {
-        return this.predicateTypeResolvers[typeName][DomainPredicate[predicate]];
+        let resolvers = this.predicateTypeResolvers[typeName][DomainPredicate[predicate]];
+        return resolvers == null ? null : resolvers;
     }
 
     private static getType(typeName: string, types: StringMap<DomainType>, collectionTypes: StringMap<CollectionDomainType>): DomainType {
