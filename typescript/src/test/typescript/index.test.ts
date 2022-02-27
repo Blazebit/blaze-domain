@@ -212,10 +212,10 @@ describe('Test parse ', function() {
             ],
             predResolvers: []
         }));
-        expect(domainModel.types['Integer'].name).to.equal("Integer");
-        expect((domainModel.types['Collection'] as domain.CollectionDomainType).elementType).to.equal(null);
-        let func = domainModel.functions['SIZE'];
-        expect(func.resultTypeResolver.resolveType(domainModel, func, [domainModel.types['Collection[Comment]']])).to.equal(domainModel.types['Integer']);
+        expect(domainModel.getType('Integer').name).to.equal("Integer");
+        expect((domainModel.getType('Collection') as domain.CollectionDomainType).elementType).to.equal(null);
+        let func = domainModel.getFunction('SIZE');
+        expect(func.resultTypeResolver.resolveType(domainModel, func, [domainModel.getType('Collection[Comment]')])).to.equal(domainModel.getType('Integer'));
     });
 
     it('Real-model parse!', function() {
@@ -744,8 +744,8 @@ describe('Test parse ', function() {
                 }
             ]
         }));
-        expect(domainModel.types['Integer'].name).to.equal("Integer");
-        expect(domainModel.operationTypeResolvers['Integer'][domain.DomainOperator[domain.DomainOperator.PLUS]].resolveType(domainModel, [domainModel.types['Integer'], domainModel.types['Integer']]).name).to.equal("Integer");
+        expect(domainModel.getType('Integer').name).to.equal("Integer");
+        expect(domainModel.getOperationTypeResolver('Integer', domain.DomainOperator.PLUS).resolveType(domainModel, [domainModel.getType('Integer'), domainModel.getType('Integer')]).name).to.equal("Integer");
     });
 
     it('With base model', function() {
@@ -894,10 +894,10 @@ describe('Test parse ', function() {
             ],
             predResolvers: []
         }), baseDomainModel);
-        expect(domainModel.types['Boolean']).to.equal(null);
-        expect((domainModel.types['Numeric'] as domain.BasicDomainType).enabledOperators.length).to.equal(1);
-        expect((domainModel.types['Numeric'] as domain.BasicDomainType).enabledPredicates.length).to.equal(1);
-        expect(domainModel.functions['indexOf']).to.equal(null);
+        expect(domainModel.getType('Boolean')).to.equal(null);
+        expect((domainModel.getType('Numeric') as domain.BasicDomainType).enabledOperators.length).to.equal(1);
+        expect((domainModel.getType('Numeric') as domain.BasicDomainType).enabledPredicates.length).to.equal(1);
+        expect(domainModel.getFunction('indexOf')).to.equal(null);
     });
 
 });

@@ -595,49 +595,77 @@ export class OperandTypeResolverException extends DomainTypeResolverException {
  */
 export class DomainModel {
     /**
-     * Returns the types of the domain model as map indexed by their type name.
+     * The types of the domain model as map indexed by their type name.
      */
-    types: StringMap<DomainType>;
+    private types: StringMap<DomainType>;
     /**
-     * Returns the functions of the domain model as map indexed by their function name.
+     * The collection types of the domain model as map indexed by their type name.
      */
-    functions: StringMap<DomainFunction>;
+    private collectionTypes: StringMap<CollectionDomainType>;
+    /**
+     * The functions of the domain model as map indexed by their function name.
+     */
+    private functions: StringMap<DomainFunction>;
     /**
      * Returns the operation type resolvers of the domain model as map indexed by their type name.
      */
-    operationTypeResolvers: StringMap<StringMap<DomainOperationTypeResolver>>;
+    private operationTypeResolvers: StringMap<StringMap<DomainOperationTypeResolver>>;
     /**
      * Returns the predicate type resolvers of the domain model as map indexed by their type name.
      */
-    predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>>;
+    private predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>>;
 
-    private collectionTypes: StringMap<CollectionDomainType>;
+    private static readonly COLLECTION: CollectionDomainType = new CollectionDomainType("Collection", null);
 
-    constructor(types: StringMap<DomainType>, functions: StringMap<DomainFunction>, operationTypeResolvers: StringMap<StringMap<DomainOperationTypeResolver>>, predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>>) {
+    constructor(types: StringMap<DomainType>, collectionTypes: StringMap<CollectionDomainType>, functions: StringMap<DomainFunction>, operationTypeResolvers: StringMap<StringMap<DomainOperationTypeResolver>>, predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>>) {
         this.types = types;
+        this.collectionTypes = collectionTypes;
         this.functions = functions;
         this.operationTypeResolvers = operationTypeResolvers;
         this.predicateTypeResolvers = predicateTypeResolvers;
-        this.collectionTypes = {};
     }
 
-    getType(input: string): DomainType {
-        if (input.startsWith("Collection")) {
-            let elementTypeName;
-            if (input.length == "Collection".length) {
-                elementTypeName = "";
-            } else if (input.charAt("Collection".length) == '[') {
-                elementTypeName = input.substring("Collection".length, input.length - 1);
-            } else {
-                return this.types[input];
-            }
-            if (this.collectionTypes[elementTypeName] !== undefined) {
-                return this.collectionTypes[elementTypeName];
-            } else {
-                return this.collectionTypes[elementTypeName] = new CollectionDomainType(input, this.getType(elementTypeName));
+    getType(typeName: string): DomainType {
+        return DomainModel.getType(typeName, this.types, this.collectionTypes);
+    }
+
+    getFunction(typeName: string): DomainFunction {
+        return this.functions[typeName];
+    }
+
+    getOperationTypeResolvers(typeName: string): StringMap<DomainOperationTypeResolver> {
+        return this.operationTypeResolvers[typeName];
+    }
+
+    getOperationTypeResolver(typeName: string, operator: DomainOperator): DomainOperationTypeResolver {
+        return this.operationTypeResolvers[typeName][DomainOperator[operator]];
+    }
+
+    getPredicateTypeResolvers(typeName: string): StringMap<DomainPredicateTypeResolver> {
+        return this.predicateTypeResolvers[typeName];
+    }
+
+    getPredicateTypeResolver(typeName: string, predicate: DomainPredicate): DomainPredicateTypeResolver {
+        return this.predicateTypeResolvers[typeName][DomainPredicate[predicate]];
+    }
+
+    private static getType(typeName: string, types: StringMap<DomainType>, collectionTypes: StringMap<CollectionDomainType>): DomainType {
+        if (typeName === undefined) {
+            return null;
+        }
+        if (typeName.startsWith("Collection")) {
+            if (typeName.length == "Collection".length) {
+                return DomainModel.COLLECTION;
+            } else if (typeName.charAt("Collection".length) == '[') {
+                let elementTypeName = typeName.substring("Collection".length + 1, typeName.length - 1);
+                if (collectionTypes[elementTypeName] !== undefined) {
+                    return collectionTypes[elementTypeName];
+                } else {
+                    return collectionTypes[elementTypeName] = new CollectionDomainType(typeName, DomainModel.getType(elementTypeName, types, collectionTypes));
+                }
             }
         }
-        return this.types[input];
+        return types[typeName];
     }
 
     /**
@@ -903,6 +931,7 @@ export class DomainModel {
         };
         let types = json['types'], functions = json['funcs'], opResolvers = json['opResolvers'], predResolvers = json['predResolvers'];
         var domainTypes: StringMap<DomainType> = {};
+        var collectionTypes: StringMap<CollectionDomainType> = {};
         var funcs: StringMap<DomainFunction> = {};
         let operationTypeResolvers: StringMap<StringMap<DomainOperationTypeResolver>> = {};
         let predicateTypeResolvers: StringMap<StringMap<DomainPredicateTypeResolver>> = {};
@@ -960,8 +989,8 @@ export class DomainModel {
                     newDomainType = new BasicDomainType(name, ops, preds, meta);
                     break;
                 case 'C':
-                    newDomainType = new CollectionDomainType(name, null);
-                    break;
+                    // Ignore, since we build these types lazily
+                    return;
                 case 'U':
                     newDomainType = new UnionDomainType(name, ops, preds, meta);
                     break;
@@ -1015,23 +1044,19 @@ export class DomainModel {
                     if (Array.isArray(type['attrs'])) {
                         type['attrs'].forEach(function (a) {
                             let attrMeta = parseMeta(a['meta']);
-                            entityType.attributes[a['name']] = new EntityAttribute(a['name'], domainTypes[a['type']], doc(attrMeta), attrMeta);
+                            entityType.attributes[a['name']] = new EntityAttribute(a['name'], DomainModel.getType(a['type'], domainTypes, collectionTypes), doc(attrMeta), attrMeta);
                         });
                     }
                     break;
                 case 'C':
-                    let collectionType = domainTypes[name] as CollectionDomainType;
-                    let prefix = 'Collection[';
-                    if (name.length > prefix.length) {
-                        collectionType.elementType = domainTypes[name.substring(prefix.length, name.length - 1)];
-                    }
-                    break;
+                    // Ignore, since we build these types lazily
+                    return;
                 case 'U':
                     let unionType = domainTypes[name] as UnionDomainType;
                     let unionElementTypeNames = unionType.name.split('|');
                     unionType.unionElements = [];
                     for (const unionElementTypeName of unionElementTypeNames) {
-                        unionType.unionElements.push(domainTypes[unionElementTypeName])
+                        unionType.unionElements.push(DomainModel.getType(unionElementTypeName, domainTypes, collectionTypes))
                     }
                     break;
             }
@@ -1048,14 +1073,14 @@ export class DomainModel {
                     for (var i = 0; i < args.length; i++) {
                         let param = args[i];
                         let paramMeta = parseMeta(param['meta']);
-                        params.push(new DomainFunctionArgument(param['name'], i, domainTypes[param['type']], doc(paramMeta), paramMeta));
+                        params.push(new DomainFunctionArgument(param['name'], i, DomainModel.getType(param['type'], domainTypes, collectionTypes), doc(paramMeta), paramMeta));
                     }
                 }
                 let meta = parseMeta(func['meta']);
                 let resultTypeResolver: DomainFunctionTypeResolver = resolver(func['typeResolver']);
                 let resultType: DomainType = null;
                 if (resultTypeResolver == null) {
-                    resultType = domainTypes[func['type']];
+                    resultType = DomainModel.getType(func['type'], domainTypes, collectionTypes);
                     resultTypeResolver = {
                         resolveType(domainModel: DomainModel, domainFunction: DomainFunction, argumentTypes: DomainType[]): DomainType {
                             validateArgumentTypes(domainFunction, argumentTypes);
@@ -1143,6 +1168,7 @@ export class DomainModel {
 
         return new DomainModel(
             domainTypes,
+            collectionTypes,
             funcs,
             operationTypeResolvers,
             predicateTypeResolvers
