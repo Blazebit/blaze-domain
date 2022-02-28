@@ -301,6 +301,11 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
     }
 
     @Override
+    public Set<Class<?>> getDomainFunctions() {
+        return domainFunctions.keySet();
+    }
+
+    @Override
     public DeclarativeDomainConfiguration addDomainType(Class<?> domainTypeClass) {
         domainTypes.put(domainTypeClass, AnnotationUtils.findAnnotation(domainTypeClass, DomainType.class));
         return this;
@@ -316,6 +321,11 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
     public DeclarativeDomainConfiguration removeDomainType(Class<?> domainTypeClass) {
         domainTypes.remove(domainTypeClass);
         return this;
+    }
+
+    @Override
+    public Set<Class<?>> getDomainTypes() {
+        return domainTypes.keySet();
     }
 
     @Override

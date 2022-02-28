@@ -29,6 +29,7 @@ import com.blazebit.domain.runtime.model.DomainModel;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Christian Beikov
@@ -62,6 +63,13 @@ public interface DeclarativeDomainConfiguration extends ServiceProvider {
     DeclarativeDomainConfiguration removeDomainType(Class<?> domainTypeClass);
 
     /**
+     * Returns the registered domain types.
+     *
+     * @return the registered domain types
+     */
+    Set<Class<?>> getDomainTypes();
+
+    /**
      * Adds the given domain functions java class for later analysis to add its functions as domain function to the domain builder.
      *
      * @param domainFunctionsClass The domain functions java class to analyze
@@ -85,6 +93,13 @@ public interface DeclarativeDomainConfiguration extends ServiceProvider {
      * @return this for chaining
      */
     DeclarativeDomainConfiguration removeDomainFunctions(Class<?> domainFunctionsClass);
+
+    /**
+     * Returns the registered domain functions.
+     *
+     * @return the registered domain functions
+     */
+    Set<Class<?>> getDomainFunctions();
 
     /**
      * Returns the type resolver.
