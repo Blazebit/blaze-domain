@@ -87,6 +87,6 @@ public enum DomainOperator {
      * @return whether this operator has precedence over the given one
      */
     public boolean hasPrecedenceOver(DomainOperator operator) {
-        return ordinal() <= operator.ordinal();
+        return ordinal() < operator.ordinal();
     }
 }
