@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.declarative.spi;
 
+import com.blazebit.domain.boot.model.DomainBuilder;
+
 import java.lang.reflect.Type;
 
 /**
@@ -37,8 +39,9 @@ public interface TypeResolver {
      *
      * @param contextClass The context class against which to resolve the type
      * @param type The type to resolve
+     * @param domainBuilder The domain builder
      * @return the resolved type
      */
-    public Object resolve(Class<?> contextClass, Type type);
+    public Object resolve(Class<?> contextClass, Type type, DomainBuilder domainBuilder);
 
 }

@@ -387,7 +387,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
 
         DomainFunctionBuilder function = domainBuilder.createFunction(name);
 
-        ResolvedType resolvedType = resolveType(typeName, elementTypeName, type, elementType, domainFunctionsClass, method, null);
+        ResolvedType resolvedType = resolveType(domainBuilder, typeName, elementTypeName, type, elementType, domainFunctionsClass, method, null);
         String resolvedTypeName = null;
         boolean resolvedCollection = false;
         if (resolvedType != null) {
@@ -485,7 +485,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
             }
         }
 
-        ResolvedType resolvedType = resolveType(typeName, elementTypeName, type, elementType, domainFunctionsClass, method, parameter);
+        ResolvedType resolvedType = resolveType(domainBuilder, typeName, elementTypeName, type, elementType, domainFunctionsClass, method, parameter);
         String resolvedTypeName = null;
         boolean resolvedCollection;
         if (resolvedType == null) {
@@ -722,7 +722,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         String typeName = domainAttribute.collection() ? "Collection" : domainAttribute.typeName();
         Class<?> elementType = domainAttribute.collection() ? domainAttribute.value() : void.class;
         String elementTypeName = domainAttribute.collection() ? domainAttribute.typeName() : "";
-        ResolvedType resolvedType = resolveType(typeName, elementTypeName, type, elementType, domainTypeClass, method, null);
+        ResolvedType resolvedType = resolveType(domainBuilder, typeName, elementTypeName, type, elementType, domainTypeClass, method, null);
         if (resolvedType == null) {
             resolvedType = ResolvedType.basic(Object.class);
         }
@@ -771,7 +771,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
         }
     }
 
-    protected ResolvedType resolveType(String typeName, String elementTypeName, Class<?> type, Class<?> elementType, Class<?> baseClass, Method method, Parameter parameter) {
+    protected ResolvedType resolveType(DomainBuilder domainBuilder, String typeName, String elementTypeName, Class<?> type, Class<?> elementType, Class<?> baseClass, Method method, Parameter parameter) {
         if (!typeName.isEmpty()) {
             if ("Collection".equals(typeName)) {
                 if (elementTypeName.isEmpty()) {
@@ -795,17 +795,17 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
             } else {
                 t = type;
             }
-            Object resolvedType = configuredTypeResolver.resolve(baseClass, t);
+            Object resolvedType = configuredTypeResolver.resolve(baseClass, t, domainBuilder);
             if (resolvedType == Object.class) {
                 return null;
             }
             if (resolvedType == null && !(t instanceof Class<?>)) {
                 // If the type could not be resolved, we try to resolve to a class type first and then invoke the resolver again
                 if (parameter == null) {
-                    resolvedType = configuredTypeResolver.resolve(baseClass, ReflectionUtils.getResolvedMethodReturnType(baseClass, method));
+                    resolvedType = configuredTypeResolver.resolve(baseClass, ReflectionUtils.getResolvedMethodReturnType(baseClass, method), domainBuilder);
                 } else {
                     int idx = Arrays.asList(method.getParameters()).indexOf(parameter);
-                    resolvedType = configuredTypeResolver.resolve(baseClass, ReflectionUtils.getResolvedMethodParameterTypes(baseClass, method)[idx]);
+                    resolvedType = configuredTypeResolver.resolve(baseClass, ReflectionUtils.getResolvedMethodParameterTypes(baseClass, method)[idx], domainBuilder);
                 }
             }
             if (resolvedType instanceof String) {
@@ -849,7 +849,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
             return null;
         } else if (Collection.class.isAssignableFrom(returnType)) {
             if (configuredTypeResolver != null) {
-                Object resolvedType = configuredTypeResolver.resolve(baseClass, elementType);
+                Object resolvedType = configuredTypeResolver.resolve(baseClass, elementType, domainBuilder);
                 if (resolvedType instanceof String) {
                     return ResolvedType.collection((String) resolvedType);
                 } else if (resolvedType instanceof Class<?>) {
@@ -859,7 +859,7 @@ public class DeclarativeDomainConfigurationImpl implements DeclarativeDomainConf
             return ResolvedType.collection(elementType);
         } else {
             if (configuredTypeResolver != null) {
-                Object resolvedType = configuredTypeResolver.resolve(baseClass, returnType);
+                Object resolvedType = configuredTypeResolver.resolve(baseClass, returnType, domainBuilder);
                 if (resolvedType instanceof String) {
                     return ResolvedType.basic((String) resolvedType);
                 } else if (resolvedType instanceof Class<?>) {

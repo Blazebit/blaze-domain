@@ -16,6 +16,8 @@
 
 package com.blazebit.domain.declarative.spi;
 
+import com.blazebit.domain.boot.model.DomainBuilder;
+
 import java.io.Serializable;
 import java.lang.reflect.Type;
 
@@ -28,7 +30,7 @@ import java.lang.reflect.Type;
 final class NoopTypeResolver implements TypeResolver, Serializable {
 
     @Override
-    public Object resolve(Class<?> contextClass, Type type) {
+    public Object resolve(Class<?> contextClass, Type type, DomainBuilder domainBuilder) {
         return null;
     }
 
