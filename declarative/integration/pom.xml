@@ -13,6 +13,7 @@
 
     <modules>
         <module>cdi</module>
+        <module>cdi-jakarta</module>
     </modules>
 
 </project>
