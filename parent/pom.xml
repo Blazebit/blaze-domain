@@ -19,6 +19,7 @@
 
         <version.blaze-utils>0.1.21</version.blaze-utils>
         <version.weld>2.4.5.Final</version.weld>
+        <version.weld-jakarta>4.0.3.Final</version.weld-jakarta>
         <version.junit>4.12</version.junit>
         <version.bnd>6.4.1</version.bnd>
 
